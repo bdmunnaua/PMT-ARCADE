@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SLIDE PUZZLE · Earn PMT · Ad After Level · Login/Register</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=DM+Mono:wght@500&display=swap');
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+
+        body {
+            background: radial-gradient(ellipse at 25% 15%, #1b3830 0%, #0a181e 50%, #090d14 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'DM Mono', monospace;
+            padding: 10px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(6, 18, 22, 0.92);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 10px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.75), inset 0 0 0 1px rgba(255,205,80,0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .screen { display: flex; flex-direction: column; gap: 10px; }
+        .hidden { display: none !important; }
+
+        .header-bar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0,0,0,0.38);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 13px;
+            padding: 6px 9px;
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.54rem;
+            font-weight: 900;
+            letter-spacing: 0.14em;
+            color: #f2c86a;
+            text-shadow: 0 0 10px rgba(242,200,106,0.5);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .vdiv { width: 1px; height: 20px; background: rgba(255,255,255,0.11); flex-shrink: 0; }
+
+        .level-group { display: flex; gap: 3px; flex-shrink: 0; }
+        .level-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.09);
+            color: rgba(255,255,255,0.38);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.42rem;
+            font-weight: 500;
+            padding: 3px 6px;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+        }
+        .level-btn .lv-icon { font-size: 0.68rem; }
+        .level-btn .lv-name { font-size: 0.38rem; }
+        .level-btn.unlocked { color: rgba(255,255,255,0.65); border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.07); }
+        .level-btn.active { background: linear-gradient(135deg, #b87218, #f0b030); border-color: transparent; color: #1a0e00; font-weight: 700; box-shadow: 0 0 9px rgba(240,176,48,0.45); }
+        .level-btn.locked { opacity: 0.28; cursor: not-allowed; }
+
+        .color-group { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+        .color-dot {
+            width: 14px; height: 14px; border-radius: 50%;
+            cursor: pointer; border: 2px solid rgba(255,255,255,0.14);
+            transition: all 0.12s;
+        }
+        .color-dot.active { border-color: #fff; box-shadow: 0 0 5px rgba(255,255,255,0.55); transform: scale(1.2); }
+
+        .goal-header {
+            margin-left: auto;
+            background: rgba(0,0,0,0.42);
+            border: 1px solid rgba(255,200,60,0.35);
+            border-radius: 10px;
+            padding: 4px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+        .goal-label { font-size: 0.4rem; letter-spacing: 0.12em; color: rgba(255,220,100,0.7); text-transform: uppercase; font-weight: 600; }
+        .goal-grid { display: flex; flex-direction: column; gap: 2px; }
+        .goal-row { display: flex; gap: 2px; justify-content: center; }
+        .goal-cell {
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.45rem;
+            font-weight: 700;
+            color: #ffecb3;
+            width: 18px;
+            height: 18px;
+        }
+
+        .coins-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 3px;
+            font-size: 0.55rem;
+            color: rgba(247,210,100,0.75);
+            padding: 0 2px;
+        }
+
+        #puzzleGrid {
+            width: 100%;
+            display: grid;
+            gap: 4px;
+            background: #091e1e;
+            padding: 8px;
+            border-radius: 18px;
+            box-shadow: inset 0 0 0 1.5px #e9b35f, 0 8px 22px rgba(0,0,0,0.6);
+        }
+        .tile {
+            background: #f7e9cd;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-family: 'DM Mono', monospace;
+            color: #2d3e2b;
+            cursor: pointer;
+            transition: transform 0.05s;
+            box-shadow: 0 2px 0 #8b6946;
+            touch-action: none;
+            aspect-ratio: 1/1;
+        }
+        .tile:active { transform: scale(0.93); }
+        .empty-tile { background: #2a6058 !important; box-shadow: inset 0 0 0 1.5px rgba(255,220,120,0.45) !important; }
+
+        .moves-area {
+            display: flex;
+            justify-content: center;
+            margin-top: 4px;
+        }
+        .moves-panel {
+            background: rgba(0,0,0,0.42);
+            border: 1px solid rgba(255,200,60,0.22);
+            border-radius: 40px;
+            padding: 6px 20px;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        .moves-label { font-size: 0.55rem; color: rgba(255,210,80,0.55); letter-spacing: 0.1em; }
+        .moves-value { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 700; color: #f3c43d; }
+
+        .status-bar {
+            background: rgba(0,0,0,0.3);
+            border-radius: 30px;
+            padding: 5px 14px;
+            text-align: center;
+            color: rgba(220,240,215,0.55);
+            font-size: 0.52rem;
+            letter-spacing: 0.06em;
+            margin-top: 6px;
+        }
+        .status-bar.win { background: linear-gradient(90deg, #b87218, #f0b030); color: #1a0e00; font-weight: 700; }
+
+        /* Form Styles */
+        .form-wrap {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,200,60,0.3);
+            border-radius: 16px;
+            padding: 16px;
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.55rem; color: #ffdf8c; margin-bottom: 4px; }
+        .form-group input {
+            width: 100%;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,200,60,0.4);
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: #ffecb3;
+            font-family: 'DM Mono', monospace;
+            font-size: 0.7rem;
+        }
+        .password-wrapper { position: relative; display: flex; align-items: center; }
+        .password-wrapper input { flex: 1; padding-right: 40px; }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #ffaa00;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .btn {
+            background: linear-gradient(135deg, #ffaa00, #ff6600);
+            border: none;
+            border-radius: 40px;
+            padding: 10px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 0.65rem;
+            color: #1a0e00;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            margin-top: 8px;
+        }
+        .btn-secondary { background: rgba(255,255,255,0.1); border: 1px solid #ffaa00; color: #ffaa00; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,200,60,0.3);
+            border-radius: 30px;
+            font-size: 0.6rem;
+            color: #ffaa00;
+            cursor: pointer;
+        }
+        .tab.active { background: linear-gradient(135deg, #ffaa00, #ff6600); color: #1a0e00; border-color: transparent; }
+        .ad-slot {
+            background: rgba(0,0,0,0.3);
+            border: 1px dashed #ffaa00;
+            border-radius: 12px;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.45rem;
+            color: #ffaa00;
+            letter-spacing: 0.1em;
+        }
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            background: linear-gradient(135deg, #c47a0e, #f3b730);
+            color: #150900;
+            padding: 12px 26px;
+            border-radius: 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            z-index: 999;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+            text-align: center;
+            white-space: nowrap;
+            animation: popIn 0.32s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .ad-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        .ad-box {
+            background: #1a0e00;
+            border: 3px solid #ffaa00;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            min-width: 280px;
+        }
+        .ad-close-btn {
+            background: linear-gradient(135deg, #ffaa00, #ff6600);
+            border: none;
+            border-radius: 40px;
+            padding: 12px 24px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 0.7rem;
+            color: #1a0e00;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        @keyframes popIn {
+            0% { transform: translate(-50%,-50%) scale(0.3); opacity:0; }
+            100% { transform: translate(-50%,-50%) scale(1); opacity:1; }
+        }
+        @media (max-width: 360px) {
+            .goal-cell { width: 14px; height: 14px; font-size: 0.38rem; }
+            .moves-value { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="card" id="app">
+
+    <!-- SPLASH SCREEN -->
+    <div id="splashScreen" class="screen">
+        <div class="header-bar">
+            <div class="game-title">SLIDE</div>
+            <div class="vdiv"></div>
+            <div style="flex:1"></div>
+        </div>
+        <div class="ad-slot">📢 AD SPACE</div>
+        <div style="text-align:center; margin:20px 0;">
+            <div style="font-family:'Orbitron'; font-size:1.5rem; color:#f2c86a;">🧩 SLIDE PUZZLE</div>
+            <div style="font-size:0.55rem; color:#ffaa00; margin-top:5px;">SOLVE · EARN PMT</div>
+        </div>
+        <button class="btn" id="startBtn">🎮 PLAY TO EARN</button>
+        <div class="ad-slot">📢 AD SPACE</div>
+        <div class="status-bar">✨ Tap tile → Slide into empty space ✨</div>
+    </div>
+
+    <!-- AUTH SCREEN -->
+    <div id="authScreen" class="screen hidden">
+        <div class="header-bar">
+            <div class="game-title">SLIDE</div>
+            <div class="vdiv"></div>
+            <div style="flex:1"></div>
+        </div>
+        <div class="form-wrap">
+            <div class="tabs">
+                <div class="tab active" id="registerTab">REGISTER</div>
+                <div class="tab" id="loginTab">LOGIN</div>
+            </div>
+            <div id="registerForm">
+                <div class="form-group"><label>USERNAME</label><input type="text" id="regUsername" maxlength="20"></div>
+                <div class="form-group"><label>EMAIL</label><input type="email" id="regEmail"></div>
+                <div class="form-group">
+                    <label>PASSWORD</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="regPassword">
+                        <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)">👁️</button>
+                    </div>
+                </div>
+                <button class="btn" id="registerBtn">🎯 CREATE ACCOUNT</button>
+            </div>
+            <div id="loginForm" style="display:none;">
+                <div class="form-group"><label>USERNAME</label><input type="text" id="loginUsername"></div>
+                <div class="form-group">
+                    <label>PASSWORD</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="loginPassword">
+                        <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">👁️</button>
+                    </div>
+                </div>
+                <button class="btn" id="loginBtn">🍊 LOGIN</button>
+            </div>
+        </div>
+        <button class="btn btn-secondary" id="backToStartBtn">← BACK</button>
+        <div class="ad-slot">📢 AD SPACE</div>
+    </div>
+
+    <!-- MAIN MENU -->
+    <div id="mainMenu" class="screen hidden">
+        <div class="header-bar">
+            <div class="game-title">SLIDE</div>
+            <div class="vdiv"></div>
+            <div style="flex:1"></div>
+        </div>
+        <div class="ad-slot">📢 AD SPACE</div>
+        <div class="status-bar" style="background:rgba(0,0,0,0.5);">👤 <span id="menuUsername">—</span> | 💰 <span id="menuBalance">0</span> PMT</div>
+        <button class="btn" id="playMenuBtn">🧩 START PUZZLE</button>
+        <button class="btn btn-secondary" id="walletBtn">👛 SET WALLET</button>
+        <button class="btn btn-secondary" id="withdrawBtn">💰 WITHDRAW (min 1000)</button>
+        <button class="btn btn-secondary" id="logoutMenuBtn">⏻ LOGOUT</button>
+        <div class="ad-slot">📢 AD SPACE</div>
+        <div class="status-bar">🏆 Complete levels to earn PMT! 🏆<br>Easy:20 | Med:40 | Hard:80 | Extreme:160</div>
+    </div>
+
+    <!-- GAME SCREEN (puzzle) -->
+    <div id="gameScreen" class="screen hidden">
+        <div class="header-bar">
+            <div class="game-title">SLIDE</div>
+            <div class="vdiv"></div>
+            <div class="level-group" id="levelSelector">
+                <button class="level-btn unlocked active" data-level="0"><span class="lv-icon">🌱</span><span class="lv-name">EASY</span></button>
+                <button class="level-btn locked" data-level="1"><span class="lv-icon">🔥</span><span class="lv-name">MED</span></button>
+                <button class="level-btn locked" data-level="2"><span class="lv-icon">💀</span><span class="lv-name">HARD</span></button>
+                <button class="level-btn locked" data-level="3"><span class="lv-icon">🏆</span><span class="lv-name">EXT</span></button>
+            </div>
+            <div class="vdiv"></div>
+            <div class="color-group">
+                <div class="color-dot active" data-color="gold" style="background:#f7e9cd;"></div>
+                <div class="color-dot" data-color="blue" style="background:#b8d4e3;"></div>
+                <div class="color-dot" data-color="green" style="background:#c8e6c9;"></div>
+                <div class="color-dot" data-color="purple" style="background:#e1bee7;"></div>
+            </div>
+            <div class="goal-header">
+                <div class="goal-label">🎯 GOAL</div>
+                <div class="goal-grid" id="goalGrid"></div>
+            </div>
+        </div>
+        <div class="coins-row">🪙 PMT: <span id="gamePmt">0</span></div>
+        <div class="puzzle-outer">
+            <div id="puzzleGrid"></div>
+        </div>
+        <div class="moves-area">
+            <div class="moves-panel">
+                <span class="moves-label">◈ MOVES ◈</span>
+                <span class="moves-value" id="movesCount">0</span>
+            </div>
+        </div>
+        <div class="status-bar" id="statusBar">✨ Slide tiles into the correct order ✨</div>
+        <div class="ad-slot">📢 AD SPACE</div>
+        <button class="btn btn-secondary" id="exitGameBtn">EXIT TO MENU</button>
+    </div>
+</div>
+
+<script>
+// =====================================================
+// SLIDE PUZZLE - SHARED ACCOUNT WITH NEON RUSH / FRUIT RUSH
+// Uses "neonRushUsers" localStorage key for cross-game login
+// =====================================================
+
+// Password toggle
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁️'; }
+}
+
+// PMT REWARDS per level
+const LEVEL_REWARDS = [20, 40, 80, 160];
+const LEVEL_CONFIG = [
+    { rows: 4, cols: 3, name: "EASY" },
+    { rows: 5, cols: 4, name: "MEDIUM" },
+    { rows: 7, cols: 5, name: "HARD" },
+    { rows: 9, cols: 6, name: "EXTREME" }
+];
+
+const themes = {
+    gold:  { tile: "#f7e9cd", shadow: "#8b6946", text: "#2d3e2b", empty: "#2a6058", grid: "#091e1e", border: "#e9b35f", ref: "#3a7a6b" },
+    blue:  { tile: "#b8d4e3", shadow: "#4a7a9e", text: "#1a3a5c", empty: "#2a5e7a", grid: "#08161e", border: "#7ab3c8", ref: "#3a7a90" },
+    green: { tile: "#c8e6c9", shadow: "#5a8f4a", text: "#1e4a2a", empty: "#2a6a3a", grid: "#081808", border: "#7dab7a", ref: "#3a8a4a" },
+    purple:{ tile: "#e1bee7", shadow: "#8e6a9e", text: "#4a2a6a", empty: "#5a3a6a", grid: "#120818", border: "#b87dc4", ref: "#7a5a8e" }
+};
+
+// ========== SHARED LOCALSTORAGE KEY ==========
+// Using "neonRushUsers" to share accounts with other games
+let users = JSON.parse(localStorage.getItem('neonRushUsers')) || {};
+// =============================================
+
+let currentUser = null;
+let pmtBalance = 0;
+
+// Game state
+let currentLevel = 0;
+let rows = 4, cols = 3;
+let board = [];
+let moves = 0;
+let won = false;
+let color = "gold";
+let levelCompletedFlag = false;
+
+// DOM elements
+const splashScreen = document.getElementById('splashScreen');
+const authScreen = document.getElementById('authScreen');
+const mainMenu = document.getElementById('mainMenu');
+const gameScreen = document.getElementById('gameScreen');
+const goalGrid = document.getElementById('goalGrid');
+const puzzleGrid = document.getElementById('puzzleGrid');
+const movesSpan = document.getElementById('movesCount');
+const statusSpan = document.getElementById('statusBar');
+const gamePmtSpan = document.getElementById('gamePmt');
+const menuUsernameSpan = document.getElementById('menuUsername');
+const menuBalanceSpan = document.getElementById('menuBalance');
+
+function showScreen(screenId) {
+    splashScreen.classList.add('hidden');
+    authScreen.classList.add('hidden');
+    mainMenu.classList.add('hidden');
+    gameScreen.classList.add('hidden');
+    if (screenId === 'splash') splashScreen.classList.remove('hidden');
+    else if (screenId === 'auth') authScreen.classList.remove('hidden');
+    else if (screenId === 'menu') mainMenu.classList.remove('hidden');
+    else if (screenId === 'game') gameScreen.classList.remove('hidden');
+}
+
+function updateMenuUI() {
+    if (currentUser) {
+        menuUsernameSpan.innerText = currentUser.username;
+        menuBalanceSpan.innerText = currentUser.balance.toFixed(3);
+        pmtBalance = currentUser.balance;
+    }
+}
+
+function saveUser() {
+    if (currentUser) {
+        users[currentUser.username] = currentUser;
+        // Save to same shared key
+        localStorage.setItem('neonRushUsers', JSON.stringify(users));
+    }
+}
+
+// Google AdSense Video Ad Simulation (Rewarded Ad)
+function showVideoAd(callback) {
+    const adOverlay = document.createElement('div');
+    adOverlay.className = 'ad-overlay';
+    adOverlay.innerHTML = `
+        <div class="ad-box">
+            <div style="font-family:'Orbitron'; color:#ffaa00; font-size:0.8rem; margin-bottom:15px;">📺 GOOGLE AdSense VIDEO AD</div>
+            <div style="font-size:0.6rem; color:#ffecb3; margin-bottom:20px;">Watch 5 seconds to claim your PMT reward!</div>
+            <div style="width:100%; height:80px; background:linear-gradient(90deg,#2a2a2a,#4a4a4a); border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:15px;">
+                <span style="font-size:2rem;">🎬</span>
+            </div>
+            <div class="ad-close-btn" id="closeAdBtn">✓ CLAIM REWARD & CONTINUE</div>
+            <div style="font-size:0.45rem; color:#ffaa00; margin-top:10px;">Advertisement will close in 5 seconds...</div>
+        </div>
+    `;
+    document.body.appendChild(adOverlay);
+    
+    let seconds = 5;
+    const timerText = adOverlay.querySelector('.ad-box div:last-child');
+    const closeBtn = adOverlay.querySelector('#closeAdBtn');
+    closeBtn.disabled = true;
+    closeBtn.style.opacity = '0.5';
+    closeBtn.style.cursor = 'not-allowed';
+    
+    const interval = setInterval(() => {
+        seconds--;
+        if (timerText) timerText.innerHTML = `Advertisement will close in ${seconds} seconds...`;
+        if (seconds <= 0) {
+            clearInterval(interval);
+            closeBtn.disabled = false;
+            closeBtn.style.opacity = '1';
+            closeBtn.style.cursor = 'pointer';
+            if (timerText) timerText.innerHTML = '✓ Ad completed! Click to claim your reward!';
+        }
+    }, 1000);
+    
+    closeBtn.onclick = () => {
+        if (closeBtn.disabled) return;
+        adOverlay.remove();
+        clearInterval(interval);
+        if (callback) callback();
+    };
+}
+
+// Puzzle functions
+function getSolvedBoard() {
+    const total = rows * cols;
+    let solved = [];
+    for (let i = 1; i < total; i++) solved.push(i);
+    solved.push(-1);
+    return solved;
+}
+
+function isSolved() {
+    const total = rows * cols;
+    for (let i = 0; i < total; i++) {
+        if (i === total - 1) { if (board[i] !== -1) return false; }
+        else { if (board[i] !== i + 1) return false; }
+    }
+    return true;
+}
+
+function renderGoal() {
+    const th = themes[color];
+    goalGrid.innerHTML = '';
+    const sol = getSolvedBoard();
+    for (let r = 0; r < rows; r++) {
+        const rowDiv = document.createElement('div'); rowDiv.className = 'goal-row';
+        for (let c = 0; c < cols; c++) {
+            const v = sol[r * cols + c];
+            const cell = document.createElement('div'); cell.className = 'goal-cell';
+            cell.style.background = v === -1 ? th.empty : th.ref;
+            cell.style.color = v === -1 ? 'rgba(255,200,140,0.5)' : '#ffecb3';
+            cell.textContent = v === -1 ? '□' : v;
+            rowDiv.appendChild(cell);
+        }
+        goalGrid.appendChild(rowDiv);
+    }
+}
+
+function renderPuzzle() {
+    const th = themes[color];
+    const total = rows * cols;
+    const fs = Math.max(12, Math.min(28, Math.floor(42 / Math.max(cols, rows)) * 1.2));
+    puzzleGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    puzzleGrid.style.aspectRatio = `${cols}/${rows}`;
+    puzzleGrid.style.backgroundColor = th.grid;
+    puzzleGrid.style.boxShadow = `inset 0 0 0 1.5px ${th.border},0 8px 20px rgba(0,0,0,0.6)`;
+    puzzleGrid.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+        const v = board[i];
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.dataset.index = i;
+        if (v === -1) {
+            tile.classList.add('empty-tile');
+            tile.style.background = th.empty;
+            tile.textContent = '';
+        } else {
+            tile.textContent = v;
+            tile.style.background = th.tile;
+            tile.style.color = th.text;
+            tile.style.boxShadow = `0 2px 0 ${th.shadow}`;
+            tile.style.fontSize = `${fs}px`;
+        }
+        puzzleGrid.appendChild(tile);
+    }
+}
+
+function showRewardToast(levelName, reward) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = `🎉 ${levelName} SOLVED! +${reward} PMT 🎉`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+}
+
+function completeLevelAndShowAd() {
+    if (levelCompletedFlag) return;
+    levelCompletedFlag = true;
+    
+    const reward = LEVEL_REWARDS[currentLevel];
+    pmtBalance += reward;
+    gamePmtSpan.innerText = pmtBalance.toFixed(3);
+    
+    if (currentUser) {
+        currentUser.balance = pmtBalance;
+        saveUser();
+        updateMenuUI();
+    }
+    
+    statusSpan.textContent = `🎉 ${LEVEL_CONFIG[currentLevel].name} COMPLETE! +${reward} PMT 🎉`;
+    statusSpan.classList.add('win');
+    showRewardToast(LEVEL_CONFIG[currentLevel].name, reward);
+    
+    if (typeof confetti === 'function') confetti({ particleCount: 150, spread: 70 });
+    
+    // Show Video Ad before advancing to next level
+    showVideoAd(() => {
+        if (currentLevel + 1 < LEVEL_CONFIG.length) {
+            loadLevel(currentLevel + 1);
+        } else {
+            statusSpan.textContent = "🏆 ALL LEVELS BEATEN! 🏆";
+            setTimeout(() => showScreen('menu'), 2000);
+        }
+        levelCompletedFlag = false;
+    });
+}
+
+function tryMove(idx) {
+    if (won || levelCompletedFlag) return;
+    const emptyIdx = board.indexOf(-1);
+    const dr = Math.abs(Math.floor(idx / cols) - Math.floor(emptyIdx / cols));
+    const dc = Math.abs((idx % cols) - (emptyIdx % cols));
+    if (dr + dc === 1) {
+        [board[idx], board[emptyIdx]] = [board[emptyIdx], board[idx]];
+        moves++;
+        movesSpan.innerText = moves;
+        renderPuzzle();
+        if (isSolved()) {
+            won = true;
+            completeLevelAndShowAd();
+        }
+    }
+}
+
+function shufflePuzzle(steps = 120) {
+    board = getSolvedBoard();
+    moves = 0;
+    won = false;
+    levelCompletedFlag = false;
+    movesSpan.innerText = moves;
+    statusSpan.textContent = `✨ ${LEVEL_CONFIG[currentLevel].name} — slide to solve ✨`;
+    statusSpan.classList.remove('win');
+    
+    let last = -1;
+    for (let s = 0; s < steps; s++) {
+        const emptyPos = board.indexOf(-1);
+        const emptyRow = Math.floor(emptyPos / cols);
+        const emptyCol = emptyPos % cols;
+        let nb = [];
+        if (emptyRow > 0) nb.push(emptyPos - cols);
+        if (emptyRow < rows - 1) nb.push(emptyPos + cols);
+        if (emptyCol > 0) nb.push(emptyPos - 1);
+        if (emptyCol < cols - 1) nb.push(emptyPos + 1);
+        let pool = nb.filter(n => n !== last);
+        if (!pool.length) pool = nb;
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        [board[emptyPos], board[pick]] = [board[pick], board[emptyPos]];
+        last = emptyPos;
+    }
+    moves = 0;
+    won = false;
+    levelCompletedFlag = false;
+    movesSpan.innerText = moves;
+    renderPuzzle();
+}
+
+function loadLevel(levelIdx) {
+    currentLevel = levelIdx;
+    rows = LEVEL_CONFIG[levelIdx].rows;
+    cols = LEVEL_CONFIG[levelIdx].cols;
+    board = getSolvedBoard();
+    shufflePuzzle(Math.max(100, rows * cols * 3));
+    
+    // Update level buttons
+    const btns = document.querySelectorAll('#levelSelector .level-btn');
+    btns.forEach((btn, i) => {
+        if (i === levelIdx) btn.classList.add('active');
+        else btn.classList.remove('active');
+        // Unlock previous levels visually
+        if (i <= currentLevel) {
+            btn.classList.add('unlocked');
+            btn.classList.remove('locked');
+        } else {
+            btn.classList.add('locked');
+            btn.classList.remove('unlocked');
+        }
+    });
+    
+    renderGoal();
+    gamePmtSpan.innerText = pmtBalance.toFixed(3);
+    won = false;
+    levelCompletedFlag = false;
+}
+
+// Touch/click events
+function initTouchEvents() {
+    let ts = null, tx = 0, ty = 0, tt = 0;
+    puzzleGrid.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const tile = e.target.closest('.tile');
+        if (!tile) return;
+        ts = parseInt(tile.dataset.index);
+        tx = e.touches[0].clientX;
+        ty = e.touches[0].clientY;
+        tt = Date.now();
+    }, { passive: false });
+    puzzleGrid.addEventListener('touchmove', e => {
+        if (ts === null) return;
+        e.preventDefault();
+        const dx = e.touches[0].clientX - tx;
+        const dy = e.touches[0].clientY - ty;
+        if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return;
+        const ei = board.indexOf(-1);
+        const sr = Math.floor(ts / cols), sc = ts % cols, er = Math.floor(ei / cols), ec = ei % cols;
+        if (Math.abs(sr - er) + Math.abs(sc - ec) !== 1) { ts = null; return; }
+        let ok = false;
+        if (Math.abs(dx) > Math.abs(dy)) {
+            if (dx > 12 && sc - ec === -1) ok = true;
+            if (dx < -12 && sc - ec === 1) ok = true;
+        } else {
+            if (dy > 12 && sr - er === -1) ok = true;
+            if (dy < -12 && sr - er === 1) ok = true;
+        }
+        if (ok) { tryMove(ts); ts = null; } else ts = null;
+    }, { passive: false });
+    puzzleGrid.addEventListener('touchend', () => {
+        if (ts !== null && Date.now() - tt < 200) tryMove(ts);
+        ts = null;
+    });
+    puzzleGrid.addEventListener('mousedown', e => {
+        const tile = e.target.closest('.tile');
+        if (tile) tryMove(parseInt(tile.dataset.index));
+    });
+}
+
+// Auth functions (using shared neonRushUsers)
+function register() {
+    const username = document.getElementById('regUsername').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    if (!username || !email || !password) { alert('Fill all fields!'); return; }
+    if (username.length < 3) { alert('Username min 3 chars'); return; }
+    if (password.length < 6) { alert('Password min 6 chars'); return; }
+    if (users[username]) { alert('Username taken!'); return; }
+    users[username] = { 
+        username, email, password, 
+        wallet: null, 
+        balance: 5, 
+        highScore: 0, 
+        totalEarned: 0,
+        highLevel: 1  // extra field for slide puzzle
+    };
+    localStorage.setItem('neonRushUsers', JSON.stringify(users));
+    currentUser = users[username];
+    pmtBalance = currentUser.balance;
+    updateMenuUI();
+    showScreen('menu');
+}
+
+function login() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const user = users[username];
+    if (!user || user.password !== password) { alert('Invalid credentials!'); return; }
+    currentUser = user;
+    pmtBalance = currentUser.balance;
+    updateMenuUI();
+    showScreen('menu');
+}
+
+function logout() {
+    currentUser = null;
+    pmtBalance = 0;
+    showScreen('splash');
+}
+
+function setWallet() {
+    if (!currentUser) return;
+    const wallet = prompt('Enter BNB Chain wallet address (0x...):');
+    if (!wallet) return;
+    if (!wallet.match(/^0x[a-fA-F0-9]{40}$/)) { alert('Invalid address!'); return; }
+    currentUser.wallet = wallet;
+    saveUser();
+    alert('Wallet saved! Min withdrawal: 1000 PMT');
+}
+
+function withdraw() {
+    if (!currentUser) { alert('Login first!'); return; }
+    if (!currentUser.wallet) { alert('Set wallet first!'); return; }
+    if (currentUser.balance < 1000) {
+        alert(`Minimum 1000 PMT! You have: ${currentUser.balance.toFixed(3)} PMT`);
+        return;
+    }
+    alert(`✅ Withdrawal of ${currentUser.balance.toFixed(3)} PMT to ${currentUser.wallet.slice(0,8)}... simulated!`);
+    currentUser.balance = 0;
+    pmtBalance = 0;
+    saveUser();
+    updateMenuUI();
+    if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 100 });
+}
+
+// Initialize game
+function startGame() {
+    if (!currentUser) {
+        showScreen('auth');
+        return;
+    }
+    currentLevel = 0;
+    rows = LEVEL_CONFIG[0].rows;
+    cols = LEVEL_CONFIG[0].cols;
+    board = getSolvedBoard();
+    moves = 0;
+    won = false;
+    levelCompletedFlag = false;
+    pmtBalance = currentUser.balance;
+    currentUser.balance = pmtBalance;
+    
+    gamePmtSpan.innerText = pmtBalance.toFixed(3);
+    movesSpan.innerText = moves;
+    statusSpan.classList.remove('win');
+    
+    renderGoal();
+    shufflePuzzle(120);
+    showScreen('game');
+}
+
+// Event listeners
+document.getElementById('startBtn').onclick = () => showScreen('auth');
+document.getElementById('backToStartBtn').onclick = () => showScreen('splash');
+document.getElementById('registerTab').onclick = () => {
+    document.getElementById('registerTab').classList.add('active');
+    document.getElementById('loginTab').classList.remove('active');
+    document.getElementById('registerForm').style.display = 'block';
+    document.getElementById('loginForm').style.display = 'none';
+};
+document.getElementById('loginTab').onclick = () => {
+    document.getElementById('loginTab').classList.add('active');
+    document.getElementById('registerTab').classList.remove('active');
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+};
+document.getElementById('registerBtn').onclick = register;
+document.getElementById('loginBtn').onclick = login;
+document.getElementById('playMenuBtn').onclick = startGame;
+document.getElementById('walletBtn').onclick = setWallet;
+document.getElementById('withdrawBtn').onclick = withdraw;
+document.getElementById('logoutMenuBtn').onclick = logout;
+document.getElementById('exitGameBtn').onclick = () => showScreen('menu');
+
+// Level buttons in game
+document.querySelectorAll('#levelSelector .level-btn').forEach((btn, i) => {
+    btn.onclick = () => { if (i <= currentLevel && !levelCompletedFlag) loadLevel(i); };
+});
+
+// Color theme
+document.querySelectorAll('.color-dot').forEach(dot => {
+    dot.onclick = () => {
+        document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+        dot.classList.add('active');
+        color = dot.dataset.color;
+        renderGoal();
+        renderPuzzle();
+    };
+});
+
+initTouchEvents();
+showScreen('splash');
+</script>
+</body>
+</html>

@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#d8e8d8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FruitRush">
+    <meta name="description" content="Match fruits, earn PMT crypto rewards on BNB Chain!">
+    <link rel="manifest" href="manifest.json">
+    <title>🍍 FRUIT RUSH | Match 3 | 20 Wrong Moves | Earn 0.50 PMT</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        body {
+            background: #d8e8d8;
+            color: #2d4a2d;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        #gameContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #d8e8d8;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            cursor: grab;
+        }
+        
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #d8e8d8;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .hidden { display: none !important; }
+
+        #hud {
+            position: fixed;
+            top: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            z-index: 50;
+            pointer-events: none;
+        }
+        .hud-left {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            pointer-events: none;
+        }
+        .hud-right {
+            display: flex;
+            gap: 12px;
+            pointer-events: auto;
+        }
+        .hud-stat {
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #ffaa00;
+            border-radius: 12px;
+            padding: 6px 12px;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            color: #ffaa00;
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+        }
+        .wrong-stat {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+        .icon-btn {
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #ffaa00;
+            border-radius: 50px;
+            padding: 6px 14px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            font-weight: bold;
+            color: #ffaa00;
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.2s;
+        }
+        .icon-btn:active {
+            transform: scale(0.95);
+            background: rgba(0,0,0,0.9);
+        }
+        .knife-btn {
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #ff6600;
+            color: #ff6600;
+        }
+        .knife-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .game-logo {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: clamp(2rem, 8vw, 4rem);
+            background: linear-gradient(90deg, #ff6600, #ffaa00, #ff6600);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+            letter-spacing: 2px;
+            filter: drop-shadow(0 0 20px rgba(255,102,0,0.3));
+        }
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+
+        .tagline {
+            color: #ff8800;
+            font-size: clamp(0.9rem, 3vw, 1.2rem);
+            letter-spacing: 3px;
+            margin: 10px 0 30px;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ffaa00, #ff6600);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            margin: 8px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            min-width: 220px;
+            transition: all 0.2s;
+            position: relative;
+            z-index: 101;
+            box-shadow: 0 4px 15px rgba(255,102,0,0.3);
+        }
+        .btn:active { transform: scale(0.97); }
+
+        .btn-secondary {
+            background: rgba(0,0,0,0.1);
+            color: #ff6600;
+            border: 2px solid #ffaa00;
+            box-shadow: none;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #ffdd00, #ffaa00);
+            color: #2d4a2d;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.8);
+            border: 2px solid #ffaa00;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 12px 0;
+            width: 100%;
+            max-width: 420px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-family: 'Orbitron', monospace;
+            color: #ff6600;
+            font-size: 13px;
+            letter-spacing: 3px;
+            margin-bottom: 14px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .stat-label { color: #2d4a2d; font-weight: bold; }
+        .stat-value { color: #ff6600; font-family: 'Orbitron', monospace; font-weight: bold; }
+
+        .progress-bar {
+            background: rgba(0,0,0,0.1);
+            border-radius: 20px;
+            height: 8px;
+            overflow: hidden;
+            margin: 10px 0 4px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffaa00, #ff6600);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .form-wrap {
+            background: rgba(255,255,255,0.9);
+            border: 2px solid #ffaa00;
+            border-radius: 20px;
+            padding: 28px;
+            max-width: 400px;
+            width: 100%;
+        }
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #ff6600;
+            font-size: 12px;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #ffaa00;
+            border-radius: 12px;
+            background: white;
+            color: #2d4a2d;
+            font-size: 16px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff6600;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255,170,0,0.1);
+            border: 2px solid #ffaa00;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            color: #ff6600;
+            font-weight: bold;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #ffaa00, #ff6600);
+            border-color: #ff6600;
+            color: white;
+        }
+
+        .crash-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            color: #ff6600;
+            text-shadow: 0 0 30px #ffaa00;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+            max-width: 420px;
+            width: 100%;
+        }
+        .result-box {
+            background: rgba(255,255,255,0.8);
+            border: 2px solid #ffaa00;
+            border-radius: 16px;
+            padding: 14px;
+        }
+
+        .ad-slot {
+            background: rgba(0,0,0,0.05);
+            border: 1px dashed #ffaa00;
+            border-radius: 12px;
+            padding: 8px;
+            font-size: 11px;
+            color: #ffaa00;
+            margin: 8px 0;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .withdrawal-card {
+            background: linear-gradient(135deg, rgba(255,107,107,0.15), rgba(238,90,36,0.15));
+            border: 2px solid #ff6600;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 12px 0;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .install-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #ffaa00, #ff6600);
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+        .install-banner p { color: white; font-weight: bold; }
+
+        .drag-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #ffaa00;
+            border-radius: 12px;
+            padding: 8px 15px;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            color: #ffaa00;
+            z-index: 200;
+            pointer-events: none;
+            font-weight: bold;
+        }
+        @media (max-width: 768px) {
+            .drag-hint { font-size: 9px; padding: 6px 12px; }
+            .hud-stat { font-size: 9px; padding: 4px 8px; }
+            .icon-btn { font-size: 10px; padding: 4px 10px; }
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+    
+    <div class="drag-hint">🍍 Drag fruit → Release on adjacent fruit to swap</div>
+
+    <div id="hud" style="display:none;">
+        <div class="hud-left">
+            <div class="hud-stat">🍍 LVL <span id="hLevel">1</span></div>
+            <div class="hud-stat">⭐ SCORE <span id="hScore">0</span></div>
+            <div class="hud-stat">💰 PMT <span id="hPmt">0.000</span></div>
+            <div class="hud-stat wrong-stat">⚠️ WRONG <span id="hWrongMoves">0</span>/20</div>
+        </div>
+        <div class="hud-right">
+            <div class="icon-btn" id="soundToggleBtn">🔊 ON</div>
+            <div class="icon-btn knife-btn" id="knifeBtn">🔪 <span id="knifeCount">3</span></div>
+        </div>
+    </div>
+
+    <!-- SPLASH SCREEN -->
+    <div id="splashScreen" class="screen">
+        <div class="game-logo">🍍 FRUIT<br>RUSH 🍉</div>
+        <p class="tagline">20 WRONG MOVES · 0.50 PMT PER MATCH</p>
+        <div class="ad-slot">📢 AD SPACE</div>
+        <button class="btn" id="startBtn">🍎 PLAY TO EARN 🍊</button>
+        <div class="card">
+            <div class="card-title">🎮 HOW TO PLAY</div>
+            <div style="font-size:14px; color:#2d4a2d; font-weight:bold;">
+                🖱️ Drag fruit → Release on adjacent fruit to swap<br>
+                ✅ PERFECT MOVE (creates match) → FREE (no wrong move count)<br>
+                ❌ WRONG MOVE (no match) → Uses 1 of 20 wrong moves<br>
+                🍎 Each match = 0.50 PMT (unlimited)<br>
+                🔪 KNIFE (3 per game) → Destroys 3 fruits (FREE)<br>
+                🔊 Sound toggle in top right corner<br>
+                💰 Withdraw at 1000 PMT
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH SCREEN -->
+    <div id="authScreen" class="screen hidden">
+        <div class="game-logo" style="font-size:clamp(1.5rem,6vw,2.5rem);">🍍 FRUIT RUSH 🍉</div>
+        <div class="form-wrap">
+            <div class="tabs">
+                <div class="tab active" id="registerTab">REGISTER</div>
+                <div class="tab" id="loginTab">LOGIN</div>
+            </div>
+            <div id="registerForm">
+                <div class="form-group"><label>Username</label><input type="text" id="regUsername" maxlength="20"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="regEmail"></div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div style="position:relative;">
+                        <input type="password" id="regPassword" style="padding-right:48px;">
+                        <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer;">👁️</span>
+                    </div>
+                </div>
+                <button class="btn" id="registerBtn" style="width:100%;">🍓 CREATE ACCOUNT 🍒</button>
+            </div>
+            <div id="loginForm" style="display:none;">
+                <div class="form-group"><label>Username</label><input type="text" id="loginUsername"></div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div style="position:relative;">
+                        <input type="password" id="loginPassword" style="padding-right:48px;">
+                        <span onclick="togglePassword('loginPassword', this)" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer;">👁️</span>
+                    </div>
+                </div>
+                <button class="btn" id="loginBtn" style="width:100%;">🍊 LOGIN 🍋</button>
+            </div>
+        </div>
+        <button class="btn btn-secondary" id="backToStartBtn">← BACK</button>
+    </div>
+
+    <!-- MAIN MENU -->
+    <div id="mainMenu" class="screen hidden">
+        <div style="font-family:'Orbitron'; color:#ff6600; margin-bottom:10px; font-weight:bold;">🍍 WELCOME, <span id="userDisplayName" style="color:#2d4a2d;"></span> 🍉</div>
+        <div class="ad-slot">📢 AD SPACE</div>
+        <div class="card">
+            <div class="card-title">👤 PLAYER PROFILE</div>
+            <div class="stat-row"><span class="stat-label">Username</span><span class="stat-value" id="menuUsername">—</span></div>
+            <div class="stat-row"><span class="stat-label">Email</span><span class="stat-value" id="menuEmail">—</span></div>
+            <div class="stat-row"><span class="stat-label">Wallet</span><span class="stat-value" id="menuWallet">Not set</span></div>
+            <div class="stat-row"><span class="stat-label">Balance</span><span class="stat-value" style="color:#ff6600;" id="menuBalance">0</span></div>
+            <div class="stat-row"><span class="stat-label">High Score</span><span class="stat-value" id="menuHighScore">0</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="progress-label" id="progressText">0 / 1000 PMT (0%)</div>
+        </div>
+        <div class="withdrawal-card">
+            <div class="card-title">🚀 WITHDRAWAL INFO</div>
+            <div style="font-size:13px; font-weight:bold;">Min 1000 PMT • BNB Chain • 0.50 PMT per match!</div>
+        </div>
+        <button class="btn" id="playBtn">🍎 START MATCHING 🍊</button>
+        <button class="btn btn-gold" id="withdrawBtn">💰 WITHDRAW PMT</button>
+        <button class="btn btn-secondary" id="walletBtn">👛 SET WALLET</button>
+        <button class="btn btn-secondary" id="logoutBtn">⏻ LOGOUT</button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="gameOver" class="screen hidden">
+        <div class="crash-title">GAME OVER!</div>
+        <p style="color:#ff4444; margin-bottom:10px;">You used all 20 wrong moves!</p>
+        <div class="ad-slot">📢 AD SPACE</div>
+        <div class="result-grid">
+            <div class="result-box"><div class="result-label">Score</div><div id="finalScore">0</div></div>
+            <div class="result-box"><div class="result-label">Earned</div><div id="earned">0</div></div>
+            <div class="result-box"><div class="result-label">Level</div><div id="finalLevel">1</div></div>
+        </div>
+        <button class="btn" id="restartBtn">🍍 PLAY AGAIN 🍇</button>
+        <button class="btn btn-secondary" id="menuBtn">☰ MAIN MENU</button>
+    </div>
+</div>
+
+<div id="installBanner" class="install-banner" style="display:none;">
+    <p>📱 INSTALL FRUIT RUSH</p>
+    <div><button id="installYes" style="background:white; color:#ff6600; padding:8px 16px; border:none; border-radius:12px; font-weight:bold;">INSTALL</button>
+    <button id="installNo" style="background:transparent; color:white; padding:8px 16px; border:1px solid white; border-radius:12px; margin-left:10px;">NOT NOW</button></div>
+</div>
+
+<script>
+// =====================================================
+// FRUIT RUSH — Match-3 Game
+// 20 WRONG MOVE LIMIT (perfect moves are FREE)
+// Knife (3 per game) — FREE
+// Sound toggle | 0.50 PMT per match
+// =====================================================
+
+const BACKEND_URL = 'https://neonrush2077-production.up.railway.app';
+
+// 10 Beautiful Fruits
+const FRUITS = ['🍎', '🍊', '🍇', '🍉', '🍒', '🍓', '🍑', '🍐', '🍋', '🍈'];
+
+function togglePassword(inputId, icon) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        icon.textContent = '👁️';
+    }
+}
+
+class FruitRush {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        
+        // Detect device
+        this.isMobile = window.innerWidth < 768;
+        this.rows = 8;
+        this.cols = this.isMobile ? 6 : 8;
+        this.cellSize = 0;
+        
+        // Drag state
+        this.dragStartRow = -1;
+        this.dragStartCol = -1;
+        this.isDragging = false;
+        
+        // Error state
+        this.errorRow1 = -1;
+        this.errorCol1 = -1;
+        this.errorRow2 = -1;
+        this.errorCol2 = -1;
+        this.errorTimer = null;
+        
+        // Game state
+        this.grid = [];
+        this.score = 0;
+        this.wrongMovesUsed = 0;     // Only wrong moves count (max 20)
+        this.maxWrongMoves = 20;
+        this.level = 1;
+        this.pmtBalance = 0;
+        this.gameActive = false;
+        this.processingMove = false;
+        
+        // Knife lifelines
+        this.knifeCount = 3;
+        
+        // Sound settings
+        this.soundEnabled = true;
+        
+        // Audio context
+        this.audioCtx = null;
+        
+        // User data
+        this.state = {
+            loggedIn: false,
+            currentUser: null,
+            users: JSON.parse(localStorage.getItem('neonRushUsers')) || {},
+            balance: 0
+        };
+        
+        this.init();
+    }
+    
+    init() {
+        this.resize();
+        this.setupButtons();
+        this.setupDragControls();
+        this.setupPWA();
+        this.initAudio();
+        
+        window.addEventListener('resize', () => {
+            this.isMobile = window.innerWidth < 768;
+            this.cols = this.isMobile ? 6 : 8;
+            this.resize();
+            if (this.gameActive) {
+                this.renderBoard();
+            }
+        });
+        window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 100));
+        
+        console.log(`🍍 Fruit Rush loaded — ${this.cols}×${this.rows} | 20 wrong moves limit | Perfect moves are FREE`);
+    }
+    
+    initAudio() {
+        try {
+            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {
+            console.log('Web Audio not supported');
+            this.soundEnabled = false;
+        }
+    }
+    
+    playErrorSound() {
+        if (!this.soundEnabled || !this.audioCtx) return;
+        try {
+            const oscillator = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            oscillator.connect(gain);
+            gain.connect(this.audioCtx.destination);
+            oscillator.frequency.value = 220;
+            gain.gain.value = 0.12;
+            oscillator.type = 'sawtooth';
+            oscillator.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.25);
+            oscillator.stop(this.audioCtx.currentTime + 0.25);
+        } catch(e) {}
+    }
+    
+    playMatchSound() {
+        if (!this.soundEnabled || !this.audioCtx) return;
+        try {
+            const oscillator = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            oscillator.connect(gain);
+            gain.connect(this.audioCtx.destination);
+            oscillator.frequency.value = 440;
+            gain.gain.value = 0.1;
+            oscillator.type = 'sine';
+            oscillator.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.15);
+            oscillator.stop(this.audioCtx.currentTime + 0.15);
+        } catch(e) {}
+    }
+    
+    playKnifeSound() {
+        if (!this.soundEnabled || !this.audioCtx) return;
+        try {
+            const oscillator = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            oscillator.connect(gain);
+            gain.connect(this.audioCtx.destination);
+            oscillator.frequency.value = 330;
+            gain.gain.value = 0.15;
+            oscillator.type = 'square';
+            oscillator.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.2);
+            oscillator.stop(this.audioCtx.currentTime + 0.2);
+        } catch(e) {}
+    }
+    
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        const maxHeight = this.canvas.height - 100;
+        this.cellSize = Math.min(
+            (this.canvas.width - 30) / this.cols,
+            maxHeight / this.rows
+        );
+        this.renderBoard();
+    }
+    
+    setupButtons() {
+        document.getElementById('startBtn').onclick = () => this.showScreen('authScreen');
+        document.getElementById('backToStartBtn').onclick = () => this.showScreen('splashScreen');
+        document.getElementById('registerTab').onclick = () => this.switchTab('register');
+        document.getElementById('loginTab').onclick = () => this.switchTab('login');
+        document.getElementById('registerBtn').onclick = () => this.register();
+        document.getElementById('loginBtn').onclick = () => this.login();
+        document.getElementById('playBtn').onclick = () => this.startGame();
+        document.getElementById('restartBtn').onclick = () => this.startGame();
+        document.getElementById('menuBtn').onclick = () => { this.gameActive = false; this.showScreen('mainMenu'); };
+        document.getElementById('withdrawBtn').onclick = () => this.withdraw();
+        document.getElementById('walletBtn').onclick = () => this.setWallet();
+        document.getElementById('logoutBtn').onclick = () => this.logout();
+        
+        // Sound toggle
+        document.getElementById('soundToggleBtn').onclick = () => this.toggleSound();
+        
+        // Knife button
+        document.getElementById('knifeBtn').onclick = () => this.useKnife();
+    }
+    
+    toggleSound() {
+        this.soundEnabled = !this.soundEnabled;
+        const btn = document.getElementById('soundToggleBtn');
+        if (this.soundEnabled) {
+            btn.innerHTML = '🔊 ON';
+            btn.style.color = '#ffaa00';
+        } else {
+            btn.innerHTML = '🔇 OFF';
+            btn.style.color = '#888';
+        }
+    }
+    
+    useKnife() {
+        if (!this.gameActive || this.processingMove || this.knifeCount <= 0) return;
+        
+        this.knifeCount--;
+        document.getElementById('knifeCount').innerText = this.knifeCount;
+        
+        if (this.knifeCount <= 0) {
+            document.getElementById('knifeBtn').classList.add('disabled');
+        }
+        
+        this.playKnifeSound();
+        
+        // Destroy 3 random fruits (does NOT count as wrong move)
+        let destroyed = 0;
+        const attempts = [];
+        
+        while (destroyed < 3 && attempts.length < 50) {
+            const randomRow = Math.floor(Math.random() * this.rows);
+            const randomCol = Math.floor(Math.random() * this.cols);
+            const key = `${randomRow},${randomCol}`;
+            
+            if (!attempts.includes(key) && this.grid[randomRow][randomCol] !== null) {
+                attempts.push(key);
+                this.grid[randomRow][randomCol] = null;
+                destroyed++;
+            }
+        }
+        
+        // Apply gravity and refill
+        this.applyGravity();
+        this.refillBoard();
+        
+        // Check for matches after knife
+        const matches = this.getAllMatches();
+        if (matches.length > 0) {
+            this.processMatches(matches, false);
+        } else {
+            this.renderBoard();
+        }
+        
+        if (typeof confetti === 'function') {
+            confetti({ particleCount: 30, spread: 40, origin: { y: 0.6 } });
+        }
+    }
+    
+    setupDragControls() {
+        const getCellFromCoord = (x, y) => {
+            const offsetX = (this.canvas.width - (this.cols * this.cellSize)) / 2;
+            const offsetY = 65;
+            
+            const col = Math.floor((x - offsetX) / this.cellSize);
+            const row = Math.floor((y - offsetY) / this.cellSize);
+            
+            if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+                return { row, col };
+            }
+            return null;
+        };
+        
+        const onStart = (clientX, clientY) => {
+            if (!this.gameActive || this.processingMove) return;
+            
+            const rect = this.canvas.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            const cell = getCellFromCoord(x, y);
+            
+            if (cell) {
+                this.dragStartRow = cell.row;
+                this.dragStartCol = cell.col;
+                this.isDragging = true;
+                this.renderBoard();
+            }
+        };
+        
+        const onMove = (clientX, clientY) => {
+            if (!this.isDragging || !this.gameActive || this.processingMove) return;
+            
+            const rect = this.canvas.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            const cell = getCellFromCoord(x, y);
+            
+            if (cell) {
+                const rowDiff = Math.abs(cell.row - this.dragStartRow);
+                const colDiff = Math.abs(cell.col - this.dragStartCol);
+                
+                if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) {
+                    this.trySwap(this.dragStartRow, this.dragStartCol, cell.row, cell.col);
+                    this.isDragging = false;
+                    this.dragStartRow = -1;
+                    this.dragStartCol = -1;
+                }
+            }
+        };
+        
+        const onEnd = () => {
+            this.isDragging = false;
+            this.dragStartRow = -1;
+            this.dragStartCol = -1;
+            this.renderBoard();
+        };
+        
+        // Mouse events
+        this.canvas.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            onStart(e.clientX, e.clientY);
+        });
+        
+        window.addEventListener('mousemove', (e) => {
+            if (this.isDragging) {
+                e.preventDefault();
+                onMove(e.clientX, e.clientY);
+            }
+        });
+        
+        window.addEventListener('mouseup', () => onEnd());
+        
+        // Touch events
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            onStart(touch.clientX, touch.clientY);
+        }, { passive: false });
+        
+        window.addEventListener('touchmove', (e) => {
+            if (this.isDragging) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                onMove(touch.clientX, touch.clientY);
+            }
+        }, { passive: false });
+        
+        window.addEventListener('touchend', () => onEnd());
+    }
+    
+    showErrorOnFruits(row1, col1, row2, col2) {
+        if (this.errorTimer) clearTimeout(this.errorTimer);
+        
+        this.errorRow1 = row1;
+        this.errorCol1 = col1;
+        this.errorRow2 = row2;
+        this.errorCol2 = col2;
+        this.renderBoard();
+        
+        this.errorTimer = setTimeout(() => {
+            this.errorRow1 = -1;
+            this.errorCol1 = -1;
+            this.errorRow2 = -1;
+            this.errorCol2 = -1;
+            this.renderBoard();
+            this.errorTimer = null;
+        }, 350);
+    }
+    
+    trySwap(r1, c1, r2, c2) {
+        this.processingMove = true;
+        
+        const temp = this.grid[r1][c1];
+        this.grid[r1][c1] = this.grid[r2][c2];
+        this.grid[r2][c2] = temp;
+        
+        const matches = this.getAllMatches();
+        
+        if (matches.length > 0) {
+            // PERFECT MOVE — creates match → FREE (no wrong move count)
+            this.playMatchSound();
+            this.processMatches(matches, true);
+        } else {
+            // WRONG MOVE — no match → counts as 1 wrong move
+            this.wrongMovesUsed++;
+            document.getElementById('hWrongMoves').innerText = this.wrongMovesUsed;
+            
+            this.showErrorOnFruits(r1, c1, r2, c2);
+            this.playErrorSound();
+            
+            this.processingMove = false;
+            this.renderBoard();
+            
+            // Check if wrong move limit reached
+            if (this.wrongMovesUsed >= this.maxWrongMoves) {
+                this.gameOver();
+                return;
+            }
+            
+            // Level up every 3 wrong moves
+            if (this.wrongMovesUsed > 0 && this.wrongMovesUsed % 3 === 0) {
+                this.level++;
+                document.getElementById('hLevel').innerText = this.level;
+                this.renderBoard();
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 50, spread: 60, origin: { y: 0.5 } });
+                }
+            }
+        }
+    }
+    
+    getAllMatches() {
+        const matches = [];
+        
+        for (let r = 0; r < this.rows; r++) {
+            let length = 1;
+            for (let c = 1; c <= this.cols; c++) {
+                if (c < this.cols && this.grid[r][c] === this.grid[r][c-1]) {
+                    length++;
+                } else {
+                    if (length >= 3) {
+                        for (let i = c - length; i < c; i++) {
+                            matches.push({r, c: i});
+                        }
+                    }
+                    length = 1;
+                }
+            }
+        }
+        
+        for (let c = 0; c < this.cols; c++) {
+            let length = 1;
+            for (let r = 1; r <= this.rows; r++) {
+                if (r < this.rows && this.grid[r][c] === this.grid[r-1][c]) {
+                    length++;
+                } else {
+                    if (length >= 3) {
+                        for (let i = r - length; i < r; i++) {
+                            matches.push({r: i, c});
+                        }
+                    }
+                    length = 1;
+                }
+            }
+        }
+        
+        return matches;
+    }
+    
+    processMatches(matches, isPerfectMove) {
+        const matchCount = matches.length;
+        const pmtEarned = 0.50;
+        
+        this.score += matchCount * 10;
+        this.pmtBalance += pmtEarned;
+        
+        document.getElementById('hScore').innerText = this.score;
+        document.getElementById('hPmt').innerText = this.pmtBalance.toFixed(3);
+        
+        for (const match of matches) {
+            this.grid[match.r][match.c] = null;
+        }
+        
+        this.applyGravity();
+        this.refillBoard();
+        
+        const newMatches = this.getAllMatches();
+        if (newMatches.length > 0) {
+            setTimeout(() => {
+                this.processMatches(newMatches, false);
+            }, 180);
+        } else {
+            setTimeout(() => {
+                this.processingMove = false;
+                this.renderBoard();
+                
+                // Level up every 3 wrong moves (only when perfect move happens)
+                if (isPerfectMove && this.wrongMovesUsed > 0 && this.wrongMovesUsed % 3 === 0) {
+                    this.level++;
+                    document.getElementById('hLevel').innerText = this.level;
+                    this.renderBoard();
+                    if (typeof confetti === 'function') {
+                        confetti({ particleCount: 50, spread: 60, origin: { y: 0.5 } });
+                    }
+                }
+            }, 180);
+        }
+        
+        this.renderBoard();
+        
+        if (typeof confetti === 'function') {
+            confetti({ particleCount: 20, spread: 40, origin: { y: 0.7 } });
+        }
+    }
+    
+    applyGravity() {
+        for (let c = 0; c < this.cols; c++) {
+            const columnValues = [];
+            for (let r = this.rows - 1; r >= 0; r--) {
+                if (this.grid[r][c] !== null) {
+                    columnValues.push(this.grid[r][c]);
+                }
+            }
+            while (columnValues.length < this.rows) {
+                columnValues.push(Math.floor(Math.random() * FRUITS.length));
+            }
+            columnValues.reverse();
+            for (let r = 0; r < this.rows; r++) {
+                this.grid[r][c] = columnValues[r];
+            }
+        }
+    }
+    
+    refillBoard() {
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                if (this.grid[r][c] === null) {
+                    this.grid[r][c] = Math.floor(Math.random() * FRUITS.length);
+                }
+            }
+        }
+    }
+    
+    initBoard() {
+        this.grid = [];
+        for (let r = 0; r < this.rows; r++) {
+            this.grid[r] = [];
+            for (let c = 0; c < this.cols; c++) {
+                this.grid[r][c] = Math.floor(Math.random() * FRUITS.length);
+            }
+        }
+        
+        let matches = this.getAllMatches();
+        let safety = 0;
+        while (matches.length > 0 && safety < 50) {
+            for (const match of matches) {
+                this.grid[match.r][match.c] = Math.floor(Math.random() * FRUITS.length);
+            }
+            matches = this.getAllMatches();
+            safety++;
+        }
+    }
+    
+    renderBoard() {
+        if (!this.ctx) return;
+        
+        const W = this.canvas.width;
+        const H = this.canvas.height;
+        
+        const grad = this.ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, '#d8e8d8');
+        grad.addColorStop(1, '#c8d8c8');
+        this.ctx.fillStyle = grad;
+        this.ctx.fillRect(0, 0, W, H);
+        
+        if (!this.gameActive || !this.grid || !this.grid.length) return;
+        
+        const offsetX = (W - (this.cols * this.cellSize)) / 2;
+        const offsetY = 65;
+        
+        // Decorative leaves
+        this.ctx.font = `${this.cellSize * 0.3}px "Segoe UI Emoji"`;
+        this.ctx.globalAlpha = 0.08;
+        for (let i = 0; i < 12; i++) {
+            this.ctx.fillText('🍃', offsetX - 20, offsetY + i * this.cellSize * 1.5);
+            this.ctx.fillText('🌿', offsetX + this.cols * this.cellSize + 5, offsetY + i * this.cellSize * 1.5);
+        }
+        this.ctx.globalAlpha = 1;
+        
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                const x = offsetX + c * this.cellSize;
+                const y = offsetY + r * this.cellSize;
+                const size = this.cellSize - 4;
+                const radius = Math.min(12, size * 0.15);
+                
+                this.ctx.shadowBlur = 4;
+                this.ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                
+                const cellGrad = this.ctx.createLinearGradient(x, y, x + size, y + size);
+                cellGrad.addColorStop(0, '#ffffff');
+                cellGrad.addColorStop(1, '#f0f4e8');
+                this.ctx.fillStyle = cellGrad;
+                this.ctx.beginPath();
+                this.ctx.roundRect(x, y, size, size, radius);
+                this.ctx.fill();
+                
+                this.ctx.shadowBlur = 0;
+                this.ctx.strokeStyle = '#c8d8c0';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.roundRect(x, y, size, size, radius);
+                this.ctx.stroke();
+                
+                const isErrorFruit = (this.errorRow1 === r && this.errorCol1 === c) ||
+                                    (this.errorRow2 === r && this.errorCol2 === c);
+                if (isErrorFruit) {
+                    this.ctx.strokeStyle = '#ff4444';
+                    this.ctx.lineWidth = 4;
+                    this.ctx.beginPath();
+                    this.ctx.roundRect(x, y, size, size, radius);
+                    this.ctx.stroke();
+                }
+                
+                if (this.isDragging && this.dragStartRow === r && this.dragStartCol === c) {
+                    this.ctx.strokeStyle = '#ffaa00';
+                    this.ctx.lineWidth = 4;
+                    this.ctx.beginPath();
+                    this.ctx.roundRect(x, y, size, size, radius);
+                    this.ctx.stroke();
+                    this.ctx.shadowBlur = 12;
+                    this.ctx.shadowColor = '#ffaa00';
+                }
+                
+                const fruitIndex = this.grid[r][c];
+                if (fruitIndex !== null && fruitIndex !== undefined) {
+                    this.ctx.font = `${Math.min(this.cellSize * 0.55, 44)}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.shadowBlur = 6;
+                    this.ctx.shadowColor = 'rgba(0,0,0,0.15)';
+                    this.ctx.fillText(FRUITS[fruitIndex], x + size/2, y + size/2);
+                    this.ctx.shadowBlur = 0;
+                }
+            }
+        }
+        
+        this.ctx.font = 'bold 18px "Orbitron", monospace';
+        this.ctx.fillStyle = '#4a7a4a';
+        this.ctx.shadowBlur = 0;
+        this.ctx.fillText(`🍍 LEVEL ${this.level}  |  ${this.cols}×${this.rows} 🍉`, offsetX, offsetY - 12);
+        
+        this.ctx.font = `${this.cellSize * 0.25}px "Segoe UI Emoji"`;
+        this.ctx.fillStyle = '#8ab88a';
+        this.ctx.fillText('🍎', offsetX - 8, offsetY + this.rows * this.cellSize - 10);
+        this.ctx.fillText('🍊', offsetX + this.cols * this.cellSize + 5, offsetY + 10);
+        this.ctx.fillText('🍇', offsetX - 5, offsetY + 30);
+        this.ctx.fillText('🍒', offsetX + this.cols * this.cellSize + 8, offsetY + this.rows * this.cellSize - 20);
+    }
+    
+    gameOver() {
+        this.gameActive = false;
+        document.getElementById('hud').style.display = 'none';
+        
+        const earned = this.pmtBalance - this.state.balance;
+        document.getElementById('finalScore').innerText = this.score;
+        document.getElementById('earned').innerText = earned.toFixed(3);
+        document.getElementById('finalLevel').innerText = this.level;
+        
+        if (this.state.currentUser) {
+            this.state.balance = this.pmtBalance;
+            this.state.currentUser.balance = this.pmtBalance;
+            if (this.score > this.state.currentUser.highScore) {
+                this.state.currentUser.highScore = this.score;
+            }
+            this.saveUser();
+        }
+        
+        this.showScreen('gameOver');
+    }
+    
+    setupPWA() {
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBanner').style.display = 'flex';
+        });
+        document.getElementById('installYes').onclick = async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                await deferredPrompt.userChoice;
+                deferredPrompt = null;
+            }
+            document.getElementById('installBanner').style.display = 'none';
+        };
+        document.getElementById('installNo').onclick = () => {
+            document.getElementById('installBanner').style.display = 'none';
+        };
+    }
+    
+    switchTab(tab) {
+        const regTab = document.getElementById('registerTab');
+        const loginTab = document.getElementById('loginTab');
+        const regForm = document.getElementById('registerForm');
+        const loginForm = document.getElementById('loginForm');
+        
+        if (tab === 'register') {
+            regTab.classList.add('active');
+            loginTab.classList.remove('active');
+            regForm.style.display = 'block';
+            loginForm.style.display = 'none';
+        } else {
+            regTab.classList.remove('active');
+            loginTab.classList.add('active');
+            regForm.style.display = 'none';
+            loginForm.style.display = 'block';
+        }
+    }
+    
+    register() {
+        const username = document.getElementById('regUsername').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        
+        if (!username || !email || !password) { alert('Please fill all fields!'); return; }
+        if (username.length < 3) { alert('Username min 3 chars'); return; }
+        if (password.length < 6) { alert('Password min 6 chars'); return; }
+        if (this.state.users[username]) { alert('Username taken!'); return; }
+        
+        this.state.users[username] = {
+            username, email, password, wallet: null,
+            balance: 5, highScore: 0, totalEarned: 0
+        };
+        localStorage.setItem('neonRushUsers', JSON.stringify(this.state.users));
+        this.loginUser(username);
+    }
+    
+    login() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const user = this.state.users[username];
+        if (!user || user.password !== password) { alert('Invalid credentials!'); return; }
+        this.loginUser(username);
+    }
+    
+    loginUser(username) {
+        this.state.currentUser = this.state.users[username];
+        this.state.balance = this.state.currentUser.balance;
+        this.pmtBalance = this.state.balance;
+        this.updateMenu();
+        this.showScreen('mainMenu');
+    }
+    
+    logout() {
+        this.state.currentUser = null;
+        this.state.balance = 0;
+        this.pmtBalance = 0;
+        this.showScreen('splashScreen');
+        document.getElementById('loginUsername').value = '';
+        document.getElementById('loginPassword').value = '';
+    }
+    
+    setWallet() {
+        if (!this.state.currentUser) { alert('Please login first!'); return; }
+        const wallet = prompt('Enter your BNB Chain wallet address (0x...):');
+        if (!wallet) return;
+        if (!wallet.match(/^0x[a-fA-F0-9]{40}$/)) { alert('Invalid BNB Chain address!'); return; }
+        this.state.currentUser.wallet = wallet;
+        this.saveUser();
+        this.updateMenu();
+        alert('Wallet saved! Minimum withdrawal: 1000 PMT');
+    }
+    
+    updateMenu() {
+        if (!this.state.currentUser) return;
+        const u = this.state.currentUser;
+        document.getElementById('userDisplayName').innerText = u.username.toUpperCase();
+        document.getElementById('menuUsername').innerText = u.username;
+        document.getElementById('menuEmail').innerText = u.email;
+        document.getElementById('menuWallet').innerText = u.wallet ? u.wallet.slice(0,8)+'...' : 'Not set';
+        document.getElementById('menuBalance').innerText = u.balance.toFixed(3);
+        document.getElementById('menuHighScore').innerText = u.highScore;
+        const pct = Math.min((u.balance / 1000) * 100, 100);
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').innerText = u.balance.toFixed(3) + ' / 1000 PMT (' + pct.toFixed(0) + '%)';
+    }
+    
+    saveUser() {
+        if (this.state.currentUser) {
+            this.state.currentUser.balance = this.state.balance;
+            if (this.score > this.state.currentUser.highScore) {
+                this.state.currentUser.highScore = this.score;
+            }
+            this.state.users[this.state.currentUser.username] = this.state.currentUser;
+            localStorage.setItem('neonRushUsers', JSON.stringify(this.state.users));
+        }
+    }
+    
+    async startGame() {
+        this.gameActive = true;
+        this.score = 0;
+        this.wrongMovesUsed = 0;
+        this.level = 1;
+        this.pmtBalance = this.state.balance;
+        this.knifeCount = 3;
+        this.dragStartRow = -1;
+        this.dragStartCol = -1;
+        this.isDragging = false;
+        this.processingMove = false;
+        this.errorRow1 = -1;
+        this.errorCol1 = -1;
+        this.errorRow2 = -1;
+        this.errorCol2 = -1;
+        
+        // Reset knife button
+        document.getElementById('knifeCount').innerText = this.knifeCount;
+        document.getElementById('knifeBtn').classList.remove('disabled');
+        
+        this.initBoard();
+        this.resize();
+        
+        document.getElementById('hLevel').innerText = this.level;
+        document.getElementById('hScore').innerText = this.score;
+        document.getElementById('hPmt').innerText = this.pmtBalance.toFixed(3);
+        document.getElementById('hWrongMoves').innerText = this.wrongMovesUsed;
+        document.getElementById('hud').style.display = 'flex';
+        
+        this.showScreen(null);
+        this.renderBoard();
+    }
+    
+    async withdraw() {
+        if (!this.state.currentUser) { alert('Please login first!'); return; }
+        if (!this.state.currentUser.wallet) { alert('Please set a wallet address first!'); return; }
+        if (this.state.balance < 1000) {
+            alert(`Minimum withdrawal is 1000 PMT!\nYou have: ${this.state.balance.toFixed(3)} PMT`);
+            return;
+        }
+        
+        try {
+            const btn = document.getElementById('withdrawBtn');
+            btn.textContent = 'PROCESSING...';
+            btn.disabled = true;
+            
+            const response = await fetch(`${BACKEND_URL}/reward-player`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    playerAddress: this.state.currentUser.wallet,
+                    score: Math.floor(this.state.balance * 1000)
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.state.balance = 0;
+                this.pmtBalance = 0;
+                this.state.currentUser.balance = 0;
+                this.saveUser();
+                this.updateMenu();
+                if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 100 });
+                alert(`✅ Withdrawal successful!\nAmount: ${data.tokensTransferred || this.state.balance} PMT`);
+            } else {
+                alert('Withdrawal failed: ' + data.error);
+            }
+        } catch (err) {
+            alert('Backend offline. Please try again later.');
+        } finally {
+            const btn = document.getElementById('withdrawBtn');
+            btn.textContent = '💰 WITHDRAW PMT';
+            btn.disabled = false;
+        }
+    }
+    
+    showScreen(name) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        if (name) document.getElementById(name).classList.remove('hidden');
+        if (name === 'mainMenu') this.updateMenu();
+        if (!name && this.gameActive) {
+            document.getElementById('hud').style.display = 'flex';
+        } else if (!name) {
+            document.getElementById('hud').style.display = 'none';
+        }
+    }
+}
+
+// Helper for rounded rectangles
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        this.moveTo(x+r, y);
+        this.lineTo(x+w-r, y);
+        this.quadraticCurveTo(x+w, y, x+w, y+r);
+        this.lineTo(x+w, y+h-r);
+        this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+        this.lineTo(x+r, y+h);
+        this.quadraticCurveTo(x, y+h, x, y+h-r);
+        this.lineTo(x, y+r);
+        this.quadraticCurveTo(x, y, x+r, y);
+        return this;
+    };
+}
+
+window.addEventListener('load', () => {
+    console.log('🍍 Fruit Rush — 20 wrong moves limit | Perfect moves are FREE | 3 knives');
+    window.game = new FruitRush();
+});
+</script>
+</body>
+</html>
