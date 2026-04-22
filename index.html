@@ -5,28 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="theme-color" content="#0a0a1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="PMT Arcade">
-    <meta name="description" content="Play 3 games — earn real PMT crypto rewards on BNB Chain!">
-    <link rel="manifest" href="manifest.json">
-    <title>PMT ARCADE | 3 Games · Earn PMT Crypto</title>
+    <title>PMT ARCADE | Referrals · Cross-Device Sync</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, serverTimestamp, increment, runTransaction } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOgqAHHRLTr_2f2GHOX1jempvveDj-Jnk",
+            authDomain: "pmt-arcade.firebaseapp.com",
+            projectId: "pmt-arcade",
+            storageBucket: "pmt-arcade.firebasestorage.app",
+            messagingSenderId: "291853894238",
+            appId: "1:291853894238:web:b03d99ac1d4333c859eacf"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        window.auth = auth;
+        window.db = db;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.sendPasswordResetEmail = sendPasswordResetEmail;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.updatePassword = updatePassword;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.updateDoc = updateDoc;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.query = query;
+        window.where = where;
+        window.getDocs = getDocs;
+        window.serverTimestamp = serverTimestamp;
+        window.increment = increment;
+        window.runTransaction = runTransaction;
+        
+        console.log("Firebase initialized!");
+    </script>
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             background: linear-gradient(135deg, #0a0a1a 0%, #0f0f2a 50%, #0a0a1a 100%);
             font-family: 'Rajdhani', sans-serif;
             min-height: 100vh;
             color: #e0f0ff;
         }
-
         .site-header {
             background: rgba(5, 5, 20, 0.95);
             backdrop-filter: blur(10px);
@@ -41,7 +73,6 @@
             flex-wrap: wrap;
             gap: 12px;
         }
-
         .logo {
             font-family: 'Orbitron', monospace;
             font-size: 1.5rem;
@@ -51,9 +82,7 @@
             -webkit-text-fill-color: transparent;
             letter-spacing: 2px;
         }
-
         .logo small { font-size: 0.7rem; letter-spacing: 1px; background: none; -webkit-text-fill-color: #00ffff; }
-
         .user-info {
             display: flex;
             align-items: center;
@@ -63,7 +92,6 @@
             border-radius: 40px;
             border: 1px solid rgba(0, 255, 255, 0.2);
         }
-
         .balance-display { font-family: 'Orbitron', monospace; color: #ffdd00; font-weight: bold; }
         .username-display { color: #00ffff; font-weight: bold; }
         .logout-btn {
@@ -76,7 +104,6 @@
             font-size: 0.7rem;
         }
         .logout-btn:hover { background: rgba(255, 0, 0, 0.3); border-color: #ff4444; }
-
         .main-container {
             display: flex;
             flex-direction: column;
@@ -85,7 +112,6 @@
             padding: 16px;
             gap: 20px;
         }
-
         .games-hub { display: flex; gap: 20px; flex-wrap: wrap; }
         .game-sidebar {
             flex: 1;
@@ -113,10 +139,7 @@
         .game-info h3 { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #00ffff; }
         .game-info p { font-size: 0.7rem; color: rgba(255, 255, 255, 0.5); }
         .game-earned { margin-left: auto; font-size: 0.7rem; color: #ffdd00; font-weight: bold; }
-
-        /* PLAY button — hidden on desktop, shown on mobile */
         .mobile-play-btn { display: none; }
-
         .game-area {
             flex: 3;
             min-width: 300px;
@@ -127,7 +150,6 @@
             aspect-ratio: 16 / 10;
         }
         .game-frame { width: 100%; height: 100%; border: none; background: #050510; }
-
         .profile-section {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 20px;
@@ -163,6 +185,35 @@
         }
         .info-label { font-size: 0.65rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
         .info-value { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #00ffff; word-break: break-all; }
+        .referral-box {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.05));
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 16px;
+            text-align: center;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        .referral-code {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffaa00;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 12px;
+            letter-spacing: 2px;
+            margin: 10px 0;
+        }
+        .copy-ref-btn {
+            background: linear-gradient(135deg, #00ffff, #0088ff);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+        }
         .token-address {
             background: rgba(0, 0, 0, 0.5);
             border-radius: 12px;
@@ -173,7 +224,6 @@
             text-align: center;
             border: 1px solid rgba(255, 200, 60, 0.3);
         }
-        .token-address span { color: #ffaa00; font-family: monospace; }
         .earnings-breakdown { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
         .earning-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
         .earning-game { display: flex; align-items: center; gap: 8px; }
@@ -200,25 +250,6 @@
         }
         .transaction-list { max-height: 200px; overflow-y: auto; margin-top: 12px; }
         .transaction-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.7rem; }
-
-        .password-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
-        .password-wrapper input { width: 100%; padding-right: 45px; }
-        .toggle-password {
-            position: absolute;
-            right: 12px;
-            background: none;
-            border: none;
-            color: #00ffff;
-            cursor: pointer;
-            font-size: 1rem;
-            padding: 0;
-        }
-
         .auth-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -263,16 +294,19 @@
             margin-top: 8px;
         }
         .auth-link { text-align: center; margin-top: 16px; font-size: 0.7rem; color: #00ffff; cursor: pointer; }
-        .otp-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
-        .otp-input { flex: 1; }
-        .small-btn {
-            background: rgba(0, 255, 255, 0.2);
-            border: 1px solid #00ffff;
-            padding: 12px 16px;
+        .referral-input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .small-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
             border-radius: 12px;
-            cursor: pointer;
-            white-space: nowrap;
-            color: #00ffff;
+            padding: 10px;
+            color: white;
+            font-size: 0.8rem;
         }
         .hidden { display: none; }
         .toast {
@@ -289,24 +323,15 @@
             animation: fadeInOut 3s ease;
         }
         @keyframes fadeInOut {
-            0%   { opacity: 0; bottom: 0; }
-            15%  { opacity: 1; bottom: 30px; }
-            85%  { opacity: 1; bottom: 30px; }
+            0% { opacity: 0; bottom: 0; }
+            15% { opacity: 1; bottom: 30px; }
+            85% { opacity: 1; bottom: 30px; }
             100% { opacity: 0; bottom: 0; }
         }
-
-        /* ── DESKTOP — exactly as original ── */
-        @media (min-width: 769px) {
-            .game-area { aspect-ratio: 16 / 10; }
-        }
-
-        /* ── MOBILE ONLY ── */
         @media (max-width: 768px) {
             .game-area { aspect-ratio: 4 / 3; }
             .site-header { flex-direction: column; text-align: center; }
             .profile-grid { grid-template-columns: 1fr; }
-
-            /* Show PLAY button on mobile */
             .mobile-play-btn {
                 display: inline-flex;
                 align-items: center;
@@ -324,8 +349,6 @@
                 cursor: pointer;
                 white-space: nowrap;
             }
-
-            /* Hide the iframe game box on mobile */
             .game-area { display: none; }
         }
     </style>
@@ -333,7 +356,7 @@
 <body>
 
 <div class="site-header" id="siteHeader" style="display: none;">
-    <div class="logo">PMT ARCADE <small>| 3 GAMES · 1 BALANCE</small></div>
+    <div class="logo">PMT ARCADE <small>| REFERRALS · SYNC</small></div>
     <div class="user-info">
         <span class="username-display" id="headerUsername">—</span>
         <span class="balance-display" id="headerBalance">0 PMT</span>
@@ -347,28 +370,19 @@
             <div class="game-cards" id="gameCards">
                 <div class="game-card" data-game="neonrush">
                     <div class="game-icon">🚀</div>
-                    <div class="game-info">
-                        <h3>NEON RUSH 2077</h3>
-                        <p>Vertical scroller · Dodge &amp; collect</p>
-                    </div>
+                    <div class="game-info"><h3>NEON RUSH 2077</h3><p>Vertical scroller</p></div>
                     <div class="game-earned" id="earnedNeon">0 PMT</div>
                     <button class="mobile-play-btn" data-game="neonrush">▶ PLAY</button>
                 </div>
                 <div class="game-card" data-game="fruitrush">
                     <div class="game-icon">🍍</div>
-                    <div class="game-info">
-                        <h3>FRUIT RUSH</h3>
-                        <p>Match 3 fruits · 0.50 PMT per match</p>
-                    </div>
+                    <div class="game-info"><h3>FRUIT RUSH</h3><p>Match 3 fruits</p></div>
                     <div class="game-earned" id="earnedFruit">0 PMT</div>
                     <button class="mobile-play-btn" data-game="fruitrush">▶ PLAY</button>
                 </div>
                 <div class="game-card" data-game="slidepuzzle">
                     <div class="game-icon">🧩</div>
-                    <div class="game-info">
-                        <h3>SLIDE PUZZLE</h3>
-                        <p>Solve puzzles · earn up to 160 PMT</p>
-                    </div>
+                    <div class="game-info"><h3>SLIDE PUZZLE</h3><p>Solve puzzles</p></div>
                     <div class="game-earned" id="earnedSlide">0 PMT</div>
                     <button class="mobile-play-btn" data-game="slidepuzzle">▶ PLAY</button>
                 </div>
@@ -397,7 +411,6 @@
                 <div class="info-label">BNB WALLET (BSC)</div>
                 <div class="info-value" id="profileWallet">Not set</div>
                 <button class="edit-btn" id="setWalletBtn" style="margin-top: 8px; font-size: 0.6rem;">SET WALLET</button>
-                <button class="edit-btn" id="connectBinanceBtn" style="margin-top: 8px; margin-left: 8px; font-size: 0.6rem;">🔗 CONNECT BINANCE WEB3</button>
             </div>
             <div class="info-card">
                 <div class="info-label">JOINED</div>
@@ -405,14 +418,16 @@
             </div>
         </div>
 
-        <div class="info-card" style="margin-top: 16px;">
-            <div class="info-label">🪙 PMT TOKEN ADDRESS (BSC)</div>
-            <div class="token-address">
-                <span id="pmtTokenAddress">0x0000000000000000000000000000000000000000</span>
-                <button class="edit-btn" id="copyTokenBtn" style="margin-top: 6px; font-size: 0.55rem; padding: 2px 8px;">📋 COPY ADDRESS</button>
+        <!-- REFERRAL SECTION - NEW -->
+        <div class="referral-box">
+            <div class="info-label">🎁 REFER & EARN 1500 PMT PER FRIEND!</div>
+            <div class="referral-code" id="referralCode">LOADING...</div>
+            <button class="copy-ref-btn" id="copyReferralBtn">📋 COPY REFERRAL LINK</button>
+            <div style="font-size: 0.7rem; margin-top: 10px; color: #ffaa00;">
+                Share your link — when a friend signs up, you both get 1500 PMT!
             </div>
-            <div style="font-size: 0.55rem; color: #ffaa00; margin-top: 6px; text-align: center;">
-                ⚡ Add this token address to your wallet to see PMT balance
+            <div id="referralStats" style="margin-top: 10px; font-size: 0.8rem;">
+                Referrals: 0 | Earned: 0 PMT
             </div>
         </div>
 
@@ -422,6 +437,7 @@
                 <div class="earning-item"><span class="earning-game">🚀 Neon Rush</span><span class="earning-amount" id="breakdownNeon">0 PMT</span></div>
                 <div class="earning-item"><span class="earning-game">🍍 Fruit Rush</span><span class="earning-amount" id="breakdownFruit">0 PMT</span></div>
                 <div class="earning-item"><span class="earning-game">🧩 Slide Puzzle</span><span class="earning-amount" id="breakdownSlide">0 PMT</span></div>
+                <div class="earning-item"><span class="earning-game">👥 Referrals</span><span class="earning-amount" id="breakdownReferral">0 PMT</span></div>
                 <div class="earning-item" style="border-top: 1px solid rgba(0,255,255,0.2); margin-top: 5px; padding-top: 8px;">
                     <span class="earning-game">💰 TOTAL EARNED</span>
                     <span class="earning-amount" id="breakdownTotal">0 PMT</span>
@@ -440,7 +456,6 @@
             <div>
                 <div class="info-label">MINIMUM WITHDRAWAL: 1000 PMT</div>
                 <div>Network: BNB Chain (BSC) | Token: PMT</div>
-                <div style="font-size: 0.6rem; color: #ffaa00;">⚡ Gas fee: small amount of BNB needed</div>
             </div>
             <button class="withdraw-btn" id="withdrawBtn">💰 WITHDRAW PMT</button>
         </div>
@@ -452,418 +467,385 @@
         <div class="auth-title" id="authTitle">PMT ARCADE</div>
         <div id="authForms">
             <div id="loginFormContent">
-                <input type="text" id="loginUsername" class="auth-input" placeholder="Username">
-                <div class="password-wrapper">
-                    <input type="password" id="loginPassword" class="auth-input" placeholder="Password" style="margin-bottom: 0;">
-                    <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">👁️</button>
-                </div>
+                <input type="email" id="loginEmail" class="auth-input" placeholder="Email">
+                <input type="password" id="loginPassword" class="auth-input" placeholder="Password">
                 <button class="auth-btn" id="loginBtn">🔐 LOGIN</button>
                 <div class="auth-link" id="showRegisterLink">Don't have an account? Register</div>
                 <div class="auth-link" id="showForgotLink">Forgot password?</div>
-                <div class="auth-link" id="showGoogleLink">🔑 Sign in with Email (OTP)</div>
             </div>
             <div id="registerFormContent" style="display: none;">
                 <input type="text" id="regUsername" class="auth-input" placeholder="Username">
                 <input type="email" id="regEmail" class="auth-input" placeholder="Email">
-                <div class="password-wrapper">
-                    <input type="password" id="regPassword" class="auth-input" placeholder="Password" style="margin-bottom: 0;">
-                    <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)">👁️</button>
+                <input type="password" id="regPassword" class="auth-input" placeholder="Password">
+                <div class="referral-input-group">
+                    <input type="text" id="regReferralCode" class="small-input" placeholder="Referral code (optional)">
                 </div>
-                <button class="auth-btn" id="registerBtn">📝 REGISTER</button>
+                <button class="auth-btn" id="registerBtn">📝 REGISTER (+1500 PMT for referrer!)</button>
                 <div class="auth-link" id="showLoginLink">Already have an account? Login</div>
             </div>
             <div id="forgotFormContent" style="display: none;">
                 <input type="email" id="forgotEmail" class="auth-input" placeholder="Your email">
-                <button class="auth-btn" id="sendOtpBtn">📧 SEND OTP</button>
-                <div class="otp-group" id="otpGroup" style="display: none;">
-                    <input type="text" id="otpCode" class="auth-input otp-input" placeholder="Enter OTP">
-                    <div class="password-wrapper">
-                        <input type="password" id="newPassword" class="auth-input" placeholder="New password" style="margin-bottom: 0;">
-                        <button type="button" class="toggle-password" onclick="togglePassword('newPassword', this)">👁️</button>
-                    </div>
-                    <button class="small-btn" id="verifyOtpBtn">VERIFY & RESET</button>
-                </div>
+                <button class="auth-btn" id="resetPasswordBtn">📧 SEND RESET EMAIL</button>
                 <div class="auth-link" id="backToLoginLink">← Back to Login</div>
-            </div>
-            <div id="googleFormContent" style="display: none;">
-                <input type="email" id="googleEmail" class="auth-input" placeholder="Your email">
-                <button class="auth-btn" id="sendGoogleOtpBtn">📧 SEND OTP</button>
-                <div class="otp-group" id="googleOtpGroup" style="display: none;">
-                    <input type="text" id="googleOtpCode" class="auth-input otp-input" placeholder="Enter OTP">
-                    <button class="small-btn" id="verifyGoogleOtpBtn">VERIFY & SIGN IN</button>
-                </div>
-                <div class="auth-link" id="backToLoginFromGoogle">← Back to Login</div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-const PMT_TOKEN_ADDRESS = '0xYourPMTTokenAddressHere';
-const BACKEND_URL = 'https://neonrush2077-production.up.railway.app';
-const STORAGE_KEY = 'neonRushUsers';
-
-let users = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-let currentUser = null;
-
-const GAMES = {
-    neonrush:    { name: 'Neon Rush',    url: 'neonrush.html',    icon: '🚀', earnedKey: 'neonEarned'  },
-    fruitrush:   { name: 'Fruit Rush',   url: 'fruitrush.html',   icon: '🍍', earnedKey: 'fruitEarned' },
-    slidepuzzle: { name: 'Slide Puzzle', url: 'slidepuzzle.html', icon: '🧩', earnedKey: 'slideEarned' }
-};
-
-let pendingOtp = null;
-let pendingEmail = null;
-let pendingGoogleEmail = null;
-
-function isMobile() { return window.innerWidth <= 768; }
-
-function togglePassword(inputId, btn) {
-    const input = document.getElementById(inputId);
-    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
-    else { input.type = 'password'; btn.textContent = '👁️'; }
-}
-
-function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-function copyTokenAddress() {
-    navigator.clipboard.writeText(PMT_TOKEN_ADDRESS);
-    showToast('✅ Token address copied to clipboard!');
-}
-
-function updateUI() {
-    if (!currentUser) return;
-    document.getElementById('headerUsername').textContent = currentUser.username;
-    document.getElementById('headerBalance').textContent  = currentUser.balance.toFixed(3) + ' PMT';
-    document.getElementById('profileUsername').textContent = currentUser.username;
-    document.getElementById('profileEmail').textContent   = currentUser.email || 'Not set';
-    document.getElementById('profileWallet').textContent  = currentUser.wallet ?
-        currentUser.wallet.slice(0, 10) + '...' + currentUser.wallet.slice(-8) : 'Not set';
-    document.getElementById('profileJoined').textContent  = currentUser.joinDate || new Date().toLocaleDateString();
-    document.getElementById('pmtTokenAddress').textContent = PMT_TOKEN_ADDRESS;
-
-    const earnings = currentUser.gameEarnings || { neon: 0, fruit: 0, slide: 0 };
-    document.getElementById('breakdownNeon').textContent  = earnings.neon.toFixed(3)  + ' PMT';
-    document.getElementById('breakdownFruit').textContent = earnings.fruit.toFixed(3) + ' PMT';
-    document.getElementById('breakdownSlide').textContent = earnings.slide.toFixed(3) + ' PMT';
-    document.getElementById('breakdownTotal').textContent = currentUser.balance.toFixed(3) + ' PMT';
-    document.getElementById('earnedNeon').textContent     = earnings.neon.toFixed(3)  + ' PMT';
-    document.getElementById('earnedFruit').textContent    = earnings.fruit.toFixed(3) + ' PMT';
-    document.getElementById('earnedSlide').textContent    = earnings.slide.toFixed(3) + ' PMT';
-
-    const transactions = currentUser.transactions || [];
-    const txContainer = document.getElementById('transactionList');
-    if (transactions.length === 0) {
-        txContainer.innerHTML = '<div style="color: rgba(255,255,255,0.3); text-align: center;">No transactions yet</div>';
-    } else {
-        txContainer.innerHTML = transactions.slice().reverse().map(tx => `
-            <div class="transaction-item">
-                <span>${tx.date}</span><span>${tx.game}</span>
-                <span style="color:#ffdd00;">+${tx.amount.toFixed(3)} PMT</span>
-            </div>`).join('');
+    const BACKEND_URL = 'https://neonrush2077-production.up.railway.app';
+    const PMT_TOKEN_ADDRESS = '0xYourPMTTokenAddressHere';
+    
+    let currentUserData = null;
+    let currentAuthUser = null;
+    
+    const GAMES = {
+        neonrush: { name: 'Neon Rush', url: 'neonrush.html', icon: '🚀', earnedKey: 'neon' },
+        fruitrush: { name: 'Fruit Rush', url: 'fruitrush.html', icon: '🍍', earnedKey: 'fruit' },
+        slidepuzzle: { name: 'Slide Puzzle', url: 'slidepuzzle.html', icon: '🧩', earnedKey: 'slide' }
+    };
+    
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
     }
-}
-
-function saveUser() {
-    if (currentUser) {
-        users[currentUser.username] = currentUser;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    
+    function generateReferralCode() {
+        return Math.random().toString(36).substring(2, 10).toUpperCase();
     }
-}
-
-function addEarnings(gameId, amount) {
-    if (!currentUser) return;
-    if (!currentUser.gameEarnings) currentUser.gameEarnings = { neon: 0, fruit: 0, slide: 0 };
-    if (!currentUser.transactions) currentUser.transactions = [];
-    let gameKey = 'neon';
-    if (gameId === 'fruitrush')   gameKey = 'fruit';
-    if (gameId === 'slidepuzzle') gameKey = 'slide';
-    currentUser.gameEarnings[gameKey] += amount;
-    currentUser.balance     += amount;
-    currentUser.totalEarned  = (currentUser.totalEarned || 0) + amount;
-    currentUser.transactions.push({ date: new Date().toLocaleString(), game: GAMES[gameId]?.name || gameId, amount });
-    saveUser(); updateUI();
-    showToast(`+${amount.toFixed(3)} PMT earned from ${GAMES[gameId]?.name || gameId}!`);
-    if (typeof confetti === 'function') confetti({ particleCount: 50, spread: 40 });
-}
-
-window.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'earnPMT') addEarnings(event.data.game, event.data.amount);
-});
-
-// Open game in new fullscreen window (mobile only)
-function openGameFullscreen(gameId) {
-    const gameUrl = GAMES[gameId]?.url;
-    if (!gameUrl) return;
-    const win = window.open(gameUrl, '_blank');
-    if (win) {
-        win.addEventListener('load', () => {
-            try {
-                const el = win.document.documentElement;
-                if (el.requestFullscreen)            el.requestFullscreen();
-                else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-            } catch(e) {}
+    
+    async function loadUserData(uid) {
+        const userDoc = await window.getDoc(window.doc(window.db, 'users', uid));
+        if (userDoc.exists()) {
+            currentUserData = userDoc.data();
+            return currentUserData;
+        }
+        return null;
+    }
+    
+    async function updateUI() {
+        if (!currentUserData) return;
+        
+        document.getElementById('headerUsername').textContent = currentUserData.username;
+        document.getElementById('headerBalance').textContent = currentUserData.balance.toFixed(3) + ' PMT';
+        document.getElementById('profileUsername').textContent = currentUserData.username;
+        document.getElementById('profileEmail').textContent = currentUserData.email;
+        document.getElementById('profileWallet').textContent = currentUserData.wallet ? 
+            currentUserData.wallet.slice(0, 10) + '...' + currentUserData.wallet.slice(-8) : 'Not set';
+        document.getElementById('profileJoined').textContent = currentUserData.joinDate || new Date().toLocaleDateString();
+        
+        const earnings = currentUserData.gameEarnings || { neon: 0, fruit: 0, slide: 0 };
+        const referralEarnings = currentUserData.referralEarnings || 0;
+        
+        document.getElementById('breakdownNeon').textContent = earnings.neon.toFixed(3) + ' PMT';
+        document.getElementById('breakdownFruit').textContent = earnings.fruit.toFixed(3) + ' PMT';
+        document.getElementById('breakdownSlide').textContent = earnings.slide.toFixed(3) + ' PMT';
+        document.getElementById('breakdownReferral').textContent = referralEarnings.toFixed(3) + ' PMT';
+        document.getElementById('breakdownTotal').textContent = currentUserData.balance.toFixed(3) + ' PMT';
+        document.getElementById('earnedNeon').textContent = earnings.neon.toFixed(3) + ' PMT';
+        document.getElementById('earnedFruit').textContent = earnings.fruit.toFixed(3) + ' PMT';
+        document.getElementById('earnedSlide').textContent = earnings.slide.toFixed(3) + ' PMT';
+        
+        document.getElementById('referralCode').textContent = currentUserData.referralCode;
+        
+        const referralCount = currentUserData.referredUsersCount || 0;
+        document.getElementById('referralStats').innerHTML = `Referrals: ${referralCount} | Earned: ${referralEarnings.toFixed(3)} PMT`;
+        
+        const transactions = currentUserData.transactions || [];
+        const txContainer = document.getElementById('transactionList');
+        if (transactions.length === 0) {
+            txContainer.innerHTML = '<div style="color: rgba(255,255,255,0.3); text-align: center;">No transactions yet</div>';
+        } else {
+            txContainer.innerHTML = transactions.slice().reverse().map(tx => `
+                <div class="transaction-item">
+                    <span>${tx.date}</span><span>${tx.game}</span>
+                    <span style="color:#ffdd00;">+${tx.amount.toFixed(3)} PMT</span>
+                </div>
+            `).join('');
+        }
+    }
+    
+    async function addEarnings(gameId, amount) {
+        if (!currentAuthUser || !currentUserData) return;
+        
+        let gameKey = 'neon';
+        if (gameId === 'fruitrush') gameKey = 'fruit';
+        if (gameId === 'slidepuzzle') gameKey = 'slide';
+        
+        const userRef = window.doc(window.db, 'users', currentAuthUser.uid);
+        
+        await window.runTransaction(window.db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            const currentEarnings = userDoc.data().gameEarnings || { neon: 0, fruit: 0, slide: 0 };
+            const newBalance = (userDoc.data().balance || 0) + amount;
+            
+            currentEarnings[gameKey] = (currentEarnings[gameKey] || 0) + amount;
+            
+            transaction.update(userRef, {
+                balance: newBalance,
+                [`gameEarnings.${gameKey}`]: currentEarnings[gameKey],
+                transactions: window.increment
+            });
         });
+        
+        const updated = await loadUserData(currentAuthUser.uid);
+        currentUserData = updated;
+        updateUI();
+        showToast(`+${amount.toFixed(3)} PMT from ${GAMES[gameId]?.name || gameId}!`);
+        if (typeof confetti === 'function') confetti({ particleCount: 50, spread: 40 });
     }
-}
-
-// Desktop: card click loads iframe as normal
-// Mobile: card click does nothing extra — use the PLAY button
-document.querySelectorAll('.game-card').forEach(card => {
-    card.addEventListener('click', (e) => {
-        if (e.target.classList.contains('mobile-play-btn')) return;
-        const gameId = card.dataset.game;
-        if (!gameId) return;
-        document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-        if (!isMobile()) {
-            const gameUrl = GAMES[gameId]?.url;
-            if (gameUrl) document.getElementById('gameFrame').src = gameUrl;
+    
+    async function processReferralBonus(newUserId, referrerCode) {
+        const usersRef = window.collection(window.db, 'users');
+        const q = window.query(usersRef, window.where('referralCode', '==', referrerCode));
+        const querySnapshot = await window.getDocs(q);
+        
+        if (!querySnapshot.empty) {
+            const referrerDoc = querySnapshot.docs[0];
+            const referrerId = referrerDoc.id;
+            
+            if (referrerId !== newUserId) {
+                const referrerRef = window.doc(window.db, 'users', referrerId);
+                
+                await window.runTransaction(window.db, async (transaction) => {
+                    const docSnap = await transaction.get(referrerRef);
+                    const currentBalance = docSnap.data().balance || 0;
+                    const currentReferralEarnings = docSnap.data().referralEarnings || 0;
+                    const currentReferredCount = docSnap.data().referredUsersCount || 0;
+                    
+                    transaction.update(referrerRef, {
+                        balance: currentBalance + 1500,
+                        referralEarnings: currentReferralEarnings + 1500,
+                        referredUsersCount: currentReferredCount + 1
+                    });
+                });
+                
+                showToast(`Referrer got 1500 PMT bonus!`);
+            }
+        }
+    }
+    
+    window.addEventListener('message', async function(event) {
+        if (event.data && event.data.type === 'earnPMT') {
+            await addEarnings(event.data.game, event.data.amount);
         }
     });
-});
-
-// Mobile PLAY buttons → open fullscreen new window
-document.querySelectorAll('.mobile-play-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openGameFullscreen(btn.dataset.game);
-    });
-});
-
-function loadDefaultGame() {
-    const firstCard = document.querySelector('.game-card');
-    if (firstCard) {
-        firstCard.classList.add('active');
-        const gameId = firstCard.dataset.game;
-        if (gameId && GAMES[gameId] && !isMobile())
-            document.getElementById('gameFrame').src = GAMES[gameId].url;
+    
+    function isMobile() { return window.innerWidth <= 768; }
+    
+    function openGameFullscreen(gameId) {
+        const gameUrl = GAMES[gameId]?.url;
+        if (!gameUrl) return;
+        window.open(gameUrl, '_blank');
     }
-}
-
-async function connectBinanceWeb3() {
-    if (!window.BinanceChain) { showToast('⚠️ Binance Wallet not detected! Install Binance extension or use Trust Wallet.'); return; }
-    try {
-        const accounts = await window.BinanceChain.request({ method: 'eth_requestAccounts' });
-        currentUser.wallet = accounts[0];
-        saveUser(); updateUI();
-        showToast(`✅ Binance Web3 Wallet connected: ${accounts[0].slice(0,10)}...`);
-        if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 60 });
-    } catch(error) { showToast('Connection failed: ' + error.message); }
-}
-
-async function withdrawToBackend() {
-    if (!currentUser) { showToast('Please login first'); return; }
-    if (!currentUser.wallet) { showToast('Please set a wallet address first'); return; }
-    if (currentUser.balance < 1000) { showToast(`Minimum 1000 PMT! You have ${currentUser.balance.toFixed(3)} PMT`); return; }
-    const amount = Math.floor(currentUser.balance * 1000);
-    const btn = document.getElementById('withdrawBtn');
-    const originalText = btn.textContent;
-    btn.textContent = '⏳ PROCESSING...'; btn.disabled = true;
-    try {
-        const response = await fetch(`${BACKEND_URL}/reward-player`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ playerAddress: currentUser.wallet, score: amount })
+    
+    document.querySelectorAll('.game-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target.classList.contains('mobile-play-btn')) return;
+            const gameId = card.dataset.game;
+            if (!gameId) return;
+            document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            if (!isMobile()) {
+                const gameUrl = GAMES[gameId]?.url;
+                if (gameUrl) document.getElementById('gameFrame').src = gameUrl;
+            }
         });
-        const data = await response.json();
-        if (data.success) {
-            const earnedAmount = data.tokensTransferred || currentUser.balance;
-            currentUser.balance = 0; saveUser(); updateUI();
-            showToast(`✅ Withdrawal successful! ${earnedAmount} PMT sent to your wallet`);
-            if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 100 });
-        } else { showToast('❌ Withdrawal failed: ' + data.error); }
-    } catch(err) { showToast('❌ Backend error. Please try again later.'); }
-    finally { btn.textContent = originalText; btn.disabled = false; }
-}
-
-function showLogin() {
-    document.getElementById('loginFormContent').style.display    = 'block';
-    document.getElementById('registerFormContent').style.display = 'none';
-    document.getElementById('forgotFormContent').style.display   = 'none';
-    document.getElementById('googleFormContent').style.display   = 'none';
-    document.getElementById('authTitle').textContent = 'PMT ARCADE';
-}
-function showRegister() {
-    document.getElementById('loginFormContent').style.display    = 'none';
-    document.getElementById('registerFormContent').style.display = 'block';
-    document.getElementById('forgotFormContent').style.display   = 'none';
-    document.getElementById('googleFormContent').style.display   = 'none';
-    document.getElementById('authTitle').textContent = 'CREATE ACCOUNT';
-}
-function showForgot() {
-    document.getElementById('loginFormContent').style.display    = 'none';
-    document.getElementById('registerFormContent').style.display = 'none';
-    document.getElementById('forgotFormContent').style.display   = 'block';
-    document.getElementById('googleFormContent').style.display   = 'none';
-    document.getElementById('otpGroup').style.display = 'none';
-    document.getElementById('authTitle').textContent = 'RESET PASSWORD';
-}
-function showGoogle() {
-    document.getElementById('loginFormContent').style.display    = 'none';
-    document.getElementById('registerFormContent').style.display = 'none';
-    document.getElementById('forgotFormContent').style.display   = 'none';
-    document.getElementById('googleFormContent').style.display   = 'block';
-    document.getElementById('googleOtpGroup').style.display = 'none';
-    document.getElementById('authTitle').textContent = 'SIGN IN WITH EMAIL';
-}
-
-function login() {
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const user = users[username];
-    if (!user || user.password !== password) { showToast('Invalid username or password!'); return; }
-    currentUser = user;
-    document.getElementById('authOverlay').style.display   = 'none';
-    document.getElementById('siteHeader').style.display    = 'flex';
-    document.getElementById('mainContainer').style.display = 'block';
-    updateUI(); loadDefaultGame();
-    showToast(`Welcome back, ${username}!`);
-}
-
-function register() {
-    const username = document.getElementById('regUsername').value.trim();
-    const email    = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
-    if (!username || !email || !password) { showToast('Please fill all fields!'); return; }
-    if (username.length < 3) { showToast('Username min 3 chars'); return; }
-    if (password.length < 6) { showToast('Password min 6 chars'); return; }
-    if (users[username])     { showToast('Username taken!'); return; }
-    users[username] = {
-        username, email, password, wallet: null, balance: 5, totalEarned: 5,
-        gameEarnings: { neon: 0, fruit: 0, slide: 0 },
-        transactions: [{ date: new Date().toLocaleString(), game: 'Welcome Bonus', amount: 5 }],
-        joinDate: new Date().toLocaleDateString()
+    });
+    
+    document.querySelectorAll('.mobile-play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openGameFullscreen(btn.dataset.game);
+        });
+    });
+    
+    async function login() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        
+        if (!email || !password) { showToast('Please fill all fields'); return; }
+        
+        try {
+            const userCredential = await window.signInWithEmailAndPassword(window.auth, email, password);
+            currentAuthUser = userCredential.user;
+        } catch (error) {
+            showToast('Login failed: ' + error.message);
+        }
+    }
+    
+    async function register() {
+        const username = document.getElementById('regUsername').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const referralCode = document.getElementById('regReferralCode').value.trim();
+        
+        if (!username || !email || !password) { showToast('Please fill all fields'); return; }
+        if (password.length < 6) { showToast('Password min 6 chars'); return; }
+        
+        try {
+            const userCredential = await window.createUserWithEmailAndPassword(window.auth, email, password);
+            const user = userCredential.user;
+            
+            const newReferralCode = generateReferralCode();
+            
+            await window.setDoc(window.doc(window.db, 'users', user.uid), {
+                username: username,
+                email: email,
+                wallet: null,
+                balance: 5,
+                totalEarned: 5,
+                referralCode: newReferralCode,
+                referralEarnings: 0,
+                referredUsersCount: 0,
+                gameEarnings: { neon: 0, fruit: 0, slide: 0 },
+                transactions: [{ date: new Date().toLocaleString(), game: 'Welcome Bonus', amount: 5 }],
+                joinDate: new Date().toLocaleDateString()
+            });
+            
+            if (referralCode) {
+                await processReferralBonus(user.uid, referralCode);
+            }
+            
+            showToast('Registration successful! +5 PMT bonus!');
+        } catch (error) {
+            showToast('Registration failed: ' + error.message);
+        }
+    }
+    
+    async function resetPassword() {
+        const email = document.getElementById('forgotEmail').value.trim();
+        if (!email) { showToast('Enter your email'); return; }
+        
+        try {
+            await window.sendPasswordResetEmail(window.auth, email);
+            showToast('Password reset email sent! Check your inbox.');
+        } catch (error) {
+            showToast('Error: ' + error.message);
+        }
+    }
+    
+    function logout() {
+        window.auth.signOut();
+    }
+    
+    async function setWallet() {
+        const wallet = prompt('Enter your BNB Chain wallet address (0x...):');
+        if (!wallet) return;
+        if (!wallet.match(/^0x[a-fA-F0-9]{40}$/)) { showToast('Invalid BNB Chain address!'); return; }
+        
+        const userRef = window.doc(window.db, 'users', currentAuthUser.uid);
+        await window.updateDoc(userRef, { wallet: wallet });
+        currentUserData.wallet = wallet;
+        updateUI();
+        showToast('Wallet saved!');
+    }
+    
+    async function editProfile() {
+        const newEmail = prompt('Enter new email:', currentUserData.email || '');
+        if (newEmail && newEmail.trim()) {
+            const userRef = window.doc(window.db, 'users', currentAuthUser.uid);
+            await window.updateDoc(userRef, { email: newEmail.trim() });
+            currentUserData.email = newEmail.trim();
+            updateUI();
+            showToast('Email updated!');
+        }
+    }
+    
+    function copyReferralLink() {
+        const code = currentUserData.referralCode;
+        const link = `${window.location.origin}${window.location.pathname}?ref=${code}`;
+        navigator.clipboard.writeText(link);
+        showToast('Referral link copied! Share with friends!');
+    }
+    
+    async function withdrawToBackend() {
+        if (!currentUserData) { showToast('Please login first'); return; }
+        if (!currentUserData.wallet) { showToast('Please set a wallet address first'); return; }
+        if (currentUserData.balance < 1000) { showToast(`Minimum 1000 PMT! You have ${currentUserData.balance.toFixed(3)} PMT`); return; }
+        
+        const amount = Math.floor(currentUserData.balance * 1000);
+        const btn = document.getElementById('withdrawBtn');
+        const originalText = btn.textContent;
+        btn.textContent = '⏳ PROCESSING...'; btn.disabled = true;
+        
+        try {
+            const response = await fetch(`${BACKEND_URL}/reward-player`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerAddress: currentUserData.wallet, score: amount })
+            });
+            const data = await response.json();
+            if (data.success) {
+                const userRef = window.doc(window.db, 'users', currentAuthUser.uid);
+                await window.updateDoc(userRef, { balance: 0 });
+                currentUserData.balance = 0;
+                updateUI();
+                showToast(`✅ Withdrawal successful! ${data.tokensTransferred} PMT sent`);
+                if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 100 });
+            } else { showToast('❌ Withdrawal failed: ' + data.error); }
+        } catch(err) { showToast('❌ Backend error. Please try again later.'); }
+        finally { btn.textContent = originalText; btn.disabled = false; }
+    }
+    
+    window.onAuthStateChanged(window.auth, async (user) => {
+        if (user) {
+            currentAuthUser = user;
+            const userData = await loadUserData(user.uid);
+            if (userData) {
+                currentUserData = userData;
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('siteHeader').style.display = 'flex';
+                document.getElementById('mainContainer').style.display = 'block';
+                updateUI();
+                
+                const firstCard = document.querySelector('.game-card');
+                if (firstCard && !isMobile()) {
+                    firstCard.classList.add('active');
+                    const gameId = firstCard.dataset.game;
+                    if (gameId && GAMES[gameId]) document.getElementById('gameFrame').src = GAMES[gameId].url;
+                }
+            }
+        } else {
+            currentAuthUser = null;
+            currentUserData = null;
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('siteHeader').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('gameFrame').src = 'about:blank';
+        }
+    });
+    
+    document.getElementById('loginBtn').onclick = login;
+    document.getElementById('registerBtn').onclick = register;
+    document.getElementById('resetPasswordBtn').onclick = resetPassword;
+    document.getElementById('showRegisterLink').onclick = () => {
+        document.getElementById('loginFormContent').style.display = 'none';
+        document.getElementById('registerFormContent').style.display = 'block';
+        document.getElementById('forgotFormContent').style.display = 'none';
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-    currentUser = users[username];
-    document.getElementById('authOverlay').style.display   = 'none';
-    document.getElementById('siteHeader').style.display    = 'flex';
-    document.getElementById('mainContainer').style.display = 'block';
-    updateUI(); loadDefaultGame();
-    showToast(`Welcome to PMT Arcade! +5 PMT bonus!`);
-}
-
-function sendForgotOtp() {
-    const email = document.getElementById('forgotEmail').value.trim();
-    if (!email) { showToast('Enter your email'); return; }
-    const userEntry = Object.entries(users).find(([_, u]) => u.email === email);
-    if (!userEntry) { showToast('No account found'); return; }
-    pendingEmail = email;
-    pendingOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    showToast(`Your OTP: ${pendingOtp} (demo)`);
-    document.getElementById('otpGroup').style.display = 'flex';
-}
-
-function verifyForgotOtp() {
-    const enteredOtp  = document.getElementById('otpCode').value;
-    const newPassword = document.getElementById('newPassword').value;
-    if (!enteredOtp || !newPassword) { showToast('Enter OTP and new password'); return; }
-    if (enteredOtp !== pendingOtp)   { showToast('Invalid OTP'); return; }
-    const userEntry = Object.entries(users).find(([_, u]) => u.email === pendingEmail);
-    if (userEntry) {
-        users[userEntry[0]].password = newPassword;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-        showToast('Password reset successful! Please login.');
-        showLogin();
-        document.getElementById('forgotEmail').value = '';
-        document.getElementById('otpCode').value     = '';
-        document.getElementById('newPassword').value = '';
-        pendingOtp = null;
-    }
-}
-
-function sendGoogleOtp() {
-    const email = document.getElementById('googleEmail').value.trim();
-    if (!email) { showToast('Enter your email'); return; }
-    pendingGoogleEmail = email;
-    pendingOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    showToast(`Your OTP: ${pendingOtp} (demo)`);
-    document.getElementById('googleOtpGroup').style.display = 'flex';
-}
-
-function verifyGoogleOtp() {
-    const enteredOtp = document.getElementById('googleOtpCode').value;
-    if (!enteredOtp) { showToast('Enter OTP'); return; }
-    if (enteredOtp !== pendingOtp) { showToast('Invalid OTP'); return; }
-    let existingUser = Object.entries(users).find(([_, u]) => u.email === pendingGoogleEmail);
-    if (existingUser) {
-        currentUser = existingUser[1];
-    } else {
-        const username = pendingGoogleEmail.split('@')[0] + Math.floor(Math.random() * 1000);
-        users[username] = {
-            username, email: pendingGoogleEmail, password: 'oauth_' + Math.random(),
-            wallet: null, balance: 5, totalEarned: 5,
-            gameEarnings: { neon: 0, fruit: 0, slide: 0 },
-            transactions: [{ date: new Date().toLocaleString(), game: 'Welcome Bonus', amount: 5 }],
-            joinDate: new Date().toLocaleDateString()
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-        currentUser = users[username];
-        showToast(`Welcome! Account created with ${pendingGoogleEmail}`);
-    }
-    document.getElementById('authOverlay').style.display   = 'none';
-    document.getElementById('siteHeader').style.display    = 'flex';
-    document.getElementById('mainContainer').style.display = 'block';
-    updateUI(); loadDefaultGame();
-    showToast(`Welcome, ${currentUser.username}!`);
-    pendingOtp = null;
-    document.getElementById('googleEmail').value   = '';
-    document.getElementById('googleOtpCode').value = '';
-}
-
-function logout() {
-    currentUser = null;
-    document.getElementById('authOverlay').style.display   = 'flex';
-    document.getElementById('siteHeader').style.display    = 'none';
-    document.getElementById('mainContainer').style.display = 'none';
-    document.getElementById('gameFrame').src = 'about:blank';
-    showLogin();
-}
-
-function setWallet() {
-    const wallet = prompt('Enter your BNB Chain wallet address (0x...):\n\nYou can get this from:\n• Binance Web3 Wallet\n• Trust Wallet\n• MetaMask');
-    if (!wallet) return;
-    if (!wallet.match(/^0x[a-fA-F0-9]{40}$/)) { showToast('Invalid BNB Chain address!'); return; }
-    currentUser.wallet = wallet;
-    saveUser(); updateUI();
-    showToast('Wallet saved successfully!');
-}
-
-function editProfile() {
-    const newEmail = prompt('Enter new email:', currentUser.email || '');
-    if (newEmail !== null && newEmail.trim()) {
-        currentUser.email = newEmail.trim();
-        saveUser(); updateUI();
-        showToast('Email updated!');
-    }
-}
-
-document.getElementById('loginBtn').onclick              = login;
-document.getElementById('registerBtn').onclick           = register;
-document.getElementById('showRegisterLink').onclick      = showRegister;
-document.getElementById('showLoginLink').onclick         = showLogin;
-document.getElementById('showForgotLink').onclick        = showForgot;
-document.getElementById('backToLoginLink').onclick       = showLogin;
-document.getElementById('showGoogleLink').onclick        = showGoogle;
-document.getElementById('backToLoginFromGoogle').onclick = showLogin;
-document.getElementById('sendOtpBtn').onclick            = sendForgotOtp;
-document.getElementById('verifyOtpBtn').onclick          = verifyForgotOtp;
-document.getElementById('sendGoogleOtpBtn').onclick      = sendGoogleOtp;
-document.getElementById('verifyGoogleOtpBtn').onclick    = verifyGoogleOtp;
-document.getElementById('logoutBtn').onclick             = logout;
-document.getElementById('setWalletBtn').onclick          = setWallet;
-document.getElementById('connectBinanceBtn').onclick     = connectBinanceWeb3;
-document.getElementById('withdrawBtn').onclick           = withdrawToBackend;
-document.getElementById('editProfileBtn').onclick        = editProfile;
-document.getElementById('copyTokenBtn').onclick          = copyTokenAddress;
-
-showLogin();
+    document.getElementById('showLoginLink').onclick = () => {
+        document.getElementById('loginFormContent').style.display = 'block';
+        document.getElementById('registerFormContent').style.display = 'none';
+        document.getElementById('forgotFormContent').style.display = 'none';
+    };
+    document.getElementById('showForgotLink').onclick = () => {
+        document.getElementById('loginFormContent').style.display = 'none';
+        document.getElementById('registerFormContent').style.display = 'none';
+        document.getElementById('forgotFormContent').style.display = 'block';
+    };
+    document.getElementById('backToLoginLink').onclick = () => {
+        document.getElementById('loginFormContent').style.display = 'block';
+        document.getElementById('registerFormContent').style.display = 'none';
+        document.getElementById('forgotFormContent').style.display = 'none';
+    };
+    document.getElementById('logoutBtn').onclick = logout;
+    document.getElementById('setWalletBtn').onclick = setWallet;
+    document.getElementById('withdrawBtn').onclick = withdrawToBackend;
+    document.getElementById('editProfileBtn').onclick = editProfile;
+    document.getElementById('copyReferralBtn').onclick = copyReferralLink;
 </script>
 </body>
 </html>
