@@ -1,97 +1,100 @@
-# 🎮 NEON RUSH 2077 — Play to Earn PMT
+# 🎮 PMT ARCADE — Play to Earn Crypto
 
-A browser-based PWA game on BNB Chain where players earn real PMT tokens.
+**Play 3 games, earn real PMT tokens on BNB Chain! One account, shared balance, real withdrawals.**
 
----
-
-## 📁 FILES
-
-| File | Description |
-|------|-------------|
-| `index.html` | Full game frontend (PWA-ready) |
-| `backend.js` | Node.js backend for BNB transfers |
-| `manifest.json` | PWA manifest (Android install) |
-| `sw.js` | Service worker (offline play) |
-| `.env` | Your private keys (NEVER share!) |
+[![Website](https://img.shields.io/badge/Website-PMT_Arcade-00ffff?style=for-the-badge&logo=githubpages)](https://bdmunnaua.github.io/PMT-ARCADE/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![PWA](https://img.shields.io/badge/PWA-Installable-purple?style=for-the-badge)](https://bdmunnaua.github.io/PMT-ARCADE/)
 
 ---
 
-## ⚙️ SETUP
+## 🕹️ Play Now
 
-### 1. Backend (.env file)
-Create a `.env` file in the same folder as `backend.js`:
-```
-PRIVATE_KEY=0xYOUR_PRIVATE_KEY_HERE
-TOKEN_ADDRESS=0xYOUR_PMT_TOKEN_ADDRESS
-PORT=3000
-```
-
-### 2. Install dependencies
-```bash
-npm install
-```
-
-### 3. Start backend
-```bash
-node backend.js
-```
-
-### 4. Open the game
-Open `index.html` in your browser.
+👉 **[https://bdmunnaua.github.io/PMT-ARCADE/](https://bdmunnaua.github.io/PMT-ARCADE/)**
 
 ---
 
-## 📱 ANDROID PWA INSTALL (Free!)
+## 🎯 Games Available
 
-1. Deploy `index.html`, `manifest.json`, `sw.js` to **GitHub Pages** or **Netlify** (both free)
-2. Open the link in Chrome on Android
-3. Chrome shows "Add to Home Screen" banner
-4. Users tap Install → game appears as an app!
-
----
-
-## 💰 ADS SETUP (Google AdSense)
-
-1. Sign up at https://adsense.google.com (free)
-2. Get approved (takes a few days)
-3. Get your Publisher ID (looks like: `ca-pub-XXXXXXXXXXXXXXXX`)
-4. In `index.html`, find this line and uncomment it:
-```html
-<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" ...> -->
-```
-5. Replace `XXXXXXXXXXXXXXXX` with your real Publisher ID
-6. The 3 ad slots (top banner, mobile banner, game-over rectangle) will show real ads
+| Game | Description | How to Play | Reward |
+|------|-------------|-------------|--------|
+| 🚀 **Neon Rush 2077** | Vertical scroller — dodge obstacles, collect coins | Arrow keys (PC) / Touch & drag (mobile) | PMT per coin |
+| 🍍 **Fruit Rush** | Match-3 puzzle — swap fruits to create matches | Click/touch + drag to adjacent fruit | 0.50 PMT per match |
+| 🧩 **Slide Puzzle** | Sliding number puzzle — arrange tiles in order | Tap tile adjacent to empty space | 20-160 PMT per level |
 
 ---
 
-## 🌐 FREE HOSTING (GitHub Pages)
+## 💰 How to Earn
 
-1. Create a free GitHub account at github.com
-2. Create a new repository
-3. Upload `index.html`, `manifest.json`, `sw.js`
-4. Go to Settings → Pages → Source: main branch
-5. Your game is live at: `https://yourusername.github.io/reponame`
-
----
-
-## ⚠️ IMPORTANT SECURITY
-
-- NEVER share your `.env` file
-- NEVER upload `.env` to GitHub (add it to `.gitignore`)
-- Your private key controls your PMT wallet
-- Always keep enough BNB for gas fees
+1. **Register** one account (works across all 3 games)
+2. **Play** any game
+3. **Earn PMT** automatically
+4. **Balance is shared** across ALL games
+5. **Withdraw** to your BNB Chain wallet
 
 ---
 
-## 🚀 GAME FEATURES
+## 👛 Supported Wallets
 
-- ✅ Vertical scroller (dodge obstacles, collect coins)
-- ✅ User registration & login (stored locally)
-- ✅ Earn PMT by playing
-- ✅ Set BNB Chain wallet address
-- ✅ Withdraw PMT to any BNB Chain wallet
-- ✅ Mobile touch controls (left, right, boost)
-- ✅ PWA — installable on Android
-- ✅ Offline play (service worker)
-- ✅ Ad slots ready for Google AdSense
-- ✅ Confetti on successful withdrawal
+| Wallet | Platform | How to Connect |
+|--------|----------|----------------|
+| **Binance Web3 Wallet** | Mobile / PC | Built into Binance app — copy address |
+| **Trust Wallet** | Mobile | Download app → copy BSC address |
+| **MetaMask** | PC Browser | Install extension → add BNB Chain |
+
+---
+
+## 📊 Withdrawal Requirements
+
+| Requirement | Detail |
+|-------------|--------|
+| **Minimum amount** | 1000 PMT |
+| **Network** | BNB Chain (BSC / BEP-20) |
+| **Gas fee** | Small amount of BNB required (~0.0005 BNB) |
+| **Processing time** | 1-5 minutes |
+| **Verification** | Wallet address must be set in profile |
+
+---
+
+## 🔧 Features
+
+| Feature | Status |
+|---------|--------|
+| One account for all 3 games | ✅ |
+| Shared PMT balance across games | ✅ |
+| Real withdrawal to BNB Chain wallet | ✅ |
+| OTP login (email verification) | ✅ |
+| Forgot password recovery | ✅ |
+| Transaction history | ✅ |
+| Earnings breakdown per game | ✅ |
+| PWA installable on Android | ✅ |
+| Works on PC and mobile | ✅ |
+| Sound toggle (Fruit Rush) | ✅ |
+| 3 knife lifelines (Fruit Rush) | ✅ |
+
+---
+
+## 📱 Install on Android (PWA)
+
+1. Open **Chrome** on Android
+2. Visit **[PMT Arcade](https://bdmunnaua.github.io/PMT-ARCADE/)**
+3. Tap **"Add to Home Screen"** or **"Install"**
+4. Play like a native app!
+
+---
+
+## 🛠️ Tech Stack
+
+| Technology | Purpose |
+|------------|---------|
+| HTML5 / CSS3 / JavaScript | Frontend & game logic |
+| Canvas API | Game graphics rendering |
+| LocalStorage | User accounts & data |
+| Node.js + Express | Backend API |
+| Web3.js | BNB Chain interactions |
+| Railway | Backend hosting |
+| GitHub Pages | Frontend hosting |
+
+---
+
+## 📁 Repository Structure
