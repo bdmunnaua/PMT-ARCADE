@@ -12,8 +12,8 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, serverTimestamp, increment, runTransaction } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, runTransaction, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyAOgqAHHRLTr_2f2GHOX1jempvveDj-Jnk",
@@ -34,19 +34,17 @@
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
         window.sendPasswordResetEmail = sendPasswordResetEmail;
         window.onAuthStateChanged = onAuthStateChanged;
-        window.updatePassword = updatePassword;
         window.doc = doc;
         window.setDoc = setDoc;
         window.getDoc = getDoc;
         window.updateDoc = updateDoc;
         window.collection = collection;
-        window.addDoc = addDoc;
         window.query = query;
         window.where = where;
         window.getDocs = getDocs;
-        window.serverTimestamp = serverTimestamp;
-        window.increment = increment;
         window.runTransaction = runTransaction;
+        window.increment = increment;
+        window.arrayUnion = arrayUnion;
         
         console.log("Firebase initialized!");
     </script>
@@ -214,16 +212,6 @@
             cursor: pointer;
             margin-top: 8px;
         }
-        .token-address {
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 12px;
-            padding: 10px;
-            margin-top: 8px;
-            font-size: 0.65rem;
-            word-break: break-all;
-            text-align: center;
-            border: 1px solid rgba(255, 200, 60, 0.3);
-        }
         .earnings-breakdown { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
         .earning-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
         .earning-game { display: flex; align-items: center; gap: 8px; }
@@ -272,6 +260,32 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
         .auth-title { font-family: 'Orbitron', monospace; font-size: 1.3rem; text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #00ffff, #ffaa00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        .password-wrapper input {
+            width: 100%;
+            padding-right: 45px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 0.9rem;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #00ffff;
+            cursor: pointer;
+            font-size: 1rem;
+        }
         .auth-input {
             width: 100%;
             background: rgba(0, 0, 0, 0.5);
@@ -298,17 +312,17 @@
             display: flex;
             gap: 10px;
             margin-top: 8px;
+            margin-bottom: 12px;
         }
         .small-input {
             flex: 1;
             background: rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(0, 255, 255, 0.3);
             border-radius: 12px;
-            padding: 10px;
+            padding: 12px;
             color: white;
             font-size: 0.8rem;
         }
-        .hidden { display: none; }
         .toast {
             position: fixed;
             bottom: 30px;
@@ -329,7 +343,7 @@
             100% { opacity: 0; bottom: 0; }
         }
         @media (max-width: 768px) {
-            .game-area { aspect-ratio: 4 / 3; }
+            .game-area { aspect-ratio: 4 / 3; display: none; }
             .site-header { flex-direction: column; text-align: center; }
             .profile-grid { grid-template-columns: 1fr; }
             .mobile-play-btn {
@@ -349,7 +363,6 @@
                 cursor: pointer;
                 white-space: nowrap;
             }
-            .game-area { display: none; }
         }
     </style>
 </head>
@@ -418,13 +431,12 @@
             </div>
         </div>
 
-        <!-- REFERRAL SECTION - NEW -->
         <div class="referral-box">
             <div class="info-label">🎁 REFER & EARN 1500 PMT PER FRIEND!</div>
             <div class="referral-code" id="referralCode">LOADING...</div>
             <button class="copy-ref-btn" id="copyReferralBtn">📋 COPY REFERRAL LINK</button>
             <div style="font-size: 0.7rem; margin-top: 10px; color: #ffaa00;">
-                Share your link — when a friend signs up, you both get 1500 PMT!
+                Share your link — when a friend signs up, you get 1500 PMT!
             </div>
             <div id="referralStats" style="margin-top: 10px; font-size: 0.8rem;">
                 Referrals: 0 | Earned: 0 PMT
@@ -468,7 +480,10 @@
         <div id="authForms">
             <div id="loginFormContent">
                 <input type="email" id="loginEmail" class="auth-input" placeholder="Email">
-                <input type="password" id="loginPassword" class="auth-input" placeholder="Password">
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" placeholder="Password">
+                    <button type="button" class="toggle-password" onclick="togglePassword('loginPassword')">👁️</button>
+                </div>
                 <button class="auth-btn" id="loginBtn">🔐 LOGIN</button>
                 <div class="auth-link" id="showRegisterLink">Don't have an account? Register</div>
                 <div class="auth-link" id="showForgotLink">Forgot password?</div>
@@ -476,7 +491,10 @@
             <div id="registerFormContent" style="display: none;">
                 <input type="text" id="regUsername" class="auth-input" placeholder="Username">
                 <input type="email" id="regEmail" class="auth-input" placeholder="Email">
-                <input type="password" id="regPassword" class="auth-input" placeholder="Password">
+                <div class="password-wrapper">
+                    <input type="password" id="regPassword" placeholder="Password">
+                    <button type="button" class="toggle-password" onclick="togglePassword('regPassword')">👁️</button>
+                </div>
                 <div class="referral-input-group">
                     <input type="text" id="regReferralCode" class="small-input" placeholder="Referral code (optional)">
                 </div>
@@ -504,6 +522,20 @@
         fruitrush: { name: 'Fruit Rush', url: 'fruitrush.html', icon: '🍍', earnedKey: 'fruit' },
         slidepuzzle: { name: 'Slide Puzzle', url: 'slidepuzzle.html', icon: '🧩', earnedKey: 'slide' }
     };
+    
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const btn = input.nextElementSibling;
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.textContent = '🙈';
+        } else {
+            input.type = 'password';
+            btn.textContent = '👁️';
+        }
+    }
+    
+    window.togglePassword = togglePassword;
     
     function showToast(message) {
         const toast = document.createElement('div');
@@ -576,18 +608,20 @@
         if (gameId === 'slidepuzzle') gameKey = 'slide';
         
         const userRef = window.doc(window.db, 'users', currentAuthUser.uid);
+        const newTransaction = { date: new Date().toLocaleString(), game: GAMES[gameId]?.name || gameId, amount: amount };
         
         await window.runTransaction(window.db, async (transaction) => {
             const userDoc = await transaction.get(userRef);
             const currentEarnings = userDoc.data().gameEarnings || { neon: 0, fruit: 0, slide: 0 };
             const newBalance = (userDoc.data().balance || 0) + amount;
+            const currentTransactions = userDoc.data().transactions || [];
             
             currentEarnings[gameKey] = (currentEarnings[gameKey] || 0) + amount;
             
             transaction.update(userRef, {
                 balance: newBalance,
                 [`gameEarnings.${gameKey}`]: currentEarnings[gameKey],
-                transactions: window.increment
+                transactions: [...currentTransactions, newTransaction]
             });
         });
         
@@ -615,11 +649,13 @@
                     const currentBalance = docSnap.data().balance || 0;
                     const currentReferralEarnings = docSnap.data().referralEarnings || 0;
                     const currentReferredCount = docSnap.data().referredUsersCount || 0;
+                    const currentTransactions = docSnap.data().transactions || [];
                     
                     transaction.update(referrerRef, {
                         balance: currentBalance + 1500,
                         referralEarnings: currentReferralEarnings + 1500,
-                        referredUsersCount: currentReferredCount + 1
+                        referredUsersCount: currentReferredCount + 1,
+                        transactions: [...currentTransactions, { date: new Date().toLocaleString(), game: 'Referral Bonus', amount: 1500 }]
                     });
                 });
                 
@@ -672,8 +708,15 @@
         try {
             const userCredential = await window.signInWithEmailAndPassword(window.auth, email, password);
             currentAuthUser = userCredential.user;
+            showToast('Login successful!');
         } catch (error) {
-            showToast('Login failed: ' + error.message);
+            if (error.code === 'auth/invalid-credential') {
+                showToast('Invalid email or password');
+            } else if (error.code === 'auth/user-not-found') {
+                showToast('User not found. Please register first.');
+            } else {
+                showToast('Login failed: ' + error.message);
+            }
         }
     }
     
@@ -684,7 +727,8 @@
         const referralCode = document.getElementById('regReferralCode').value.trim();
         
         if (!username || !email || !password) { showToast('Please fill all fields'); return; }
-        if (password.length < 6) { showToast('Password min 6 chars'); return; }
+        if (username.length < 3) { showToast('Username must be at least 3 characters'); return; }
+        if (password.length < 6) { showToast('Password must be at least 6 characters'); return; }
         
         try {
             const userCredential = await window.createUserWithEmailAndPassword(window.auth, email, password);
@@ -712,7 +756,13 @@
             
             showToast('Registration successful! +5 PMT bonus!');
         } catch (error) {
-            showToast('Registration failed: ' + error.message);
+            if (error.code === 'auth/email-already-in-use') {
+                showToast('Email already registered. Please login.');
+            } else if (error.code === 'auth/weak-password') {
+                showToast('Password is too weak. Use at least 6 characters.');
+            } else {
+                showToast('Registration failed: ' + error.message);
+            }
         }
     }
     
@@ -724,16 +774,22 @@
             await window.sendPasswordResetEmail(window.auth, email);
             showToast('Password reset email sent! Check your inbox.');
         } catch (error) {
-            showToast('Error: ' + error.message);
+            if (error.code === 'auth/user-not-found') {
+                showToast('No account found with this email');
+            } else {
+                showToast('Error: ' + error.message);
+            }
         }
     }
     
     function logout() {
         window.auth.signOut();
+        showToast('Logged out successfully');
     }
     
     async function setWallet() {
-        const wallet = prompt('Enter your BNB Chain wallet address (0x...):');
+        if (!currentAuthUser) { showToast('Please login first'); return; }
+        const wallet = prompt('Enter your BNB Chain wallet address (0x...):\n\nYou can get this from:\n• Binance Web3 Wallet\n• Trust Wallet\n• MetaMask');
         if (!wallet) return;
         if (!wallet.match(/^0x[a-fA-F0-9]{40}$/)) { showToast('Invalid BNB Chain address!'); return; }
         
@@ -741,12 +797,13 @@
         await window.updateDoc(userRef, { wallet: wallet });
         currentUserData.wallet = wallet;
         updateUI();
-        showToast('Wallet saved!');
+        showToast('Wallet saved successfully!');
     }
     
     async function editProfile() {
+        if (!currentUserData) return;
         const newEmail = prompt('Enter new email:', currentUserData.email || '');
-        if (newEmail && newEmail.trim()) {
+        if (newEmail && newEmail.trim() && newEmail !== currentUserData.email) {
             const userRef = window.doc(window.db, 'users', currentAuthUser.uid);
             await window.updateDoc(userRef, { email: newEmail.trim() });
             currentUserData.email = newEmail.trim();
@@ -756,6 +813,7 @@
     }
     
     function copyReferralLink() {
+        if (!currentUserData) return;
         const code = currentUserData.referralCode;
         const link = `${window.location.origin}${window.location.pathname}?ref=${code}`;
         navigator.clipboard.writeText(link);
@@ -767,7 +825,7 @@
         if (!currentUserData.wallet) { showToast('Please set a wallet address first'); return; }
         if (currentUserData.balance < 1000) { showToast(`Minimum 1000 PMT! You have ${currentUserData.balance.toFixed(3)} PMT`); return; }
         
-        const amount = Math.floor(currentUserData.balance * 1000);
+        const amount = Math.floor(currentUserData.balance);
         const btn = document.getElementById('withdrawBtn');
         const originalText = btn.textContent;
         btn.textContent = '⏳ PROCESSING...'; btn.disabled = true;
@@ -780,13 +838,21 @@
             const data = await response.json();
             if (data.success) {
                 const userRef = window.doc(window.db, 'users', currentAuthUser.uid);
-                await window.updateDoc(userRef, { balance: 0 });
+                const newTransaction = { date: new Date().toLocaleString(), game: 'Withdrawal', amount: -currentUserData.balance };
+                const currentTransactions = currentUserData.transactions || [];
+                await window.updateDoc(userRef, { 
+                    balance: 0,
+                    transactions: [...currentTransactions, newTransaction]
+                });
                 currentUserData.balance = 0;
                 updateUI();
-                showToast(`✅ Withdrawal successful! ${data.tokensTransferred} PMT sent`);
+                showToast(`✅ Withdrawal successful! ${data.tokensTransferred || amount} PMT sent to your wallet`);
                 if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 100 });
             } else { showToast('❌ Withdrawal failed: ' + data.error); }
-        } catch(err) { showToast('❌ Backend error. Please try again later.'); }
+        } catch(err) { 
+            console.error(err);
+            showToast('❌ Backend error. Please try again later.'); 
+        }
         finally { btn.textContent = originalText; btn.disabled = false; }
     }
     
