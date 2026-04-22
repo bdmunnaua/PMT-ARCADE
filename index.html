@@ -160,6 +160,17 @@
         }
         .info-label { font-size: 0.65rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
         .info-value { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #00ffff; word-break: break-all; }
+        .token-address {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 0.65rem;
+            word-break: break-all;
+            text-align: center;
+            border: 1px solid rgba(255, 200, 60, 0.3);
+        }
+        .token-address span { color: #ffaa00; font-family: monospace; }
         .earnings-breakdown { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
         .earning-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
         .earning-game { display: flex; align-items: center; gap: 8px; }
@@ -186,6 +197,28 @@
         }
         .transaction-list { max-height: 200px; overflow-y: auto; margin-top: 12px; }
         .transaction-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.7rem; }
+
+        /* Password wrapper */
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .password-wrapper input {
+            width: 100%;
+            padding-right: 45px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #00ffff;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0;
+        }
 
         /* Auth Screens */
         .auth-overlay {
@@ -344,6 +377,18 @@
             </div>
         </div>
 
+        <!-- PMT Token Address for Users to Import -->
+        <div class="info-card" style="margin-top: 16px;">
+            <div class="info-label">🪙 PMT TOKEN ADDRESS (BSC)</div>
+            <div class="token-address">
+                <span id="pmtTokenAddress">0x0000000000000000000000000000000000000000</span>
+                <button class="edit-btn" id="copyTokenBtn" style="margin-top: 6px; font-size: 0.55rem; padding: 2px 8px;">📋 COPY ADDRESS</button>
+            </div>
+            <div style="font-size: 0.55rem; color: #ffaa00; margin-top: 6px; text-align: center;">
+                ⚡ Add this token address to your wallet to see PMT balance
+            </div>
+        </div>
+
         <div class="info-card" style="margin-top: 16px;">
             <div class="info-label">📊 EARNINGS BREAKDOWN</div>
             <div class="earnings-breakdown" id="earningsBreakdown">
@@ -381,7 +426,10 @@
         <div id="authForms">
             <div id="loginFormContent">
                 <input type="text" id="loginUsername" class="auth-input" placeholder="Username">
-                <input type="password" id="loginPassword" class="auth-input" placeholder="Password">
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" class="auth-input" placeholder="Password" style="margin-bottom: 0;">
+                    <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">👁️</button>
+                </div>
                 <button class="auth-btn" id="loginBtn">🔐 LOGIN</button>
                 <div class="auth-link" id="showRegisterLink">Don't have an account? Register</div>
                 <div class="auth-link" id="showForgotLink">Forgot password?</div>
@@ -390,7 +438,10 @@
             <div id="registerFormContent" style="display: none;">
                 <input type="text" id="regUsername" class="auth-input" placeholder="Username">
                 <input type="email" id="regEmail" class="auth-input" placeholder="Email">
-                <input type="password" id="regPassword" class="auth-input" placeholder="Password">
+                <div class="password-wrapper">
+                    <input type="password" id="regPassword" class="auth-input" placeholder="Password" style="margin-bottom: 0;">
+                    <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)">👁️</button>
+                </div>
                 <button class="auth-btn" id="registerBtn">📝 REGISTER</button>
                 <div class="auth-link" id="showLoginLink">Already have an account? Login</div>
             </div>
@@ -399,7 +450,10 @@
                 <button class="auth-btn" id="sendOtpBtn">📧 SEND OTP</button>
                 <div class="otp-group" id="otpGroup" style="display: none;">
                     <input type="text" id="otpCode" class="auth-input otp-input" placeholder="Enter OTP">
-                    <input type="password" id="newPassword" class="auth-input" placeholder="New password">
+                    <div class="password-wrapper">
+                        <input type="password" id="newPassword" class="auth-input" placeholder="New password" style="margin-bottom: 0;">
+                        <button type="button" class="toggle-password" onclick="togglePassword('newPassword', this)">👁️</button>
+                    </div>
                     <button class="small-btn" id="verifyOtpBtn">VERIFY & RESET</button>
                 </div>
                 <div class="auth-link" id="backToLoginLink">← Back to Login</div>
@@ -424,6 +478,11 @@
 // Shared localStorage key: neonRushUsers
 // =====================================================
 
+// ========== PMT TOKEN ADDRESS (BSC Mainnet) ==========
+// UPDATE THIS WITH YOUR ACTUAL PMT TOKEN CONTRACT ADDRESS
+const PMT_TOKEN_ADDRESS = '0xYourPMTTokenAddressHere';
+// =====================================================
+
 const BACKEND_URL = 'https://neonrush2077-production.up.railway.app';
 const STORAGE_KEY = 'neonRushUsers';
 
@@ -440,6 +499,18 @@ let pendingOtp = null;
 let pendingEmail = null;
 let pendingGoogleEmail = null;
 
+// Password toggle function
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+    }
+}
+
 function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast';
@@ -448,15 +519,23 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
+function copyTokenAddress() {
+    navigator.clipboard.writeText(PMT_TOKEN_ADDRESS);
+    showToast('✅ Token address copied to clipboard!');
+}
+
 function updateUI() {
     if (!currentUser) return;
-    headerUsername.textContent = currentUser.username;
-    headerBalance.textContent = currentUser.balance.toFixed(3) + ' PMT';
+    document.getElementById('headerUsername').textContent = currentUser.username;
+    document.getElementById('headerBalance').textContent = currentUser.balance.toFixed(3) + ' PMT';
     document.getElementById('profileUsername').textContent = currentUser.username;
     document.getElementById('profileEmail').textContent = currentUser.email || 'Not set';
     document.getElementById('profileWallet').textContent = currentUser.wallet ? 
         currentUser.wallet.slice(0, 10) + '...' + currentUser.wallet.slice(-8) : 'Not set';
     document.getElementById('profileJoined').textContent = currentUser.joinDate || new Date().toLocaleDateString();
+    
+    // Display token address
+    document.getElementById('pmtTokenAddress').textContent = PMT_TOKEN_ADDRESS;
     
     const earnings = currentUser.gameEarnings || { neon: 0, fruit: 0, slide: 0 };
     document.getElementById('breakdownNeon').textContent = earnings.neon.toFixed(3) + ' PMT';
@@ -529,7 +608,7 @@ document.querySelectorAll('.game-card').forEach(card => {
         document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
         const gameUrl = GAMES[gameId]?.url;
-        if (gameUrl) gameFrame.src = gameUrl;
+        if (gameUrl) document.getElementById('gameFrame').src = gameUrl;
     });
 });
 
@@ -538,7 +617,7 @@ function loadDefaultGame() {
     if (firstCard) {
         firstCard.classList.add('active');
         const gameId = firstCard.dataset.game;
-        if (gameId && GAMES[gameId]) gameFrame.src = GAMES[gameId].url;
+        if (gameId && GAMES[gameId]) document.getElementById('gameFrame').src = GAMES[gameId].url;
     }
 }
 
@@ -546,7 +625,6 @@ function loadDefaultGame() {
 async function connectBinanceWeb3() {
     if (!window.BinanceChain) {
         showToast('⚠️ Binance Wallet not detected! Install Binance extension or use Trust Wallet.');
-        showToast('💡 For Trust Wallet: Use WalletConnect or copy address manually');
         return;
     }
     try {
@@ -647,9 +725,9 @@ function login() {
     const user = users[username];
     if (!user || user.password !== password) { showToast('Invalid username or password!'); return; }
     currentUser = user;
-    authOverlay.style.display = 'none';
-    siteHeader.style.display = 'flex';
-    mainContainer.style.display = 'block';
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('siteHeader').style.display = 'flex';
+    document.getElementById('mainContainer').style.display = 'block';
     updateUI();
     loadDefaultGame();
     showToast(`Welcome back, ${username}!`);
@@ -673,9 +751,9 @@ function register() {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
     currentUser = users[username];
-    authOverlay.style.display = 'none';
-    siteHeader.style.display = 'flex';
-    mainContainer.style.display = 'block';
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('siteHeader').style.display = 'flex';
+    document.getElementById('mainContainer').style.display = 'block';
     updateUI();
     loadDefaultGame();
     showToast(`Welcome to PMT Arcade! +5 PMT bonus!`);
@@ -740,9 +818,9 @@ function verifyGoogleOtp() {
         currentUser = users[username];
         showToast(`Welcome! Account created with ${pendingGoogleEmail}`);
     }
-    authOverlay.style.display = 'none';
-    siteHeader.style.display = 'flex';
-    mainContainer.style.display = 'block';
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('siteHeader').style.display = 'flex';
+    document.getElementById('mainContainer').style.display = 'block';
     updateUI();
     loadDefaultGame();
     showToast(`Welcome, ${currentUser.username}!`);
@@ -753,10 +831,10 @@ function verifyGoogleOtp() {
 
 function logout() {
     currentUser = null;
-    authOverlay.style.display = 'flex';
-    siteHeader.style.display = 'none';
-    mainContainer.style.display = 'none';
-    gameFrame.src = 'about:blank';
+    document.getElementById('authOverlay').style.display = 'flex';
+    document.getElementById('siteHeader').style.display = 'none';
+    document.getElementById('mainContainer').style.display = 'none';
+    document.getElementById('gameFrame').src = 'about:blank';
     showLogin();
 }
 
@@ -798,6 +876,7 @@ document.getElementById('setWalletBtn').onclick = setWallet;
 document.getElementById('connectBinanceBtn').onclick = connectBinanceWeb3;
 document.getElementById('withdrawBtn').onclick = withdrawToBackend;
 document.getElementById('editProfileBtn').onclick = editProfile;
+document.getElementById('copyTokenBtn').onclick = copyTokenAddress;
 
 showLogin();
 </script>
