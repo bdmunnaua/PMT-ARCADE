@@ -184,8 +184,9 @@
         <div class="hud-stat">LVL <span id="hLevel">1</span></div>
         <div class="hud-stat">⬆ <span id="hHeight">0</span>m</div>
         <div class="hud-stat">★ <span id="hScore">0</span></div>
-        <div class="hud-stat">PMT <span id="hPmt">0.000</span></div>
+        <div class="hud-stat">💰 PMT <span id="hPmt">0.000</span></div>
         <div class="hud-stat">♥ <span id="hLives">3</span></div>
+        <div class="hud-stat">🪙 <span id="hCoins">0</span></div>
     </div>
 
     <!-- START SCREEN -->
@@ -197,7 +198,10 @@
             <div style="font-size:12px; color:rgba(255,255,255,0.6);">
                 ← → Arrow keys or touch & slide<br>
                 Dodge obstacles • Collect coins<br>
-                Each coin = PMT earned
+                <span style="color:#ffdd00;">📈 PROGRESSIVE EARNINGS:</span><br>
+                🪙 1-10 coins → 3 PMT each<br>
+                🪙 11-50 coins → 5 PMT each<br>
+                🪙 51+ coins → 10 PMT each
             </div>
         </div>
     </div>
@@ -208,6 +212,7 @@
         <div class="result-grid">
             <div class="result-box"><div class="result-label">Height</div><div id="finalHeight">0</div></div>
             <div class="result-box"><div class="result-label">Score</div><div id="finalScore">0</div></div>
+            <div class="result-box"><div class="result-label">Coins</div><div id="finalCoins">0</div></div>
             <div class="result-box"><div class="result-label">Earned</div><div id="finalEarned">0</div></div>
         </div>
         <button class="btn" id="restartBtn">🔄 PLAY AGAIN</button>
@@ -217,8 +222,11 @@
 <script>
 // =====================================================
 // NEON RUSH 2077 — Pure Gameplay (No Auth)
+// PROGRESSIVE EARNINGS:
+// Coins 1-10: 3 PMT each
+// Coins 11-50: 5 PMT each  
+// Coins 51+: 10 PMT each
 // Sends earnings to parent hub via postMessage
-// Works standalone or inside PMT Arcade hub
 // =====================================================
 
 // Send earnings to parent hub (if inside iframe)
@@ -227,6 +235,13 @@ function reportEarnings(amount) {
         window.parent.postMessage({ type: 'earnPMT', game: 'neonrush', amount: amount }, '*');
     }
     console.log(`💰 Earned: ${amount} PMT`);
+}
+
+// Calculate PMT per coin based on total coins collected
+function getPmtPerCoin(coinsCollected) {
+    if (coinsCollected < 10) return 3;
+    if (coinsCollected < 50) return 5;
+    return 10;
 }
 
 class NeonRushGame {
@@ -239,6 +254,7 @@ class NeonRushGame {
         
         this.score = 0;
         this.pmtEarned = 0;
+        this.coinsCollected = 0;      // Total coins collected this game
         this.level = 1;
         this.lives = 3;
         this.gameRunning = false;
@@ -266,7 +282,7 @@ class NeonRushGame {
         document.getElementById('startBtn').onclick = () => this.startGame();
         document.getElementById('restartBtn').onclick = () => this.startGame();
         
-        console.log('Neon Rush 2077 — Pure Gameplay Mode');
+        console.log('Neon Rush 2077 — Progressive Earnings Mode');
     }
     
     resize() {
@@ -331,6 +347,7 @@ class NeonRushGame {
         this.level = 1;
         this.scrollSpeed = 4;
         this.pmtEarned = 0;
+        this.coinsCollected = 0;
         this.obstacles = [];
         this.coins = [];
         this.particles = [];
@@ -355,6 +372,7 @@ class NeonRushGame {
         document.getElementById('hPmt').innerText = this.pmtEarned.toFixed(3);
         document.getElementById('hLives').innerText = this.lives;
         document.getElementById('hHeight').innerText = Math.floor(this.totalHeight / 10);
+        document.getElementById('hCoins').innerText = this.coinsCollected;
     }
     
     gameLoop() {
@@ -410,7 +428,7 @@ class NeonRushGame {
             }
         }
         
-        // Coin collection
+        // Coin collection with PROGRESSIVE EARNINGS
         for (let i = this.coins.length - 1; i >= 0; i--) {
             const c = this.coins[i];
             c.y += this.scrollSpeed;
@@ -424,20 +442,30 @@ class NeonRushGame {
             
             if (Math.sqrt(dx * dx + dy * dy) < 30) {
                 this.score += 100;
-                const earned = 0.10;
-                this.pmtEarned += earned;
+                this.coinsCollected++;
+                
+                // Calculate PMT based on total coins collected
+                const pmtValue = getPmtPerCoin(this.coinsCollected);
+                this.pmtEarned += pmtValue;
+                
+                // Show popup for PMT earned
+                this.showPmtPopup(c.x, sy, pmtValue);
                 
                 // Report earnings to parent hub
-                reportEarnings(earned);
+                reportEarnings(pmtValue);
                 
                 this.createParticles(c.x, sy, '#ffdd00');
                 this.coins.splice(i, 1);
                 this.updateHUD();
                 
+                // Level up every 500 score
                 if (this.score % 500 === 0) {
                     this.level++;
                     this.scrollSpeed += 0.7;
                     this.createParticles(this.canvas.width / 2, 300, '#00ffff');
+                    if (typeof confetti === 'function') {
+                        confetti({ particleCount: 80, spread: 60 });
+                    }
                 }
             }
         }
@@ -456,6 +484,19 @@ class NeonRushGame {
         
         this.score++;
         if (this.score % 100 === 0) this.updateHUD();
+    }
+    
+    showPmtPopup(x, y, amount) {
+        // Create floating text popup
+        const popup = {
+            x: x,
+            y: y,
+            text: `+${amount} PMT`,
+            alpha: 1,
+            life: 30
+        };
+        if (!this.popups) this.popups = [];
+        this.popups.push(popup);
     }
     
     render() {
@@ -553,6 +594,28 @@ class NeonRushGame {
             ctx.fillText('$', c.x, sy);
         });
         
+        // PMT Popups
+        if (this.popups) {
+            for (let i = this.popups.length - 1; i >= 0; i--) {
+                const p = this.popups[i];
+                p.life--;
+                p.y -= 1.5;
+                p.alpha = p.life / 30;
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.font = 'bold 16px "Orbitron", monospace';
+                ctx.fillStyle = '#ffdd00';
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#ffaa00';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.text, p.x, p.y - 20);
+                ctx.restore();
+                if (p.life <= 0) {
+                    this.popups.splice(i, 1);
+                }
+            }
+        }
+        
         // Particles
         this.particles.forEach(p => {
             ctx.save();
@@ -569,14 +632,13 @@ class NeonRushGame {
         this.gameRunning = false;
         document.getElementById('hud').style.display = 'none';
         
-        const earned = this.pmtEarned;
         document.getElementById('finalScore').innerText = this.score;
         document.getElementById('finalHeight').innerText = Math.floor(this.totalHeight / 10);
-        document.getElementById('finalEarned').innerText = earned.toFixed(3);
+        document.getElementById('finalCoins').innerText = this.coinsCollected;
+        document.getElementById('finalEarned').innerText = this.pmtEarned.toFixed(3);
         
         document.getElementById('gameOverScreen').classList.remove('hidden');
         
-        // Small confetti on game over
         if (typeof confetti === 'function') {
             confetti({ particleCount: 50, spread: 40 });
         }
@@ -637,7 +699,7 @@ class NeonRushGame {
 
 // Start the game
 window.addEventListener('load', () => {
-    console.log('Neon Rush 2077 — Pure Gameplay (No Auth)');
+    console.log('Neon Rush 2077 — Progressive Earnings (3 → 5 → 10 PMT per coin)');
     new NeonRushGame();
 });
 </script>
