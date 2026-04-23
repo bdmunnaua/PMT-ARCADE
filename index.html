@@ -233,7 +233,7 @@
             80% { opacity: 1; bottom: 35px; }
             100% { opacity: 0; bottom: 0; }
         }
-        /* FULLSCREEN OVERLAY (from second code) */
+        /* FULLSCREEN OVERLAY */
         #fullscreenGameOverlay {
             position: fixed;
             top: 0;
@@ -354,7 +354,7 @@
     </div>
 </div>
 
-<!-- FULLSCREEN OVERLAY (merged from second code) -->
+<!-- FULLSCREEN OVERLAY -->
 <div id="fullscreenGameOverlay">
     <iframe id="fullscreenGameFrame"></iframe>
     <button id="closeFullscreenGame">✕ CLOSE GAME</button>
@@ -412,6 +412,9 @@
     
     let currentUserData = null;
     let currentAuthUser = null;
+    
+    // ✅ UPDATED: Your Railway backend URL
+    const BACKEND_URL = 'https://pmt-arcade-production.up.railway.app';
     
     const GAMES = {
         neonrush: { name: 'Neon Rush', url: 'neonrush.html', earnedKey: 'neon' },
@@ -604,13 +607,80 @@
         showToast('🔗 Referral link copied!');
     }
     
+    // ========== WORKING WITHDRAWAL FUNCTION ==========
     async function withdraw() {
-        if (!currentUserData?.wallet) { showToast('Connect BNB wallet first'); return; }
-        if ((currentUserData.balance || 0) < 1000) { showToast(`Minimum 1000 PMT required. You have ${(currentUserData.balance||0).toFixed(2)} PMT`); return; }
-        showToast('⏳ Withdrawal request: manual processing soon.');
+        // Check if user has a wallet
+        if (!currentUserData?.wallet) { 
+            showToast('❌ Please connect your BNB wallet first'); 
+            return; 
+        }
+        
+        // Check minimum balance (1000 PMT)
+        const currentBalance = currentUserData.balance || 0;
+        if (currentBalance < 1000) { 
+            showToast(`❌ Minimum withdrawal is 1000 PMT. You have ${currentBalance.toFixed(2)} PMT`); 
+            return; 
+        }
+        
+        const btn = document.getElementById('withdrawBtn');
+        const originalText = btn.textContent;
+        btn.textContent = '⏳ PROCESSING...';
+        btn.disabled = true;
+        
+        try {
+            // Convert PMT to score format (PMT * 1000)
+            const score = Math.floor(currentBalance * 1000);
+            
+            console.log('📤 Sending withdrawal request to:', BACKEND_URL);
+            console.log('   Player:', currentUserData.wallet);
+            console.log('   Score:', score);
+            console.log('   PMT Amount:', currentBalance);
+            
+            const response = await fetch(`${BACKEND_URL}/reward-player`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    playerAddress: currentUserData.wallet, 
+                    score: score 
+                })
+            });
+            
+            const data = await response.json();
+            console.log('📥 Withdrawal response:', data);
+            
+            if (data.success) {
+                // Update Firebase balance to 0 after successful withdrawal
+                const userRef = doc(db, 'users', currentAuthUser.uid);
+                const newTransaction = {
+                    date: new Date().toISOString(),
+                    game: 'Withdrawal',
+                    amount: -currentBalance
+                };
+                const currentTransactions = currentUserData.transactions || [];
+                
+                await updateDoc(userRef, { 
+                    balance: 0,
+                    transactions: [...currentTransactions, newTransaction]
+                });
+                
+                await loadUserData(currentAuthUser.uid);
+                updateUI();
+                
+                showToast(`✅ Withdrawal successful! ${data.tokensTransferred || currentBalance} PMT sent to your wallet!`);
+                if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 100 });
+            } else {
+                showToast('❌ Withdrawal failed: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Withdrawal error:', error);
+            showToast('❌ Network error. Please try again.');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
     }
     
-    // FULLSCREEN OVERLAY CONTROLS (merged)
+    // FULLSCREEN OVERLAY CONTROLS
     function openGameFullscreen(url) {
         const overlay = document.getElementById("fullscreenGameOverlay");
         const frame = document.getElementById("fullscreenGameFrame");
@@ -672,8 +742,10 @@
                         document.getElementById('gameFrame').src = GAMES[active.dataset.game].url;
                     } else {
                         const first = document.querySelector('.game-card');
-                        if (first) document.getElementById('gameFrame').src = GAMES[first.dataset.game].url;
-                        if (first) first.classList.add('active');
+                        if (first) {
+                            document.getElementById('gameFrame').src = GAMES[first.dataset.game].url;
+                            first.classList.add('active');
+                        }
                     }
                 }
             } else { await auth.signOut(); showToast('Profile missing'); }
@@ -702,6 +774,7 @@
     document.getElementById('backToLoginLink').onclick = () => { document.getElementById('loginFormContent').style.display='block'; document.getElementById('registerFormContent').style.display='none'; document.getElementById('forgotFormContent').style.display='none'; };
     
     console.log("PMT ARCADE + Fullscreen Overlay | Ready");
+    console.log("Withdrawal backend URL:", BACKEND_URL);
 </script>
 </body>
 </html>
