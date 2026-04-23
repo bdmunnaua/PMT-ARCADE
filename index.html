@@ -2,166 +2,366 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PMT ARCADE - WORKING VERSION</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>PMT ARCADE | Referrals · Cross-Device Sync</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: linear-gradient(135deg, #0a0a1a, #0f0f2a);
-            font-family: Arial, sans-serif;
-            color: white;
+            background: linear-gradient(135deg, #0a0a1a 0%, #0f0f2a 50%, #0a0a1a 100%);
+            font-family: 'Rajdhani', sans-serif;
             min-height: 100vh;
+            color: #e0f0ff;
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header {
-            background: rgba(0,0,0,0.5);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+        .site-header {
+            background: rgba(5, 5, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
         }
-        .balance { color: #ffdd00; font-size: 24px; font-weight: bold; }
-        .auth-box {
-            background: rgba(0,0,0,0.8);
-            padding: 30px;
-            border-radius: 20px;
-            max-width: 400px;
-            margin: 50px auto;
-            border: 1px solid #00ffff;
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ffff, #ff00ff, #ffaa00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid #00ffff;
-            border-radius: 8px;
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(0, 255, 255, 0.08);
+            padding: 6px 16px;
+            border-radius: 40px;
+        }
+        .balance-display { font-family: 'Orbitron', monospace; color: #ffdd00; font-weight: bold; }
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            font-size: 16px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            cursor: pointer;
         }
-        button {
-            width: 100%;
-            padding: 12px;
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px;
+            gap: 20px;
+        }
+        .games-hub { display: flex; gap: 20px; flex-wrap: wrap; }
+        .game-sidebar {
+            flex: 1;
+            min-width: 250px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 16px;
+        }
+        .game-cards { display: flex; flex-direction: column; gap: 12px; }
+        .game-card {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .game-card.active {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.1));
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+        .game-icon { font-size: 2rem; }
+        .game-info h3 { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #00ffff; }
+        .game-earned { margin-left: auto; font-size: 0.7rem; color: #ffdd00; }
+        .mobile-play-btn { display: none; }
+        .game-area {
+            flex: 3;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            aspect-ratio: 16 / 10;
+        }
+        .game-frame { width: 100%; height: 100%; border: none; }
+        .profile-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 16px; }
+        .info-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 14px;
+        }
+        .info-label { font-size: 0.65rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; margin-bottom: 6px; }
+        .info-value { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #00ffff; }
+        .referral-box {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.05));
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 16px;
+            text-align: center;
+        }
+        .referral-code {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffaa00;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 12px;
             margin: 10px 0;
+        }
+        .copy-ref-btn {
             background: linear-gradient(135deg, #00ffff, #0088ff);
             border: none;
-            border-radius: 8px;
-            color: black;
-            font-weight: bold;
+            padding: 8px 20px;
+            border-radius: 40px;
             cursor: pointer;
-            font-size: 16px;
         }
-        .link {
-            color: #00ffff;
+        .edit-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            padding: 4px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+        .withdraw-btn {
+            background: linear-gradient(135deg, #ffaa00, #ff6600);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(5, 5, 20, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .auth-card {
+            background: linear-gradient(135deg, #0f0f2a, #0a0a1a);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 24px;
+            padding: 28px;
+            max-width: 400px;
+            width: 100%;
+        }
+        .auth-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
             text-align: center;
-            margin-top: 10px;
-            cursor: pointer;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #00ffff, #ffaa00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .profile-card {
-            background: rgba(0,0,0,0.5);
-            padding: 20px;
-            border-radius: 10px;
-            margin: 10px 0;
+        .auth-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            margin-bottom: 12px;
+        }
+        .auth-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #00ffff, #0088ff);
+            border: none;
+            padding: 12px;
+            border-radius: 40px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .auth-link { text-align: center; margin-top: 16px; font-size: 0.7rem; color: #00ffff; cursor: pointer; }
+        .password-wrapper {
+            position: relative;
+            margin-bottom: 12px;
+        }
+        .password-wrapper input {
+            width: 100%;
+            padding-right: 45px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #00ffff;
+            cursor: pointer;
         }
         .toast {
             position: fixed;
-            bottom: 20px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             background: #00ffff;
-            color: black;
-            padding: 10px 20px;
-            border-radius: 20px;
-            z-index: 9999;
+            color: #0a0a1a;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            z-index: 1100;
+            animation: fadeInOut 3s ease;
         }
-        .hidden { display: none; }
+        @keyframes fadeInOut {
+            0% { opacity: 0; bottom: 0; }
+            15% { opacity: 1; bottom: 30px; }
+            85% { opacity: 1; bottom: 30px; }
+            100% { opacity: 0; bottom: 0; }
+        }
+        @media (max-width: 768px) {
+            .game-area { display: none; }
+            .mobile-play-btn {
+                display: inline-flex;
+                margin-left: 8px;
+                background: linear-gradient(135deg, #00ffff, #0088ff);
+                border: none;
+                border-radius: 20px;
+                padding: 8px 14px;
+                cursor: pointer;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div id="authScreen" class="auth-box">
-    <h2 style="text-align:center; margin-bottom:20px;">PMT ARCADE</h2>
-    
-    <div id="loginDiv">
-        <input type="email" id="loginEmail" placeholder="Email Address">
-        <input type="password" id="loginPassword" placeholder="Password">
-        <button onclick="doLogin()">LOGIN</button>
-        <div class="link" onclick="showRegister()">Create New Account</div>
-        <div class="link" onclick="showForgot()">Forgot Password?</div>
-    </div>
-    
-    <div id="registerDiv" class="hidden">
-        <input type="text" id="regUsername" placeholder="Username">
-        <input type="email" id="regEmail" placeholder="Email Address">
-        <input type="password" id="regPassword" placeholder="Password (min 6 chars)">
-        <input type="text" id="regReferral" placeholder="Referral Code (optional)">
-        <button onclick="doRegister()">REGISTER (+5 PMT BONUS)</button>
-        <div class="link" onclick="showLogin()">Back to Login</div>
-    </div>
-    
-    <div id="forgotDiv" class="hidden">
-        <input type="email" id="forgotEmail" placeholder="Your Email">
-        <button onclick="doResetPassword()">SEND RESET EMAIL</button>
-        <div class="link" onclick="showLogin()">Back to Login</div>
+<div class="site-header" id="siteHeader" style="display: none;">
+    <div class="logo">PMT ARCADE</div>
+    <div class="user-info">
+        <span id="headerUsername">—</span>
+        <span class="balance-display" id="headerBalance">0 PMT</span>
+        <button class="logout-btn" id="logoutBtn">LOGOUT</button>
     </div>
 </div>
 
-<div id="gameScreen" class="hidden">
-    <div class="container">
-        <div class="header">
-            <div>🎮 PMT ARCADE</div>
-            <div>Welcome, <span id="displayUsername">---</span></div>
-            <div class="balance" id="displayBalance">0 PMT</div>
-            <button onclick="doLogout()" style="width:auto; padding:5px 15px;">LOGOUT</button>
-        </div>
-        
-        <div class="profile-card">
-            <h3>YOUR PROFILE</h3>
-            <p><strong>Username:</strong> <span id="profileUsername">---</span></p>
-            <p><strong>Email:</strong> <span id="profileEmail">---</span></p>
-            <p><strong>Wallet:</strong> <span id="profileWallet">Not set</span></p>
-            <button onclick="setWallet()" style="width:auto; margin-top:10px;">SET WALLET</button>
-        </div>
-        
-        <div class="profile-card" style="background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(255,0,255,0.1));">
-            <h3>🎁 REFER & EARN 1500 PMT</h3>
-            <div style="font-size: 24px; font-weight: bold; color: #ffaa00; text-align: center; margin: 10px 0;" id="referralCodeDisplay">LOADING...</div>
-            <button onclick="copyReferralLink()">📋 COPY REFERRAL LINK</button>
-            <p style="margin-top: 10px;" id="referralStatsDisplay">Referrals: 0 | Earned: 0 PMT</p>
-        </div>
-        
-        <div class="profile-card">
-            <h3>💰 EARNINGS</h3>
-            <p>Neon Rush: <span id="earnNeon">0</span> PMT</p>
-            <p>Fruit Rush: <span id="earnFruit">0</span> PMT</p>
-            <p>Slide Puzzle: <span id="earnSlide">0</span> PMT</p>
-            <p>Referrals: <span id="earnReferral">0</span> PMT</p>
-            <hr style="margin: 10px 0;">
-            <p><strong>TOTAL: <span id="totalEarned">0</span> PMT</strong></p>
-        </div>
-        
-        <div class="profile-card">
-            <h3>🎮 PLAY GAMES</h3>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button onclick="playGame('neonrush')">🚀 NEON RUSH</button>
-                <button onclick="playGame('fruitrush')">🍍 FRUIT RUSH</button>
-                <button onclick="playGame('slidepuzzle')">🧩 SLIDE PUZZLE</button>
+<div class="main-container" id="mainContainer" style="display: none;">
+    <div class="games-hub">
+        <div class="game-sidebar">
+            <div class="game-cards">
+                <div class="game-card" data-game="neonrush">
+                    <div class="game-icon">🚀</div>
+                    <div class="game-info"><h3>NEON RUSH</h3></div>
+                    <div class="game-earned" id="earnedNeon">0 PMT</div>
+                    <button class="mobile-play-btn" data-game="neonrush">▶ PLAY</button>
+                </div>
+                <div class="game-card" data-game="fruitrush">
+                    <div class="game-icon">🍍</div>
+                    <div class="game-info"><h3>FRUIT RUSH</h3></div>
+                    <div class="game-earned" id="earnedFruit">0 PMT</div>
+                    <button class="mobile-play-btn" data-game="fruitrush">▶ PLAY</button>
+                </div>
+                <div class="game-card" data-game="slidepuzzle">
+                    <div class="game-icon">🧩</div>
+                    <div class="game-info"><h3>SLIDE PUZZLE</h3></div>
+                    <div class="game-earned" id="earnedSlide">0 PMT</div>
+                    <button class="mobile-play-btn" data-game="slidepuzzle">▶ PLAY</button>
+                </div>
             </div>
         </div>
-        
-        <div class="profile-card">
-            <button onclick="doWithdraw()" style="background: linear-gradient(135deg, #ffaa00, #ff6600);">💰 WITHDRAW PMT (Min 1000)</button>
+        <div class="game-area">
+            <iframe class="game-frame" id="gameFrame" src="about:blank"></iframe>
+        </div>
+    </div>
+
+    <div class="profile-section">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>PLAYER PROFILE</h3>
+            <button class="edit-btn" id="editProfileBtn">EDIT</button>
+        </div>
+        <div class="profile-grid">
+            <div class="info-card"><div class="info-label">USERNAME</div><div class="info-value" id="profileUsername">—</div></div>
+            <div class="info-card"><div class="info-label">EMAIL</div><div class="info-value" id="profileEmail">—</div></div>
+            <div class="info-card"><div class="info-label">WALLET</div><div class="info-value" id="profileWallet">Not set</div><button class="edit-btn" id="setWalletBtn" style="margin-top:8px;">SET WALLET</button></div>
+        </div>
+
+        <div class="referral-box">
+            <div>🎁 REFER & EARN 1500 PMT PER FRIEND!</div>
+            <div class="referral-code" id="referralCode">LOADING...</div>
+            <button class="copy-ref-btn" id="copyReferralBtn">📋 COPY REFERRAL LINK</button>
+            <div id="referralStats" style="margin-top:10px;">Referrals: 0 | Earned: 0 PMT</div>
+        </div>
+
+        <div class="info-card" style="margin-top:16px;">
+            <div class="info-label">EARNINGS</div>
+            <div id="earningsBreakdown">
+                <div style="display:flex; justify-content:space-between;"><span>🚀 Neon Rush</span><span id="breakdownNeon">0 PMT</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>🍍 Fruit Rush</span><span id="breakdownFruit">0 PMT</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>🧩 Slide Puzzle</span><span id="breakdownSlide">0 PMT</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>👥 Referrals</span><span id="breakdownReferral">0 PMT</span></div>
+                <div style="display:flex; justify-content:space-between; border-top:1px solid rgba(0,255,255,0.2); margin-top:8px; padding-top:8px;"><span>💰 TOTAL</span><span id="breakdownTotal">0 PMT</span></div>
+            </div>
+        </div>
+
+        <div class="withdraw-section" style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:16px; border-top:1px solid rgba(0,255,255,0.15);">
+            <div><div class="info-label">MIN WITHDRAWAL: 1000 PMT</div><div>BNB Chain</div></div>
+            <button class="withdraw-btn" id="withdrawBtn">💰 WITHDRAW</button>
+        </div>
+    </div>
+</div>
+
+<div id="authOverlay" class="auth-overlay">
+    <div class="auth-card">
+        <div class="auth-title">PMT ARCADE</div>
+        <div id="loginFormContent">
+            <input type="email" id="loginEmail" class="auth-input" placeholder="Email">
+            <div class="password-wrapper">
+                <input type="password" id="loginPassword" placeholder="Password">
+                <button type="button" class="toggle-password" onclick="togglePassword('loginPassword')">👁️</button>
+            </div>
+            <button class="auth-btn" id="loginBtn">LOGIN</button>
+            <div class="auth-link" id="showRegisterLink">Don't have an account? Register</div>
+            <div class="auth-link" id="showForgotLink">Forgot password?</div>
+        </div>
+        <div id="registerFormContent" style="display:none;">
+            <input type="text" id="regUsername" class="auth-input" placeholder="Username">
+            <input type="email" id="regEmail" class="auth-input" placeholder="Email">
+            <div class="password-wrapper">
+                <input type="password" id="regPassword" placeholder="Password">
+                <button type="button" class="toggle-password" onclick="togglePassword('regPassword')">👁️</button>
+            </div>
+            <input type="text" id="regReferralCode" class="auth-input" placeholder="Referral code (optional)">
+            <button class="auth-btn" id="registerBtn">REGISTER (+1500 for referrer!)</button>
+            <div class="auth-link" id="showLoginLink">Already have an account? Login</div>
+        </div>
+        <div id="forgotFormContent" style="display:none;">
+            <input type="email" id="forgotEmail" class="auth-input" placeholder="Email">
+            <button class="auth-btn" id="resetPasswordBtn">SEND RESET EMAIL</button>
+            <div class="auth-link" id="backToLoginLink">← Back to Login</div>
         </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
     
     const firebaseConfig = {
         apiKey: "AIzaSyAOgqAHHRLTr_2f2GHOX1jempvveDj-Jnk",
@@ -176,8 +376,14 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     
-    let currentUser = null;
     let currentUserData = null;
+    let currentAuthUser = null;
+    
+    const GAMES = {
+        neonrush: { name: 'Neon Rush', url: 'neonrush.html', earnedKey: 'neon' },
+        fruitrush: { name: 'Fruit Rush', url: 'fruitrush.html', earnedKey: 'fruit' },
+        slidepuzzle: { name: 'Slide Puzzle', url: 'slidepuzzle.html', earnedKey: 'slide' }
+    };
     
     function showToast(msg) {
         const toast = document.createElement('div');
@@ -187,232 +393,280 @@
         setTimeout(() => toast.remove(), 3000);
     }
     
+    window.togglePassword = function(id) {
+        const input = document.getElementById(id);
+        const btn = input.nextElementSibling;
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.textContent = '🙈';
+        } else {
+            input.type = 'password';
+            btn.textContent = '👁️';
+        }
+    };
+    
     function generateReferralCode() {
         return Math.random().toString(36).substring(2, 10).toUpperCase();
     }
     
     async function loadUserData(uid) {
-        const docRef = doc(db, 'users', uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            currentUserData = docSnap.data();
-            return true;
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        if (userDoc.exists()) {
+            currentUserData = userDoc.data();
+            return currentUserData;
         }
-        return false;
+        return null;
     }
     
     async function updateUI() {
         if (!currentUserData) return;
-        
-        document.getElementById('displayUsername').textContent = currentUserData.username;
-        document.getElementById('displayBalance').textContent = (currentUserData.balance || 0).toFixed(3) + ' PMT';
+        document.getElementById('headerUsername').textContent = currentUserData.username;
+        document.getElementById('headerBalance').textContent = (currentUserData.balance || 0).toFixed(3) + ' PMT';
         document.getElementById('profileUsername').textContent = currentUserData.username;
         document.getElementById('profileEmail').textContent = currentUserData.email;
-        document.getElementById('profileWallet').textContent = currentUserData.wallet || 'Not set';
-        document.getElementById('referralCodeDisplay').textContent = currentUserData.referralCode;
+        document.getElementById('profileWallet').textContent = currentUserData.wallet ? currentUserData.wallet.slice(0,10)+'...' : 'Not set';
         
         const earnings = currentUserData.gameEarnings || { neon: 0, fruit: 0, slide: 0 };
-        const referralEarn = currentUserData.referralEarnings || 0;
+        const referralEarnings = currentUserData.referralEarnings || 0;
         
-        document.getElementById('earnNeon').textContent = earnings.neon.toFixed(3);
-        document.getElementById('earnFruit').textContent = earnings.fruit.toFixed(3);
-        document.getElementById('earnSlide').textContent = earnings.slide.toFixed(3);
-        document.getElementById('earnReferral').textContent = referralEarn.toFixed(3);
-        document.getElementById('totalEarned').textContent = (currentUserData.balance || 0).toFixed(3);
-        document.getElementById('referralStatsDisplay').innerHTML = `Referrals: ${currentUserData.referredUsersCount || 0} | Earned: ${referralEarn.toFixed(3)} PMT`;
+        document.getElementById('breakdownNeon').textContent = earnings.neon.toFixed(3) + ' PMT';
+        document.getElementById('breakdownFruit').textContent = earnings.fruit.toFixed(3) + ' PMT';
+        document.getElementById('breakdownSlide').textContent = earnings.slide.toFixed(3) + ' PMT';
+        document.getElementById('breakdownReferral').textContent = referralEarnings.toFixed(3) + ' PMT';
+        document.getElementById('breakdownTotal').textContent = (currentUserData.balance || 0).toFixed(3) + ' PMT';
+        document.getElementById('earnedNeon').textContent = earnings.neon.toFixed(3) + ' PMT';
+        document.getElementById('earnedFruit').textContent = earnings.fruit.toFixed(3) + ' PMT';
+        document.getElementById('earnedSlide').textContent = earnings.slide.toFixed(3) + ' PMT';
+        document.getElementById('referralCode').textContent = currentUserData.referralCode;
+        document.getElementById('referralStats').innerHTML = `Referrals: ${currentUserData.referredUsersCount || 0} | Earned: ${referralEarnings.toFixed(3)} PMT`;
     }
     
-    async function processReferral(newUserId, referrerCode) {
-        if (!referrerCode) return;
+    async function addEarnings(gameId, amount) {
+        if (!currentAuthUser) return;
+        let gameKey = gameId === 'fruitrush' ? 'fruit' : (gameId === 'slidepuzzle' ? 'slide' : 'neon');
+        const userRef = doc(db, 'users', currentAuthUser.uid);
+        
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            const currentEarnings = userDoc.data().gameEarnings || { neon: 0, fruit: 0, slide: 0 };
+            currentEarnings[gameKey] = (currentEarnings[gameKey] || 0) + amount;
+            transaction.update(userRef, {
+                balance: (userDoc.data().balance || 0) + amount,
+                [`gameEarnings.${gameKey}`]: currentEarnings[gameKey]
+            });
+        });
+        await loadUserData(currentAuthUser.uid);
+        updateUI();
+        showToast(`+${amount} PMT from ${GAMES[gameId]?.name}!`);
+        if (typeof confetti === 'function') confetti({ particleCount: 50, spread: 40 });
+    }
+    
+    window.addEventListener('message', (e) => {
+        if (e.data?.type === 'earnPMT') addEarnings(e.data.game, e.data.amount);
+    });
+    
+    async function processReferralBonus(newUserId, referrerCode) {
         const q = query(collection(db, 'users'), where('referralCode', '==', referrerCode));
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
             const referrer = snapshot.docs[0];
             if (referrer.id !== newUserId) {
-                const referrerRef = doc(db, 'users', referrer.id);
-                const referrerData = referrer.data();
-                await updateDoc(referrerRef, {
-                    balance: (referrerData.balance || 0) + 1500,
-                    referralEarnings: (referrerData.referralEarnings || 0) + 1500,
-                    referredUsersCount: (referrerData.referredUsersCount || 0) + 1
+                await updateDoc(doc(db, 'users', referrer.id), {
+                    balance: (referrer.data().balance || 0) + 1500,
+                    referralEarnings: (referrer.data().referralEarnings || 0) + 1500,
+                    referredUsersCount: (referrer.data().referredUsersCount || 0) + 1
                 });
-                showToast('Referrer got 1500 PMT bonus!');
+                showToast('Referrer got 1500 PMT!');
             }
         }
     }
     
-    window.doRegister = async function() {
-        const username = document.getElementById('regUsername').value.trim();
-        const email = document.getElementById('regEmail').value.trim();
-        const password = document.getElementById('regPassword').value;
-        const referralCode = document.getElementById('regReferral').value.trim();
-        
-        if (!username) { showToast('Enter username'); return; }
-        if (!email) { showToast('Enter email'); return; }
-        if (!password) { showToast('Enter password'); return; }
-        if (password.length < 6) { showToast('Password must be at least 6 characters'); return; }
-        
-        try {
-            const userCred = await createUserWithEmailAndPassword(auth, email, password);
-            const uid = userCred.user.uid;
-            
-            const newReferralCode = generateReferralCode();
-            
-            await setDoc(doc(db, 'users', uid), {
-                username: username,
-                email: email,
-                wallet: null,
-                balance: 5,
-                totalEarned: 5,
-                referralCode: newReferralCode,
-                referralEarnings: 0,
-                referredUsersCount: 0,
-                gameEarnings: { neon: 0, fruit: 0, slide: 0 },
-                joinDate: new Date().toLocaleDateString()
-            });
-            
-            if (referralCode) {
-                await processReferral(uid, referralCode);
-            }
-            
-            showToast('Registration successful! +5 PMT bonus!');
-        } catch (error) {
-            console.error(error);
-            showToast('Error: ' + error.message);
-        }
-    };
-    
-    window.doLogin = async function() {
+    async function login() {
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
-        
-        if (!email) { showToast('Enter email'); return; }
-        if (!password) { showToast('Enter password'); return; }
-        
+        if (!email || !password) { showToast('Fill all fields'); return; }
         try {
             await signInWithEmailAndPassword(auth, email, password);
             showToast('Login successful!');
         } catch (error) {
             showToast('Login failed: ' + error.message);
         }
-    };
+    }
     
-    window.doResetPassword = async function() {
+    async function register() {
+        const username = document.getElementById('regUsername').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const referralCode = document.getElementById('regReferralCode').value.trim();
+        
+        if (!username || !email || !password) { showToast('Fill all fields'); return; }
+        if (password.length < 6) { showToast('Password min 6 chars'); return; }
+        
+        try {
+            const userCred = await createUserWithEmailAndPassword(auth, email, password);
+            await setDoc(doc(db, 'users', userCred.user.uid), {
+                username, email, wallet: null, balance: 5, totalEarned: 5,
+                referralCode: generateReferralCode(), referralEarnings: 0, referredUsersCount: 0,
+                gameEarnings: { neon: 0, fruit: 0, slide: 0 },
+                joinDate: new Date().toLocaleDateString()
+            });
+            if (referralCode) await processReferralBonus(userCred.user.uid, referralCode);
+            showToast('Registration successful! +5 PMT!');
+        } catch (error) {
+            showToast('Registration failed: ' + error.message);
+        }
+    }
+    
+    async function resetPassword() {
         const email = document.getElementById('forgotEmail').value.trim();
         if (!email) { showToast('Enter email'); return; }
         try {
             await sendPasswordResetEmail(auth, email);
-            showToast('Reset email sent! Check your inbox.');
+            showToast('Reset email sent!');
         } catch (error) {
             showToast('Error: ' + error.message);
         }
-    };
+    }
     
-    window.doLogout = function() {
-        auth.signOut();
-        showToast('Logged out');
-    };
+    function logout() { auth.signOut(); }
     
-    window.setWallet = async function() {
-        if (!currentUser) return;
+    async function setWallet() {
+        if (!currentAuthUser) { showToast('Login first'); return; }
         const wallet = prompt('Enter BNB Chain wallet address (0x...):');
-        if (wallet && wallet.match(/^0x[a-fA-F0-9]{40}$/)) {
-            await updateDoc(doc(db, 'users', currentUser.uid), { wallet: wallet });
-            await loadUserData(currentUser.uid);
+        if (wallet?.match(/^0x[a-fA-F0-9]{40}$/)) {
+            await updateDoc(doc(db, 'users', currentAuthUser.uid), { wallet });
+            await loadUserData(currentAuthUser.uid);
             updateUI();
             showToast('Wallet saved!');
-        } else if (wallet) {
-            showToast('Invalid wallet address');
-        }
-    };
+        } else if (wallet) { showToast('Invalid address'); }
+    }
     
-    window.copyReferralLink = function() {
+    async function editProfile() {
         if (!currentUserData) return;
-        const link = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralCode}`;
-        navigator.clipboard.writeText(link);
-        showToast('Referral link copied!');
-    };
-    
-    window.playGame = function(gameId) {
-        const gameUrls = {
-            neonrush: 'neonrush.html',
-            fruitrush: 'fruitrush.html',
-            slidepuzzle: 'slidepuzzle.html'
-        };
-        window.open(gameUrls[gameId], '_blank');
-    };
-    
-    window.doWithdraw = function() {
-        if (!currentUserData) return;
-        if (!currentUserData.wallet) { showToast('Set wallet first'); return; }
-        if (currentUserData.balance < 1000) { showToast(`Need 1000 PMT, have ${currentUserData.balance.toFixed(3)}`); return; }
-        showToast('Withdrawal: Connect to backend');
-    };
-    
-    window.showRegister = function() {
-        document.getElementById('loginDiv').classList.add('hidden');
-        document.getElementById('registerDiv').classList.remove('hidden');
-        document.getElementById('forgotDiv').classList.add('hidden');
-    };
-    
-    window.showLogin = function() {
-        document.getElementById('loginDiv').classList.remove('hidden');
-        document.getElementById('registerDiv').classList.add('hidden');
-        document.getElementById('forgotDiv').classList.add('hidden');
-    };
-    
-    window.showForgot = function() {
-        document.getElementById('loginDiv').classList.add('hidden');
-        document.getElementById('registerDiv').classList.add('hidden');
-        document.getElementById('forgotDiv').classList.remove('hidden');
-    };
-    
-    // Listen for game earnings
-    window.addEventListener('message', async (e) => {
-        if (e.data?.type === 'earnPMT' && currentUser) {
-            const gameId = e.data.game;
-            const amount = e.data.amount;
-            let gameKey = gameId === 'fruitrush' ? 'fruit' : (gameId === 'slidepuzzle' ? 'slide' : 'neon');
-            
-            const userRef = doc(db, 'users', currentUser.uid);
-            const userDoc = await getDoc(userRef);
-            const currentEarnings = userDoc.data().gameEarnings || { neon: 0, fruit: 0, slide: 0 };
-            currentEarnings[gameKey] = (currentEarnings[gameKey] || 0) + amount;
-            
-            await updateDoc(userRef, {
-                balance: (userDoc.data().balance || 0) + amount,
-                [`gameEarnings.${gameKey}`]: currentEarnings[gameKey]
-            });
-            
-            await loadUserData(currentUser.uid);
+        const newEmail = prompt('New email:', currentUserData.email);
+        if (newEmail?.trim() && newEmail !== currentUserData.email) {
+            await updateDoc(doc(db, 'users', currentAuthUser.uid), { email: newEmail.trim() });
+            await loadUserData(currentAuthUser.uid);
             updateUI();
-            showToast(`+${amount} PMT earned!`);
-            if (typeof confetti === 'function') confetti();
+            showToast('Email updated!');
         }
-    });
+    }
+    
+    function copyReferralLink() {
+        if (!currentUserData) return;
+        navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralCode}`);
+        showToast('Referral link copied!');
+    }
+    
+    async function withdraw() {
+        if (!currentUserData?.wallet) { showToast('Set wallet first'); return; }
+        if (currentUserData.balance < 1000) { showToast(`Need 1000 PMT, have ${currentUserData.balance.toFixed(3)}`); return; }
+        showToast('Withdrawal feature ready - backend pending');
+    }
     
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            currentUser = user;
-            const hasData = await loadUserData(user.uid);
-            if (hasData) {
-                document.getElementById('authScreen').classList.add('hidden');
-                document.getElementById('gameScreen').classList.remove('hidden');
+            currentAuthUser = user;
+            const userData = await loadUserData(user.uid);
+            if (userData) {
+                currentUserData = userData;
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('siteHeader').style.display = 'flex';
+                document.getElementById('mainContainer').style.display = 'block';
                 updateUI();
             } else {
-                showToast('User data not found. Please re-register.');
+                showToast("User profile not found. Please re-register.");
                 await auth.signOut();
             }
         } else {
-            currentUser = null;
+            currentAuthUser = null;
             currentUserData = null;
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('gameScreen').classList.add('hidden');
-            showLogin();
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('siteHeader').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'none';
         }
     });
     
-    console.log("App ready!");
+    document.getElementById('loginBtn').onclick = login;
+    document.getElementById('registerBtn').onclick = register;
+    document.getElementById('resetPasswordBtn').onclick = resetPassword;
+    document.getElementById('logoutBtn').onclick = logout;
+    document.getElementById('setWalletBtn').onclick = setWallet;
+    document.getElementById('editProfileBtn').onclick = editProfile;
+    document.getElementById('copyReferralBtn').onclick = copyReferralLink;
+    document.getElementById('withdrawBtn').onclick = withdraw;
+    
+    document.getElementById('showRegisterLink').onclick = () => {
+        document.getElementById('loginFormContent').style.display = 'none';
+        document.getElementById('registerFormContent').style.display = 'block';
+        document.getElementById('forgotFormContent').style.display = 'none';
+    };
+    document.getElementById('showLoginLink').onclick = () => {
+        document.getElementById('loginFormContent').style.display = 'block';
+        document.getElementById('registerFormContent').style.display = 'none';
+        document.getElementById('forgotFormContent').style.display = 'none';
+    };
+    document.getElementById('showForgotLink').onclick = () => {
+        document.getElementById('loginFormContent').style.display = 'none';
+        document.getElementById('registerFormContent').style.display = 'none';
+        document.getElementById('forgotFormContent').style.display = 'block';
+    };
+    document.getElementById('backToLoginLink').onclick = () => {
+        document.getElementById('loginFormContent').style.display = 'block';
+        document.getElementById('registerFormContent').style.display = 'none';
+        document.getElementById('forgotFormContent').style.display = 'none';
+    };
+    
+    // ========== FIXED GAME CARD CLICK HANDLERS ==========
+    // Desktop: Click card → highlight + load game in iframe
+    document.querySelectorAll('.game-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            // Don't trigger if clicking the PLAY button (mobile)
+            if (e.target.classList.contains('mobile-play-btn')) return;
+            
+            const gameId = card.dataset.game;
+            if (!gameId) return;
+            
+            // Remove active class from all cards
+            document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
+            
+            // Add active class to clicked card
+            card.classList.add('active');
+            
+            // DESKTOP (width > 768px): load game in iframe
+            if (window.innerWidth > 768) {
+                const gameUrl = GAMES[gameId]?.url;
+                if (gameUrl) {
+                    document.getElementById('gameFrame').src = gameUrl;
+                }
+            }
+        });
+    });
+    
+    // Mobile PLAY buttons → open in new tab
+    document.querySelectorAll('.mobile-play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const gameId = btn.dataset.game;
+            if (gameId) {
+                window.open(GAMES[gameId]?.url, '_blank');
+            }
+        });
+    });
+    
+    // Load first game by default on desktop
+    if (window.innerWidth > 768) {
+        const firstCard = document.querySelector('.game-card');
+        if (firstCard) {
+            firstCard.classList.add('active');
+            const firstGameId = firstCard.dataset.game;
+            if (firstGameId && GAMES[firstGameId]) {
+                document.getElementById('gameFrame').src = GAMES[firstGameId].url;
+            }
+        }
+    }
+    
+    console.log("PMT Arcade ready!");
 </script>
 </body>
 </html>
