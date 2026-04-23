@@ -4,243 +4,237 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="theme-color" content="#0a0a1a">
-    <title>PMT ARCADE | Referrals · Cross-Device Sync</title>
+    <title>PMT ARCADE | Fullscreen Games · Referrals · Sync</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: linear-gradient(135deg, #0a0a1a 0%, #0f0f2a 50%, #0a0a1a 100%);
+            background: radial-gradient(circle at 20% 30%, #0a0a1a, #030310);
             font-family: 'Rajdhani', sans-serif;
             min-height: 100vh;
-            color: #e0f0ff;
+            color: #eef5ff;
         }
         .site-header {
-            background: rgba(5, 5, 20, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-            padding: 12px 20px;
+            background: rgba(2, 2, 12, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.4);
+            padding: 12px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 14px;
         }
         .logo {
             font-family: 'Orbitron', monospace;
-            font-size: 1.5rem;
+            font-size: 1.7rem;
             font-weight: 900;
-            background: linear-gradient(135deg, #00ffff, #ff00ff, #ffaa00);
+            background: linear-gradient(135deg, #00ffff, #ff44ee, #ffcc44);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
         }
         .user-info {
             display: flex;
             align-items: center;
             gap: 20px;
-            background: rgba(0, 255, 255, 0.08);
-            padding: 6px 16px;
-            border-radius: 40px;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 6px 20px;
+            border-radius: 60px;
+            border: 1px solid rgba(0,255,255,0.3);
         }
-        .balance-display { font-family: 'Orbitron', monospace; color: #ffdd00; font-weight: bold; }
+        .balance-display { font-family: 'Orbitron', monospace; color: #f5e56b; font-weight: bold; text-shadow: 0 0 3px #ffaa33; }
         .logout-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
+            background: rgba(255, 80, 120, 0.2);
+            border: 1px solid rgba(255,100,150,0.5);
+            color: #ffccdd;
+            padding: 5px 16px;
+            border-radius: 30px;
             cursor: pointer;
+            transition: 0.2s;
         }
-        .main-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 16px;
-            gap: 20px;
-        }
-        .games-hub { display: flex; gap: 20px; flex-wrap: wrap; }
+        .main-container { max-width: 1500px; margin: 20px auto; padding: 0 18px; gap: 24px; }
+        .games-hub { display: flex; gap: 24px; flex-wrap: wrap; }
         .game-sidebar {
-            flex: 1;
-            min-width: 250px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 20px;
-            padding: 16px;
+            flex: 1.2;
+            min-width: 270px;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(4px);
+            border-radius: 28px;
+            padding: 20px;
+            border: 1px solid rgba(0,255,255,0.2);
         }
-        .game-cards { display: flex; flex-direction: column; gap: 12px; }
+        .game-cards { display: flex; flex-direction: column; gap: 18px; }
         .game-card {
-            background: rgba(0, 255, 255, 0.05);
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 14px;
+            background: rgba(0, 20, 40, 0.7);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 24px;
+            padding: 12px 18px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
+            transition: all 0.2s ease;
         }
         .game-card.active {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.1));
-            border-color: #00ffff;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            background: linear-gradient(135deg, rgba(0, 200, 255, 0.25), rgba(200, 0, 255, 0.15));
+            border-color: #0ff;
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.5);
         }
-        .game-icon { font-size: 2rem; }
-        .game-info h3 { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #00ffff; }
-        .game-earned { margin-left: auto; font-size: 0.7rem; color: #ffdd00; }
-        .play-btn {
-            background: linear-gradient(135deg, #00ffff, #0088ff);
+        .game-icon { font-size: 2.2rem; filter: drop-shadow(0 0 4px cyan); }
+        .game-info h3 { font-family: 'Orbitron', monospace; font-size: 1rem; color: #aaffff; letter-spacing: 1px; }
+        .game-earned { margin-left: auto; font-size: 0.75rem; background: #00000066; padding: 4px 10px; border-radius: 40px; color: #ffdd88; }
+        .mobile-play-btn, .desktop-fullscreen-btn {
+            background: #0ff22e;
             border: none;
-            border-radius: 20px;
-            padding: 8px 14px;
-            font-family: 'Orbitron', monospace;
-            font-size: 0.7rem;
+            border-radius: 30px;
+            padding: 6px 14px;
             font-weight: bold;
             cursor: pointer;
-            color: #0a0a1a;
+            margin-left: 8px;
         }
+        .desktop-fullscreen-btn { background: linear-gradient(135deg, #00c853, #00a86b); color: white; }
+        .game-area {
+            flex: 3;
+            background: #010114;
+            border-radius: 28px;
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+            box-shadow: 0 0 28px rgba(0,255,255,0.2);
+            border: 1px solid cyan;
+        }
+        .game-frame { width: 100%; height: 100%; border: none; background: #000; }
         .profile-section {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 20px;
-            padding: 20px;
-            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            border-radius: 28px;
+            padding: 24px;
+            margin-top: 30px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
         }
-        .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 16px; }
+        .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 18px; }
         .info-card {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 16px;
-            padding: 14px;
-        }
-        .info-label { font-size: 0.65rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; margin-bottom: 6px; }
-        .info-value { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #00ffff; word-break: break-all; }
-        .referral-box {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.05));
-            border-radius: 16px;
+            background: rgba(5, 10, 25, 0.7);
+            border-radius: 20px;
             padding: 16px;
+            border-left: 3px solid cyan;
+        }
+        .info-label { font-size: 0.7rem; letter-spacing: 1px; color: #8fcbff; text-transform: uppercase; margin-bottom: 8px; }
+        .info-value { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #f0f0ff; word-break: break-all; }
+        .referral-box {
+            background: linear-gradient(125deg, rgba(0, 180, 200, 0.2), rgba(180, 0, 200, 0.15));
+            border-radius: 24px;
+            padding: 20px;
             margin-top: 16px;
             text-align: center;
+            border: 1px dashed cyan;
         }
         .referral-code {
             font-family: 'Orbitron', monospace;
-            font-size: 1.5rem;
+            font-size: 1.7rem;
             font-weight: bold;
-            color: #ffaa00;
-            background: rgba(0,0,0,0.5);
+            color: #ffcc55;
+            background: #000000aa;
             padding: 10px;
-            border-radius: 12px;
-            margin: 10px 0;
+            border-radius: 20px;
+            margin: 12px 0;
+            letter-spacing: 2px;
         }
         .copy-ref-btn {
-            background: linear-gradient(135deg, #00ffff, #0088ff);
+            background: linear-gradient(95deg, #00c9ff, #0088cc);
             border: none;
-            padding: 8px 20px;
-            border-radius: 40px;
+            padding: 8px 28px;
+            border-radius: 60px;
             cursor: pointer;
+            font-weight: bold;
         }
         .edit-btn {
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid #00ffff;
-            padding: 4px 16px;
-            border-radius: 20px;
+            background: rgba(0, 255, 255, 0.15);
+            border: 1px solid #0ff;
+            padding: 5px 18px;
+            border-radius: 40px;
             cursor: pointer;
-            font-size: 0.7rem;
         }
         .withdraw-btn {
-            background: linear-gradient(135deg, #ffaa00, #ff6600);
+            background: radial-gradient(circle at 30% 10%, #f7b32b, #f15a24);
             border: none;
-            padding: 10px 24px;
-            border-radius: 40px;
+            padding: 10px 28px;
+            border-radius: 60px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             cursor: pointer;
         }
         .auth-overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(5, 5, 20, 0.98);
+            background: rgba(0,0,0,0.96);
             backdrop-filter: blur(20px);
-            z-index: 1000;
+            z-index: 2000;
             display: flex;
             justify-content: center;
             align-items: center;
         }
         .auth-card {
-            background: linear-gradient(135deg, #0f0f2a, #0a0a1a);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 24px;
-            padding: 28px;
-            max-width: 400px;
-            width: 100%;
+            background: linear-gradient(145deg, #11112a, #07071a);
+            border: 1px solid rgba(0,255,255,0.5);
+            border-radius: 40px;
+            padding: 32px;
+            max-width: 440px;
+            width: 90%;
         }
         .auth-title {
             font-family: 'Orbitron', monospace;
-            font-size: 1.3rem;
+            font-size: 1.8rem;
             text-align: center;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #00ffff, #ffaa00);
+            background: linear-gradient(135deg, cyan, #ff66cc);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .auth-input {
             width: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 12px;
-            padding: 12px 16px;
+            background: #0a0a1e;
+            border: 1px solid #33ccff;
+            border-radius: 60px;
+            padding: 12px 20px;
             color: white;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
         .auth-btn {
             width: 100%;
-            background: linear-gradient(135deg, #00ffff, #0088ff);
+            background: linear-gradient(95deg, #0af, #0066cc);
             border: none;
             padding: 12px;
-            border-radius: 40px;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-        .auth-link { text-align: center; margin-top: 16px; font-size: 0.7rem; color: #00ffff; cursor: pointer; }
-        .password-wrapper {
-            position: relative;
-            margin-bottom: 12px;
-        }
-        .password-wrapper input {
-            width: 100%;
-            padding-right: 45px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 12px;
-            padding: 12px 16px;
-            color: white;
-        }
-        .toggle-password {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #00ffff;
+            border-radius: 60px;
+            font-weight: bold;
             cursor: pointer;
         }
+        .auth-link { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #7df9ff; cursor: pointer; }
         .toast {
             position: fixed;
-            bottom: 30px;
+            bottom: 35px;
             left: 50%;
             transform: translateX(-50%);
-            background: #00ffff;
-            color: #0a0a1a;
-            padding: 12px 24px;
-            border-radius: 40px;
+            background: #0ff;
+            color: #000;
             font-weight: bold;
-            z-index: 1100;
-            animation: fadeInOut 3s ease;
+            padding: 12px 28px;
+            border-radius: 50px;
+            z-index: 2100;
+            animation: fadeGlow 2.8s ease forwards;
+            box-shadow: 0 0 20px cyan;
         }
-        @keyframes fadeInOut {
+        @keyframes fadeGlow {
             0% { opacity: 0; bottom: 0; }
-            15% { opacity: 1; bottom: 30px; }
-            85% { opacity: 1; bottom: 30px; }
+            15% { opacity: 1; bottom: 35px; }
+            80% { opacity: 1; bottom: 35px; }
             100% { opacity: 0; bottom: 0; }
         }
-
-        /* FULLSCREEN GAME OVERLAY */
-        #gameOverlay {
+        /* FULLSCREEN OVERLAY (from second code) */
+        #fullscreenGameOverlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -250,45 +244,45 @@
             z-index: 10000;
             display: none;
         }
-        #gameFrame {
+        #fullscreenGameFrame {
             width: 100%;
             height: 100%;
             border: none;
         }
-        #closeGame {
+        #closeFullscreenGame {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 20px;
+            right: 25px;
             z-index: 10001;
-            background: linear-gradient(135deg, #ff0066, #ff3300);
+            background: red;
             color: white;
             border: none;
-            padding: 12px 18px;
-            font-size: 18px;
+            padding: 12px 20px;
+            font-size: 20px;
             font-weight: bold;
-            border-radius: 40px;
+            border-radius: 50px;
             cursor: pointer;
-            font-family: 'Orbitron', monospace;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px rgba(255,0,0,0.6);
         }
-        #closeGame:hover {
-            background: linear-gradient(135deg, #ff3300, #ff0066);
-            transform: scale(1.02);
+        @media (max-width: 780px) {
+            .game-area { display: none; }
+            .mobile-play-btn { display: inline-block; }
+            .desktop-fullscreen-btn { display: none; }
         }
-
-        @media (max-width: 768px) {
-            .profile-grid { grid-template-columns: 1fr; }
+        @media (min-width: 781px) {
+            .mobile-play-btn { display: none; }
+            .desktop-fullscreen-btn { display: inline-block; }
         }
     </style>
 </head>
 <body>
 
 <div class="site-header" id="siteHeader" style="display: none;">
-    <div class="logo">PMT ARCADE</div>
+    <div class="logo">⚡ PMT ARCADE ⚡</div>
     <div class="user-info">
-        <span id="headerUsername">—</span>
+        <span id="headerUsername" style="font-weight:600;">—</span>
         <span class="balance-display" id="headerBalance">0 PMT</span>
-        <button class="logout-btn" id="logoutBtn">LOGOUT</button>
+        <button class="logout-btn" id="logoutBtn">⤉ EXIT</button>
     </div>
 </div>
 
@@ -297,102 +291,105 @@
         <div class="game-sidebar">
             <div class="game-cards">
                 <div class="game-card" data-game="neonrush">
-                    <div class="game-icon">🚀</div>
+                    <div class="game-icon">🚀🌀</div>
                     <div class="game-info"><h3>NEON RUSH</h3></div>
                     <div class="game-earned" id="earnedNeon">0 PMT</div>
-                    <button class="play-btn" onclick="openGame('neonrush.html')">▶ PLAY</button>
+                    <button class="mobile-play-btn" data-game="neonrush">▶ PLAY</button>
+                    <button class="desktop-fullscreen-btn" data-game="neonrush">🖥️ FULLSCREEN</button>
                 </div>
                 <div class="game-card" data-game="fruitrush">
-                    <div class="game-icon">🍍</div>
+                    <div class="game-icon">🍒🍍</div>
                     <div class="game-info"><h3>FRUIT RUSH</h3></div>
                     <div class="game-earned" id="earnedFruit">0 PMT</div>
-                    <button class="play-btn" onclick="openGame('fruitrush.html')">▶ PLAY</button>
+                    <button class="mobile-play-btn" data-game="fruitrush">▶ PLAY</button>
+                    <button class="desktop-fullscreen-btn" data-game="fruitrush">🖥️ FULLSCREEN</button>
                 </div>
                 <div class="game-card" data-game="slidepuzzle">
-                    <div class="game-icon">🧩</div>
+                    <div class="game-icon">🧩✨</div>
                     <div class="game-info"><h3>SLIDE PUZZLE</h3></div>
                     <div class="game-earned" id="earnedSlide">0 PMT</div>
-                    <button class="play-btn" onclick="openGame('slidepuzzle.html')">▶ PLAY</button>
+                    <button class="mobile-play-btn" data-game="slidepuzzle">▶ PLAY</button>
+                    <button class="desktop-fullscreen-btn" data-game="slidepuzzle">🖥️ FULLSCREEN</button>
                 </div>
             </div>
         </div>
         <div class="game-area">
-            <iframe class="game-frame" id="gameFrame" src="about:blank"></iframe>
+            <iframe class="game-frame" id="gameFrame" src="about:blank" title="arcade game preview"></iframe>
         </div>
     </div>
 
     <div class="profile-section">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>PLAYER PROFILE</h3>
-            <button class="edit-btn" id="editProfileBtn">EDIT</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap:wrap;">
+            <h2 style="font-family:'Orbitron';">🎮 VAULT PROFILE</h2>
+            <button class="edit-btn" id="editProfileBtn">✎ EDIT</button>
         </div>
         <div class="profile-grid">
-            <div class="info-card"><div class="info-label">USERNAME</div><div class="info-value" id="profileUsername">—</div></div>
-            <div class="info-card"><div class="info-label">EMAIL</div><div class="info-value" id="profileEmail">—</div></div>
-            <div class="info-card"><div class="info-label">WALLET</div><div class="info-value" id="profileWallet">Not set</div><button class="edit-btn" id="setWalletBtn" style="margin-top:8px;">SET WALLET</button></div>
+            <div class="info-card"><div class="info-label">🏆 USERNAME</div><div class="info-value" id="profileUsername">—</div></div>
+            <div class="info-card"><div class="info-label">📧 EMAIL</div><div class="info-value" id="profileEmail">—</div></div>
+            <div class="info-card"><div class="info-label">💎 BNB WALLET</div><div class="info-value" id="profileWallet">Not linked</div><button class="edit-btn" id="setWalletBtn" style="margin-top:8px;">🔗 CONNECT</button></div>
         </div>
 
         <div class="referral-box">
-            <div>🎁 REFER & EARN 1500 PMT PER FRIEND!</div>
-            <div class="referral-code" id="referralCode">LOADING...</div>
-            <button class="copy-ref-btn" id="copyReferralBtn">📋 COPY REFERRAL LINK</button>
-            <div id="referralStats" style="margin-top:10px;">Referrals: 0 | Earned: 0 PMT</div>
+            <div>🎁 REFER & EARN 1500 PMT PER FRIEND! 🎁</div>
+            <div class="referral-code" id="referralCode">——</div>
+            <button class="copy-ref-btn" id="copyReferralBtn">📎 COPY REFERRAL LINK</button>
+            <div id="referralStats" style="margin-top:12px; font-weight:600;">Referrals: 0 | Earned: 0 PMT</div>
         </div>
 
-        <div class="info-card" style="margin-top:16px;">
-            <div class="info-label">EARNINGS</div>
+        <div class="info-card" style="margin-top:20px;">
+            <div class="info-label">💰 EARNINGS BREAKDOWN</div>
             <div id="earningsBreakdown">
-                <div style="display:flex; justify-content:space-between;"><span>🚀 Neon Rush</span><span id="breakdownNeon">0 PMT</span></div>
-                <div style="display:flex; justify-content:space-between;"><span>🍍 Fruit Rush</span><span id="breakdownFruit">0 PMT</span></div>
-                <div style="display:flex; justify-content:space-between;"><span>🧩 Slide Puzzle</span><span id="breakdownSlide">0 PMT</span></div>
-                <div style="display:flex; justify-content:space-between;"><span>👥 Referrals</span><span id="breakdownReferral">0 PMT</span></div>
-                <div style="display:flex; justify-content:space-between; border-top:1px solid rgba(0,255,255,0.2); margin-top:8px; padding-top:8px;"><span>💰 TOTAL</span><span id="breakdownTotal">0 PMT</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>🚀 NEON RUSH</span><span id="breakdownNeon">0 PMT</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>🍍 FRUIT RUSH</span><span id="breakdownFruit">0 PMT</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>🧩 SLIDE PUZZLE</span><span id="breakdownSlide">0 PMT</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>👥 REFERRALS</span><span id="breakdownReferral">0 PMT</span></div>
+                <div style="display:flex; justify-content:space-between; border-top:1px solid cyan; margin-top:12px; padding-top:10px;"><span>🔮 TOTAL PMT</span><span id="breakdownTotal">0 PMT</span></div>
             </div>
         </div>
 
-        <div class="withdraw-section" style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:16px; border-top:1px solid rgba(0,255,255,0.15);">
-            <div><div class="info-label">MIN WITHDRAWAL: 1000 PMT</div><div>BNB Chain</div></div>
-            <button class="withdraw-btn" id="withdrawBtn">💰 WITHDRAW</button>
+        <div class="withdraw-section" style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; padding-top:12px; border-top:1px solid rgba(0,255,255,0.4);">
+            <div><div class="info-label">MIN WITHDRAW: 1000 PMT</div><div>⚡ BNB Chain (BEP-20)</div></div>
+            <button class="withdraw-btn" id="withdrawBtn">💸 WITHDRAW</button>
         </div>
     </div>
+</div>
+
+<!-- FULLSCREEN OVERLAY (merged from second code) -->
+<div id="fullscreenGameOverlay">
+    <iframe id="fullscreenGameFrame"></iframe>
+    <button id="closeFullscreenGame">✕ CLOSE GAME</button>
 </div>
 
 <div id="authOverlay" class="auth-overlay">
     <div class="auth-card">
         <div class="auth-title">PMT ARCADE</div>
         <div id="loginFormContent">
-            <input type="email" id="loginEmail" class="auth-input" placeholder="Email">
-            <div class="password-wrapper">
-                <input type="password" id="loginPassword" placeholder="Password">
-                <button type="button" class="toggle-password" onclick="togglePassword('loginPassword')">👁️</button>
+            <input type="email" id="loginEmail" class="auth-input" placeholder="Email address">
+            <div style="position:relative;">
+                <input type="password" id="loginPassword" placeholder="Password" style="width:100%; padding:12px 20px; background:#0a0a1e; border:1px solid #33ccff; border-radius:60px; color:white;">
+                <button type="button" style="position:absolute; right:12px; top:10px; background:none; border:none; color:cyan;" onclick="window.togglePasswordField('loginPassword')">👁️</button>
             </div>
-            <button class="auth-btn" id="loginBtn">LOGIN</button>
-            <div class="auth-link" id="showRegisterLink">Don't have an account? Register</div>
-            <div class="auth-link" id="showForgotLink">Forgot password?</div>
+            <button class="auth-btn" id="loginBtn">⚡ LOGIN ⚡</button>
+            <div class="auth-link" id="showRegisterLink">🆕 Create account →</div>
+            <div class="auth-link" id="showForgotLink">🔐 Forgot password?</div>
         </div>
         <div id="registerFormContent" style="display:none;">
-            <input type="text" id="regUsername" class="auth-input" placeholder="Username">
+            <input type="text" id="regUsername" class="auth-input" placeholder="Username (nickname)">
             <input type="email" id="regEmail" class="auth-input" placeholder="Email">
-            <div class="password-wrapper">
-                <input type="password" id="regPassword" placeholder="Password">
-                <button type="button" class="toggle-password" onclick="togglePassword('regPassword')">👁️</button>
+            <div style="position:relative;">
+                <input type="password" id="regPassword" placeholder="Password (min 6 chars)" style="width:100%; padding:12px 20px; background:#0a0a1e; border:1px solid #33ccff; border-radius:60px; color:white;">
+                <button type="button" style="position:absolute; right:12px; top:10px; background:none; border:none; color:cyan;" onclick="window.togglePasswordField('regPassword')">👁️</button>
             </div>
             <input type="text" id="regReferralCode" class="auth-input" placeholder="Referral code (optional)">
-            <button class="auth-btn" id="registerBtn">REGISTER (+1500 for referrer!)</button>
-            <div class="auth-link" id="showLoginLink">Already have an account? Login</div>
+            <button class="auth-btn" id="registerBtn">🎮 REGISTER +1500 for referrer!</button>
+            <div class="auth-link" id="showLoginLink">↩️ Back to Login</div>
         </div>
         <div id="forgotFormContent" style="display:none;">
-            <input type="email" id="forgotEmail" class="auth-input" placeholder="Email">
-            <button class="auth-btn" id="resetPasswordBtn">SEND RESET EMAIL</button>
+            <input type="email" id="forgotEmail" class="auth-input" placeholder="Your email">
+            <button class="auth-btn" id="resetPasswordBtn">📧 SEND RESET LINK</button>
             <div class="auth-link" id="backToLoginLink">← Back to Login</div>
         </div>
     </div>
-</div>
-
-<!-- FULLSCREEN GAME OVERLAY -->
-<div id="gameOverlay">
-    <iframe id="gameFrame"></iframe>
-    <button id="closeGame">✕ EXIT GAME</button>
 </div>
 
 <script type="module">
@@ -423,34 +420,26 @@
     };
     
     function showToast(msg) {
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.textContent = msg;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2900);
     }
     
-    window.togglePassword = function(id) {
-        const input = document.getElementById(id);
-        const btn = input.nextElementSibling;
-        if (input.type === 'password') {
-            input.type = 'text';
-            btn.textContent = '🙈';
-        } else {
-            input.type = 'password';
-            btn.textContent = '👁️';
-        }
+    window.togglePasswordField = function(id) {
+        const inp = document.getElementById(id);
+        if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
     };
     
-    function generateReferralCode() {
-        return Math.random().toString(36).substring(2, 10).toUpperCase();
+    function genReferralCode() {
+        return 'PMT' + Math.random().toString(36).substring(2, 9).toUpperCase();
     }
     
     async function loadUserData(uid) {
-        const userDoc = await getDoc(doc(db, 'users', uid));
-        if (userDoc.exists()) {
-            currentUserData = userDoc.data();
-            console.log("✅ User data loaded:", currentUserData.username, "Balance:", currentUserData.balance);
+        const snap = await getDoc(doc(db, 'users', uid));
+        if (snap.exists()) {
+            currentUserData = snap.data();
             return currentUserData;
         }
         return null;
@@ -458,167 +447,121 @@
     
     async function updateUI() {
         if (!currentUserData) return;
-        document.getElementById('headerUsername').textContent = currentUserData.username;
-        document.getElementById('headerBalance').textContent = (currentUserData.balance || 0).toFixed(3) + ' PMT';
-        document.getElementById('profileUsername').textContent = currentUserData.username;
-        document.getElementById('profileEmail').textContent = currentUserData.email;
-        document.getElementById('profileWallet').textContent = currentUserData.wallet ? currentUserData.wallet.slice(0,10)+'...' : 'Not set';
-        
-        const earnings = currentUserData.gameEarnings || { neon: 0, fruit: 0, slide: 0 };
-        const referralEarnings = currentUserData.referralEarnings || 0;
-        
-        document.getElementById('breakdownNeon').textContent = earnings.neon.toFixed(3) + ' PMT';
-        document.getElementById('breakdownFruit').textContent = earnings.fruit.toFixed(3) + ' PMT';
-        document.getElementById('breakdownSlide').textContent = earnings.slide.toFixed(3) + ' PMT';
-        document.getElementById('breakdownReferral').textContent = referralEarnings.toFixed(3) + ' PMT';
-        document.getElementById('breakdownTotal').textContent = (currentUserData.balance || 0).toFixed(3) + ' PMT';
-        document.getElementById('earnedNeon').textContent = earnings.neon.toFixed(3) + ' PMT';
-        document.getElementById('earnedFruit').textContent = earnings.fruit.toFixed(3) + ' PMT';
-        document.getElementById('earnedSlide').textContent = earnings.slide.toFixed(3) + ' PMT';
-        document.getElementById('referralCode').textContent = currentUserData.referralCode;
-        document.getElementById('referralStats').innerHTML = `Referrals: ${currentUserData.referredUsersCount || 0} | Earned: ${referralEarnings.toFixed(3)} PMT`;
+        document.getElementById('headerUsername').innerText = currentUserData.username;
+        document.getElementById('headerBalance').innerHTML = (currentUserData.balance || 0).toFixed(3) + ' PMT';
+        document.getElementById('profileUsername').innerText = currentUserData.username;
+        document.getElementById('profileEmail').innerText = currentUserData.email;
+        const walletShort = currentUserData.wallet ? currentUserData.wallet.slice(0,8)+'...'+currentUserData.wallet.slice(-6) : 'Not linked';
+        document.getElementById('profileWallet').innerText = walletShort;
+        const earnings = currentUserData.gameEarnings || { neon:0, fruit:0, slide:0 };
+        const refEarn = currentUserData.referralEarnings || 0;
+        document.getElementById('breakdownNeon').innerHTML = earnings.neon.toFixed(3) + ' PMT';
+        document.getElementById('breakdownFruit').innerHTML = earnings.fruit.toFixed(3) + ' PMT';
+        document.getElementById('breakdownSlide').innerHTML = earnings.slide.toFixed(3) + ' PMT';
+        document.getElementById('breakdownReferral').innerHTML = refEarn.toFixed(3) + ' PMT';
+        document.getElementById('breakdownTotal').innerHTML = (currentUserData.balance || 0).toFixed(3) + ' PMT';
+        document.getElementById('earnedNeon').innerHTML = earnings.neon.toFixed(3) + ' PMT';
+        document.getElementById('earnedFruit').innerHTML = earnings.fruit.toFixed(3) + ' PMT';
+        document.getElementById('earnedSlide').innerHTML = earnings.slide.toFixed(3) + ' PMT';
+        document.getElementById('referralCode').innerText = currentUserData.referralCode;
+        document.getElementById('referralStats').innerHTML = `Referrals: ${currentUserData.referredUsersCount || 0} | Earned: ${refEarn.toFixed(3)} PMT`;
     }
     
     async function addEarnings(gameId, amount) {
-        if (!currentAuthUser) {
-            console.log("❌ No user logged in");
-            return;
-        }
-        
+        if (!currentAuthUser) { console.warn("no auth"); return; }
         let gameKey = gameId === 'fruitrush' ? 'fruit' : (gameId === 'slidepuzzle' ? 'slide' : 'neon');
         const userRef = doc(db, 'users', currentAuthUser.uid);
-        
-        console.log(`💰 Adding ${amount} PMT to ${gameKey}`);
-        
         try {
-            const userDoc = await getDoc(userRef);
-            if (!userDoc.exists()) {
-                console.log("❌ User document not found");
-                return;
-            }
-            
-            const currentData = userDoc.data();
-            const currentBalance = currentData.balance || 0;
-            const currentEarnings = currentData.gameEarnings || { neon: 0, fruit: 0, slide: 0 };
-            const currentTransactions = currentData.transactions || [];
-            
-            currentEarnings[gameKey] = (currentEarnings[gameKey] || 0) + amount;
-            
-            const newTransaction = {
-                date: new Date().toLocaleString(),
-                game: GAMES[gameId]?.name || gameId,
-                amount: amount
-            };
-            
+            const snap = await getDoc(userRef);
+            if (!snap.exists()) return;
+            const data = snap.data();
+            const currentBalance = data.balance || 0;
+            const gameEarnings = data.gameEarnings || { neon:0, fruit:0, slide:0 };
+            const transactions = data.transactions || [];
+            gameEarnings[gameKey] = (gameEarnings[gameKey] || 0) + amount;
+            const newTransaction = { date: new Date().toISOString(), game: GAMES[gameId]?.name || gameId, amount: amount };
             await updateDoc(userRef, {
                 balance: currentBalance + amount,
-                [`gameEarnings.${gameKey}`]: currentEarnings[gameKey],
-                transactions: [...currentTransactions, newTransaction]
+                [`gameEarnings.${gameKey}`]: gameEarnings[gameKey],
+                transactions: [...transactions, newTransaction]
             });
-            
             await loadUserData(currentAuthUser.uid);
             updateUI();
             showToast(`🎉 +${amount} PMT from ${GAMES[gameId]?.name}!`);
-            if (typeof confetti === 'function') confetti({ particleCount: 50, spread: 40 });
-            console.log(`✅ Successfully added ${amount} PMT`);
-        } catch (error) {
-            console.error("❌ Error adding earnings:", error);
+            if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 55, origin: { y: 0.6 } });
+        } catch (err) {
+            console.error("earn err", err);
+            showToast("Earn failed, retry");
         }
     }
     
-    // Listen for messages from game (inside iframe)
+    // GLOBAL message listener for earnings (works inside iframes)
     window.addEventListener('message', (e) => {
-        console.log("📩 MAIN PAGE received message:", e.data);
-        if (e.data && e.data.type === 'earnPMT') {
-            console.log(`🎯 EARNING DETECTED! Game: ${e.data.game}, Amount: ${e.data.amount}`);
+        if (e.data && e.data.type === 'earnPMT' && e.data.game && typeof e.data.amount === 'number') {
             addEarnings(e.data.game, e.data.amount);
         }
     });
     
-    // Open game in fullscreen overlay
-    window.openGame = function(url) {
-        const overlay = document.getElementById("gameOverlay");
-        const frame = document.getElementById("gameFrame");
-        frame.src = url;
-        overlay.style.display = "block";
-    };
-    
-    // Close game overlay
-    document.getElementById("closeGame").onclick = function() {
-        document.getElementById("gameOverlay").style.display = "none";
-        document.getElementById("gameFrame").src = "";
-    };
-    
     async function processReferralBonus(newUserId, referrerCode) {
         if (!referrerCode) return;
         const q = query(collection(db, 'users'), where('referralCode', '==', referrerCode));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-            const referrer = snapshot.docs[0];
-            if (referrer.id !== newUserId) {
-                const referrerRef = doc(db, 'users', referrer.id);
-                const referrerData = referrer.data();
-                const currentTransactions = referrerData.transactions || [];
-                
-                await updateDoc(referrerRef, {
-                    balance: (referrerData.balance || 0) + 1500,
-                    referralEarnings: (referrerData.referralEarnings || 0) + 1500,
-                    referredUsersCount: (referrerData.referredUsersCount || 0) + 1,
-                    transactions: [...currentTransactions, {
-                        date: new Date().toLocaleString(),
-                        game: 'Referral Bonus',
-                        amount: 1500
-                    }]
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+            const referrerDoc = snap.docs[0];
+            if (referrerDoc.id !== newUserId) {
+                const ref = doc(db, 'users', referrerDoc.id);
+                const refData = referrerDoc.data();
+                const newBalance = (refData.balance || 0) + 1500;
+                const newRefEarn = (refData.referralEarnings || 0) + 1500;
+                const newCount = (refData.referredUsersCount || 0) + 1;
+                const txList = refData.transactions || [];
+                await updateDoc(ref, {
+                    balance: newBalance,
+                    referralEarnings: newRefEarn,
+                    referredUsersCount: newCount,
+                    transactions: [...txList, { date: new Date().toISOString(), game: 'Referral Bonus', amount: 1500 }]
                 });
-                showToast('🎁 Referrer got 1500 PMT!');
+                showToast('🎁 Referrer earned 1500 PMT!');
             }
         }
     }
     
     async function login() {
         const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
-        if (!email || !password) { showToast('Fill all fields'); return; }
+        const pwd = document.getElementById('loginPassword').value;
+        if (!email || !pwd) { showToast('Enter credentials'); return; }
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            showToast('✅ Login successful!');
-        } catch (error) {
-            showToast('❌ Login failed: ' + error.message);
-        }
+            await signInWithEmailAndPassword(auth, email, pwd);
+            showToast('✅ Welcome back.');
+        } catch (err) { showToast('❌ Login fail: ' + err.message); }
     }
     
     async function register() {
         const username = document.getElementById('regUsername').value.trim();
         const email = document.getElementById('regEmail').value.trim();
-        const password = document.getElementById('regPassword').value;
-        const referralCode = document.getElementById('regReferralCode').value.trim();
-        
-        if (!username || !email || !password) { showToast('Fill all fields'); return; }
-        if (password.length < 6) { showToast('Password min 6 chars'); return; }
-        
+        const pwd = document.getElementById('regPassword').value;
+        const referral = document.getElementById('regReferralCode').value.trim();
+        if (!username || !email || !pwd) { showToast('All fields required'); return; }
+        if (pwd.length < 6) { showToast('Password min 6 characters'); return; }
         try {
-            const userCred = await createUserWithEmailAndPassword(auth, email, password);
-            const newReferralCode = generateReferralCode();
-            
+            const userCred = await createUserWithEmailAndPassword(auth, email, pwd);
+            const newCode = genReferralCode();
             await setDoc(doc(db, 'users', userCred.user.uid), {
                 username: username,
                 email: email,
                 wallet: null,
-                balance: 5,
-                totalEarned: 5,
-                referralCode: newReferralCode,
+                balance: 8,
+                totalEarned: 8,
+                referralCode: newCode,
                 referralEarnings: 0,
                 referredUsersCount: 0,
                 gameEarnings: { neon: 0, fruit: 0, slide: 0 },
-                transactions: [{ date: new Date().toLocaleString(), game: 'Welcome Bonus', amount: 5 }],
+                transactions: [{ date: new Date().toISOString(), game: 'Welcome Bonus', amount: 8 }],
                 joinDate: new Date().toLocaleDateString()
             });
-            
-            if (referralCode) await processReferralBonus(userCred.user.uid, referralCode);
-            showToast('✅ Registration successful! +5 PMT!');
-        } catch (error) {
-            showToast('❌ Registration failed: ' + error.message);
-        }
+            if (referral) await processReferralBonus(userCred.user.uid, referral);
+            showToast('✅ Registered! +8 PMT welcome!');
+        } catch (err) { showToast('❌ Register error: ' + err.message); }
     }
     
     async function resetPassword() {
@@ -626,33 +569,31 @@
         if (!email) { showToast('Enter email'); return; }
         try {
             await sendPasswordResetEmail(auth, email);
-            showToast('📧 Reset email sent!');
-        } catch (error) {
-            showToast('❌ Error: ' + error.message);
-        }
+            showToast('📨 Password reset email sent!');
+        } catch (err) { showToast('Reset failed: ' + err.message); }
     }
     
     function logout() { auth.signOut(); }
     
     async function setWallet() {
-        if (!currentAuthUser) { showToast('Login first'); return; }
-        const wallet = prompt('Enter BNB Chain wallet address (0x...):');
-        if (wallet?.match(/^0x[a-fA-F0-9]{40}$/)) {
-            await updateDoc(doc(db, 'users', currentAuthUser.uid), { wallet: wallet });
+        if (!currentAuthUser) { showToast('Login required'); return; }
+        const addr = prompt('Enter BNB Chain wallet (0x...):');
+        if (addr && addr.match(/^0x[a-fA-F0-9]{40}$/)) {
+            await updateDoc(doc(db, 'users', currentAuthUser.uid), { wallet: addr });
             await loadUserData(currentAuthUser.uid);
             updateUI();
-            showToast('✅ Wallet saved!');
-        } else if (wallet) { showToast('❌ Invalid address'); }
+            showToast('✅ Wallet updated!');
+        } else if (addr) showToast('❌ Invalid BNB address');
     }
     
     async function editProfile() {
         if (!currentUserData) return;
         const newEmail = prompt('New email:', currentUserData.email);
-        if (newEmail?.trim() && newEmail !== currentUserData.email) {
+        if (newEmail && newEmail !== currentUserData.email && newEmail.includes('@')) {
             await updateDoc(doc(db, 'users', currentAuthUser.uid), { email: newEmail.trim() });
             await loadUserData(currentAuthUser.uid);
             updateUI();
-            showToast('✅ Email updated!');
+            showToast('Email updated');
         }
     }
     
@@ -660,36 +601,89 @@
         if (!currentUserData) return;
         const link = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralCode}`;
         navigator.clipboard.writeText(link);
-        showToast('📋 Referral link copied!');
+        showToast('🔗 Referral link copied!');
     }
     
     async function withdraw() {
-        if (!currentUserData?.wallet) { showToast('Set wallet first'); return; }
-        if (currentUserData.balance < 1000) { showToast(`Need 1000 PMT, have ${currentUserData.balance.toFixed(3)}`); return; }
-        showToast('⏳ Withdrawal feature - backend pending');
+        if (!currentUserData?.wallet) { showToast('Connect BNB wallet first'); return; }
+        if ((currentUserData.balance || 0) < 1000) { showToast(`Minimum 1000 PMT required. You have ${(currentUserData.balance||0).toFixed(2)} PMT`); return; }
+        showToast('⏳ Withdrawal request: manual processing soon.');
+    }
+    
+    // FULLSCREEN OVERLAY CONTROLS (merged)
+    function openGameFullscreen(url) {
+        const overlay = document.getElementById("fullscreenGameOverlay");
+        const frame = document.getElementById("fullscreenGameFrame");
+        frame.src = url;
+        overlay.style.display = "block";
+    }
+    function closeGameFullscreen() {
+        const overlay = document.getElementById("fullscreenGameOverlay");
+        const frame = document.getElementById("fullscreenGameFrame");
+        overlay.style.display = "none";
+        frame.src = "";
+    }
+    document.getElementById("closeFullscreenGame").onclick = closeGameFullscreen;
+    
+    // Attach fullscreen + desktop preview logic
+    function attachGameEvents() {
+        document.querySelectorAll('.game-card').forEach(card => {
+            const gameId = card.dataset.game;
+            if (!gameId) return;
+            const mobileBtn = card.querySelector('.mobile-play-btn');
+            const desktopFsBtn = card.querySelector('.desktop-fullscreen-btn');
+            if (mobileBtn) {
+                mobileBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (GAMES[gameId]) openGameFullscreen(GAMES[gameId].url);
+                };
+            }
+            if (desktopFsBtn) {
+                desktopFsBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (GAMES[gameId]) openGameFullscreen(GAMES[gameId].url);
+                };
+            }
+            card.addEventListener('click', (e) => {
+                if (e.target.classList.contains('mobile-play-btn') || e.target.classList.contains('desktop-fullscreen-btn')) return;
+                document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                if (window.innerWidth > 768 && GAMES[gameId]) {
+                    document.getElementById('gameFrame').src = GAMES[gameId].url;
+                }
+            });
+        });
     }
     
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentAuthUser = user;
-            const userData = await loadUserData(user.uid);
-            if (userData) {
-                currentUserData = userData;
+            const data = await loadUserData(user.uid);
+            if (data) {
+                currentUserData = data;
                 document.getElementById('authOverlay').style.display = 'none';
                 document.getElementById('siteHeader').style.display = 'flex';
                 document.getElementById('mainContainer').style.display = 'block';
                 updateUI();
-                console.log("🎮 App ready!");
-            } else {
-                showToast("User profile not found. Please re-register.");
-                await auth.signOut();
-            }
+                attachGameEvents();
+                if (window.innerWidth > 768) {
+                    const active = document.querySelector('.game-card.active');
+                    if (active && GAMES[active.dataset.game]) {
+                        document.getElementById('gameFrame').src = GAMES[active.dataset.game].url;
+                    } else {
+                        const first = document.querySelector('.game-card');
+                        if (first) document.getElementById('gameFrame').src = GAMES[first.dataset.game].url;
+                        if (first) first.classList.add('active');
+                    }
+                }
+            } else { await auth.signOut(); showToast('Profile missing'); }
         } else {
-            currentAuthUser = null;
-            currentUserData = null;
+            currentAuthUser = null; currentUserData = null;
             document.getElementById('authOverlay').style.display = 'flex';
             document.getElementById('siteHeader').style.display = 'none';
             document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('gameFrame').src = 'about:blank';
+            closeGameFullscreen();
         }
     });
     
@@ -702,28 +696,12 @@
     document.getElementById('copyReferralBtn').onclick = copyReferralLink;
     document.getElementById('withdrawBtn').onclick = withdraw;
     
-    document.getElementById('showRegisterLink').onclick = () => {
-        document.getElementById('loginFormContent').style.display = 'none';
-        document.getElementById('registerFormContent').style.display = 'block';
-        document.getElementById('forgotFormContent').style.display = 'none';
-    };
-    document.getElementById('showLoginLink').onclick = () => {
-        document.getElementById('loginFormContent').style.display = 'block';
-        document.getElementById('registerFormContent').style.display = 'none';
-        document.getElementById('forgotFormContent').style.display = 'none';
-    };
-    document.getElementById('showForgotLink').onclick = () => {
-        document.getElementById('loginFormContent').style.display = 'none';
-        document.getElementById('registerFormContent').style.display = 'none';
-        document.getElementById('forgotFormContent').style.display = 'block';
-    };
-    document.getElementById('backToLoginLink').onclick = () => {
-        document.getElementById('loginFormContent').style.display = 'block';
-        document.getElementById('registerFormContent').style.display = 'none';
-        document.getElementById('forgotFormContent').style.display = 'none';
-    };
+    document.getElementById('showRegisterLink').onclick = () => { document.getElementById('loginFormContent').style.display='none'; document.getElementById('registerFormContent').style.display='block'; document.getElementById('forgotFormContent').style.display='none'; };
+    document.getElementById('showLoginLink').onclick = () => { document.getElementById('loginFormContent').style.display='block'; document.getElementById('registerFormContent').style.display='none'; document.getElementById('forgotFormContent').style.display='none'; };
+    document.getElementById('showForgotLink').onclick = () => { document.getElementById('loginFormContent').style.display='none'; document.getElementById('registerFormContent').style.display='none'; document.getElementById('forgotFormContent').style.display='block'; };
+    document.getElementById('backToLoginLink').onclick = () => { document.getElementById('loginFormContent').style.display='block'; document.getElementById('registerFormContent').style.display='none'; document.getElementById('forgotFormContent').style.display='none'; };
     
-    console.log("🎮 PMT Arcade ready! Games open in fullscreen overlay.");
+    console.log("PMT ARCADE + Fullscreen Overlay | Ready");
 </script>
 </body>
 </html>
