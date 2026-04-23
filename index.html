@@ -93,7 +93,7 @@
             overflow: hidden;
             aspect-ratio: 16 / 10;
         }
-        .game-frame { width: 100%; height: 100%; border: none; }
+        .game-frame { width: 100%; height: 100%; border: none; background: #050510; }
         .profile-section {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 20px;
@@ -107,7 +107,7 @@
             padding: 14px;
         }
         .info-label { font-size: 0.65rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; margin-bottom: 6px; }
-        .info-value { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #00ffff; }
+        .info-value { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #00ffff; word-break: break-all; }
         .referral-box {
             background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.05));
             border-radius: 16px;
@@ -361,7 +361,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, runTransaction, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
     
     const firebaseConfig = {
         apiKey: "AIzaSyAOgqAHHRLTr_2f2GHOX1jempvveDj-Jnk",
@@ -413,6 +413,7 @@
         const userDoc = await getDoc(doc(db, 'users', uid));
         if (userDoc.exists()) {
             currentUserData = userDoc.data();
+            console.log("User data loaded:", currentUserData.username, "Balance:", currentUserData.balance);
             return currentUserData;
         }
         return null;
@@ -442,39 +443,81 @@
     }
     
     async function addEarnings(gameId, amount) {
-        if (!currentAuthUser) return;
+        if (!currentAuthUser) {
+            console.log("No user logged in, cannot add earnings");
+            return;
+        }
+        
         let gameKey = gameId === 'fruitrush' ? 'fruit' : (gameId === 'slidepuzzle' ? 'slide' : 'neon');
         const userRef = doc(db, 'users', currentAuthUser.uid);
         
-        await runTransaction(db, async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            const currentEarnings = userDoc.data().gameEarnings || { neon: 0, fruit: 0, slide: 0 };
-            currentEarnings[gameKey] = (currentEarnings[gameKey] || 0) + amount;
-            transaction.update(userRef, {
-                balance: (userDoc.data().balance || 0) + amount,
-                [`gameEarnings.${gameKey}`]: currentEarnings[gameKey]
+        console.log(`Adding ${amount} PMT to ${gameKey} for user ${currentAuthUser.uid}`);
+        
+        try {
+            await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists()) {
+                    throw new Error("User document does not exist!");
+                }
+                
+                const currentBalance = userDoc.data().balance || 0;
+                const currentEarnings = userDoc.data().gameEarnings || { neon: 0, fruit: 0, slide: 0 };
+                const currentTransactions = userDoc.data().transactions || [];
+                
+                currentEarnings[gameKey] = (currentEarnings[gameKey] || 0) + amount;
+                
+                const newTransaction = {
+                    date: new Date().toLocaleString(),
+                    game: GAMES[gameId]?.name || gameId,
+                    amount: amount
+                };
+                
+                transaction.update(userRef, {
+                    balance: currentBalance + amount,
+                    [`gameEarnings.${gameKey}`]: currentEarnings[gameKey],
+                    transactions: [...currentTransactions, newTransaction]
+                });
             });
-        });
-        await loadUserData(currentAuthUser.uid);
-        updateUI();
-        showToast(`+${amount} PMT from ${GAMES[gameId]?.name}!`);
-        if (typeof confetti === 'function') confetti({ particleCount: 50, spread: 40 });
+            
+            await loadUserData(currentAuthUser.uid);
+            updateUI();
+            showToast(`+${amount} PMT from ${GAMES[gameId]?.name}!`);
+            if (typeof confetti === 'function') confetti({ particleCount: 50, spread: 40 });
+        } catch (error) {
+            console.error("Error adding earnings:", error);
+            showToast("Error adding earnings: " + error.message);
+        }
     }
     
+    // FIXED: Message listener with debug logging
     window.addEventListener('message', (e) => {
-        if (e.data?.type === 'earnPMT') addEarnings(e.data.game, e.data.amount);
+        console.log("📩 Main page received message:", e.data);
+        if (e.data && e.data.type === 'earnPMT') {
+            console.log(`✅ Earning detected! Game: ${e.data.game}, Amount: ${e.data.amount}`);
+            addEarnings(e.data.game, e.data.amount);
+        }
     });
     
     async function processReferralBonus(newUserId, referrerCode) {
+        if (!referrerCode) return;
         const q = query(collection(db, 'users'), where('referralCode', '==', referrerCode));
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
             const referrer = snapshot.docs[0];
             if (referrer.id !== newUserId) {
-                await updateDoc(doc(db, 'users', referrer.id), {
-                    balance: (referrer.data().balance || 0) + 1500,
-                    referralEarnings: (referrer.data().referralEarnings || 0) + 1500,
-                    referredUsersCount: (referrer.data().referredUsersCount || 0) + 1
+                const referrerRef = doc(db, 'users', referrer.id);
+                const referrerData = referrer.data();
+                const currentTransactions = referrerData.transactions || [];
+                
+                await updateDoc(referrerRef, {
+                    balance: (referrerData.balance || 0) + 1500,
+                    referralEarnings: (referrerData.referralEarnings || 0) + 1500,
+                    referredUsersCount: (referrerData.referredUsersCount || 0) + 1,
+                    transactions: [...currentTransactions, {
+                        date: new Date().toLocaleString(),
+                        game: 'Referral Bonus',
+                        amount: 1500
+                    }]
                 });
                 showToast('Referrer got 1500 PMT!');
             }
@@ -504,12 +547,22 @@
         
         try {
             const userCred = await createUserWithEmailAndPassword(auth, email, password);
+            const newReferralCode = generateReferralCode();
+            
             await setDoc(doc(db, 'users', userCred.user.uid), {
-                username, email, wallet: null, balance: 5, totalEarned: 5,
-                referralCode: generateReferralCode(), referralEarnings: 0, referredUsersCount: 0,
+                username: username,
+                email: email,
+                wallet: null,
+                balance: 5,
+                totalEarned: 5,
+                referralCode: newReferralCode,
+                referralEarnings: 0,
+                referredUsersCount: 0,
                 gameEarnings: { neon: 0, fruit: 0, slide: 0 },
+                transactions: [{ date: new Date().toLocaleString(), game: 'Welcome Bonus', amount: 5 }],
                 joinDate: new Date().toLocaleDateString()
             });
+            
             if (referralCode) await processReferralBonus(userCred.user.uid, referralCode);
             showToast('Registration successful! +5 PMT!');
         } catch (error) {
@@ -522,7 +575,7 @@
         if (!email) { showToast('Enter email'); return; }
         try {
             await sendPasswordResetEmail(auth, email);
-            showToast('Reset email sent!');
+            showToast('Reset email sent! Check your inbox.');
         } catch (error) {
             showToast('Error: ' + error.message);
         }
@@ -532,18 +585,18 @@
     
     async function setWallet() {
         if (!currentAuthUser) { showToast('Login first'); return; }
-        const wallet = prompt('Enter BNB Chain wallet address (0x...):');
+        const wallet = prompt('Enter BNB Chain wallet address (0x...):\n\nYou can get this from:\n• Binance Web3 Wallet\n• Trust Wallet\n• MetaMask');
         if (wallet?.match(/^0x[a-fA-F0-9]{40}$/)) {
-            await updateDoc(doc(db, 'users', currentAuthUser.uid), { wallet });
+            await updateDoc(doc(db, 'users', currentAuthUser.uid), { wallet: wallet });
             await loadUserData(currentAuthUser.uid);
             updateUI();
             showToast('Wallet saved!');
-        } else if (wallet) { showToast('Invalid address'); }
+        } else if (wallet) { showToast('Invalid BNB Chain address!'); }
     }
     
     async function editProfile() {
         if (!currentUserData) return;
-        const newEmail = prompt('New email:', currentUserData.email);
+        const newEmail = prompt('Enter new email:', currentUserData.email);
         if (newEmail?.trim() && newEmail !== currentUserData.email) {
             await updateDoc(doc(db, 'users', currentAuthUser.uid), { email: newEmail.trim() });
             await loadUserData(currentAuthUser.uid);
@@ -554,13 +607,14 @@
     
     function copyReferralLink() {
         if (!currentUserData) return;
-        navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralCode}`);
-        showToast('Referral link copied!');
+        const link = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralCode}`;
+        navigator.clipboard.writeText(link);
+        showToast('Referral link copied! Share with friends!');
     }
     
     async function withdraw() {
         if (!currentUserData?.wallet) { showToast('Set wallet first'); return; }
-        if (currentUserData.balance < 1000) { showToast(`Need 1000 PMT, have ${currentUserData.balance.toFixed(3)}`); return; }
+        if (currentUserData.balance < 1000) { showToast(`Minimum 1000 PMT! You have ${currentUserData.balance.toFixed(3)} PMT`); return; }
         showToast('Withdrawal feature ready - backend pending');
     }
     
@@ -584,6 +638,7 @@
             document.getElementById('authOverlay').style.display = 'flex';
             document.getElementById('siteHeader').style.display = 'none';
             document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('gameFrame').src = 'about:blank';
         }
     });
     
@@ -617,23 +672,16 @@
         document.getElementById('forgotFormContent').style.display = 'none';
     };
     
-    // ========== FIXED GAME CARD CLICK HANDLERS ==========
-    // Desktop: Click card → highlight + load game in iframe
+    // Game card click handlers
     document.querySelectorAll('.game-card').forEach(card => {
         card.addEventListener('click', (e) => {
-            // Don't trigger if clicking the PLAY button (mobile)
             if (e.target.classList.contains('mobile-play-btn')) return;
-            
             const gameId = card.dataset.game;
             if (!gameId) return;
             
-            // Remove active class from all cards
             document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
-            
-            // Add active class to clicked card
             card.classList.add('active');
             
-            // DESKTOP (width > 768px): load game in iframe
             if (window.innerWidth > 768) {
                 const gameUrl = GAMES[gameId]?.url;
                 if (gameUrl) {
@@ -643,7 +691,6 @@
         });
     });
     
-    // Mobile PLAY buttons → open in new tab
     document.querySelectorAll('.mobile-play-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -654,7 +701,6 @@
         });
     });
     
-    // Load first game by default on desktop
     if (window.innerWidth > 768) {
         const firstCard = document.querySelector('.game-card');
         if (firstCard) {
@@ -666,7 +712,7 @@
         }
     }
     
-    console.log("PMT Arcade ready!");
+    console.log("PMT Arcade ready! Waiting for game messages...");
 </script>
 </body>
 </html>
