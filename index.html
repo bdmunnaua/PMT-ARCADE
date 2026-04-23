@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <meta name="theme-color" content="#0a0a1a">
     <title>PMT ARCADE | Referrals · Cross-Device Sync</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
@@ -360,7 +359,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, runTransaction, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
     
     const firebaseConfig = {
         apiKey: "AIzaSyAOgqAHHRLTr_2f2GHOX1jempvveDj-Jnk",
@@ -409,18 +408,27 @@
     }
     
     async function loadUserData(uid) {
+        console.log("Loading user data for UID:", uid);
         const userDoc = await getDoc(doc(db, 'users', uid));
         if (userDoc.exists()) {
             currentUserData = userDoc.data();
+            console.log("User data loaded:", currentUserData);
             return currentUserData;
+        } else {
+            console.log("No user document found!");
+            return null;
         }
-        return null;
     }
     
     async function updateUI() {
-        if (!currentUserData) return;
+        if (!currentUserData) {
+            console.log("No user data to display");
+            return;
+        }
+        console.log("Updating UI with:", currentUserData);
+        
         document.getElementById('headerUsername').textContent = currentUserData.username;
-        document.getElementById('headerBalance').textContent = currentUserData.balance.toFixed(3) + ' PMT';
+        document.getElementById('headerBalance').textContent = (currentUserData.balance || 0).toFixed(3) + ' PMT';
         document.getElementById('profileUsername').textContent = currentUserData.username;
         document.getElementById('profileEmail').textContent = currentUserData.email;
         document.getElementById('profileWallet').textContent = currentUserData.wallet ? currentUserData.wallet.slice(0,10)+'...' : 'Not set';
@@ -432,7 +440,7 @@
         document.getElementById('breakdownFruit').textContent = earnings.fruit.toFixed(3) + ' PMT';
         document.getElementById('breakdownSlide').textContent = earnings.slide.toFixed(3) + ' PMT';
         document.getElementById('breakdownReferral').textContent = referralEarnings.toFixed(3) + ' PMT';
-        document.getElementById('breakdownTotal').textContent = currentUserData.balance.toFixed(3) + ' PMT';
+        document.getElementById('breakdownTotal').textContent = (currentUserData.balance || 0).toFixed(3) + ' PMT';
         document.getElementById('earnedNeon').textContent = earnings.neon.toFixed(3) + ' PMT';
         document.getElementById('earnedFruit').textContent = earnings.fruit.toFixed(3) + ' PMT';
         document.getElementById('earnedSlide').textContent = earnings.slide.toFixed(3) + ' PMT';
@@ -457,7 +465,7 @@
         await loadUserData(currentAuthUser.uid);
         updateUI();
         showToast(`+${amount} PMT from ${GAMES[gameId]?.name}!`);
-        confetti({ particleCount: 50, spread: 40 });
+        if (typeof confetti === 'function') confetti({ particleCount: 50, spread: 40 });
     }
     
     window.addEventListener('message', (e) => {
@@ -485,9 +493,11 @@
         const password = document.getElementById('loginPassword').value;
         if (!email || !password) { showToast('Fill all fields'); return; }
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCred = await signInWithEmailAndPassword(auth, email, password);
+            console.log("Login success:", userCred.user.uid);
             showToast('Login successful!');
         } catch (error) {
+            console.error("Login error:", error);
             showToast('Login failed: ' + error.message);
         }
     }
@@ -503,15 +513,29 @@
         
         try {
             const userCred = await createUserWithEmailAndPassword(auth, email, password);
+            console.log("User created:", userCred.user.uid);
+            
+            const newReferralCode = generateReferralCode();
+            
             await setDoc(doc(db, 'users', userCred.user.uid), {
-                username, email, wallet: null, balance: 5, totalEarned: 5,
-                referralCode: generateReferralCode(), referralEarnings: 0, referredUsersCount: 0,
+                username: username,
+                email: email,
+                wallet: null,
+                balance: 5,
+                totalEarned: 5,
+                referralCode: newReferralCode,
+                referralEarnings: 0,
+                referredUsersCount: 0,
                 gameEarnings: { neon: 0, fruit: 0, slide: 0 },
                 joinDate: new Date().toLocaleDateString()
             });
+            
+            console.log("User data saved to Firestore");
+            
             if (referralCode) await processReferralBonus(userCred.user.uid, referralCode);
             showToast('Registration successful! +5 PMT!');
         } catch (error) {
+            console.error("Registration error:", error);
             showToast('Registration failed: ' + error.message);
         }
     }
@@ -527,21 +551,28 @@
         }
     }
     
-    function logout() { auth.signOut(); }
+    function logout() { 
+        auth.signOut();
+        showToast('Logged out');
+    }
     
     async function setWallet() {
+        if (!currentAuthUser) { showToast('Login first'); return; }
         const wallet = prompt('Enter BNB Chain wallet address (0x...):');
         if (wallet?.match(/^0x[a-fA-F0-9]{40}$/)) {
             await updateDoc(doc(db, 'users', currentAuthUser.uid), { wallet });
             await loadUserData(currentAuthUser.uid);
             updateUI();
             showToast('Wallet saved!');
-        } else { showToast('Invalid address'); }
+        } else if (wallet) { 
+            showToast('Invalid address'); 
+        }
     }
     
     async function editProfile() {
+        if (!currentUserData) return;
         const newEmail = prompt('New email:', currentUserData.email);
-        if (newEmail?.trim()) {
+        if (newEmail?.trim() && newEmail !== currentUserData.email) {
             await updateDoc(doc(db, 'users', currentAuthUser.uid), { email: newEmail.trim() });
             await loadUserData(currentAuthUser.uid);
             updateUI();
@@ -550,6 +581,7 @@
     }
     
     function copyReferralLink() {
+        if (!currentUserData) return;
         navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralCode}`);
         showToast('Referral link copied!');
     }
@@ -557,18 +589,29 @@
     async function withdraw() {
         if (!currentUserData?.wallet) { showToast('Set wallet first'); return; }
         if (currentUserData.balance < 1000) { showToast(`Need 1000 PMT, have ${currentUserData.balance.toFixed(3)}`); return; }
-        // Withdrawal logic here (call your backend)
-        showToast('Withdrawal feature ready');
+        showToast('Withdrawal feature ready - backend pending');
     }
     
+    // MAIN AUTH HANDLER
     onAuthStateChanged(auth, async (user) => {
+        console.log("Auth state changed:", user ? user.uid : "No user");
+        
         if (user) {
             currentAuthUser = user;
-            await loadUserData(user.uid);
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('siteHeader').style.display = 'flex';
-            document.getElementById('mainContainer').style.display = 'block';
-            updateUI();
+            const userData = await loadUserData(user.uid);
+            
+            if (userData) {
+                currentUserData = userData;
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('siteHeader').style.display = 'flex';
+                document.getElementById('mainContainer').style.display = 'block';
+                await updateUI();
+                console.log("UI updated with user data");
+            } else {
+                console.log("No user data found for UID:", user.uid);
+                showToast("User profile not found. Please re-register.");
+                await auth.signOut();
+            }
         } else {
             currentAuthUser = null;
             currentUserData = null;
@@ -578,6 +621,7 @@
         }
     });
     
+    // Event listeners
     document.getElementById('loginBtn').onclick = login;
     document.getElementById('registerBtn').onclick = register;
     document.getElementById('resetPasswordBtn').onclick = resetPassword;
@@ -613,7 +657,7 @@
         card.addEventListener('click', (e) => {
             if (e.target.classList.contains('mobile-play-btn')) return;
             const gameId = card.dataset.game;
-            if (gameId && !window.innerWidth <= 768) {
+            if (gameId && window.innerWidth > 768) {
                 document.getElementById('gameFrame').src = GAMES[gameId]?.url;
             }
         });
@@ -625,6 +669,8 @@
             if (gameId) window.open(GAMES[gameId]?.url, '_blank');
         });
     });
+    
+    console.log("App initialized");
 </script>
 </body>
 </html>
