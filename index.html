@@ -85,15 +85,17 @@
         .game-icon { font-size: 2rem; }
         .game-info h3 { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: #00ffff; }
         .game-earned { margin-left: auto; font-size: 0.7rem; color: #ffdd00; }
-        .mobile-play-btn { display: none; }
-        .game-area {
-            flex: 3;
-            background: rgba(0, 0, 0, 0.3);
+        .play-btn {
+            background: linear-gradient(135deg, #00ffff, #0088ff);
+            border: none;
             border-radius: 20px;
-            overflow: hidden;
-            aspect-ratio: 16 / 10;
+            padding: 8px 14px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #0a0a1a;
         }
-        .game-frame { width: 100%; height: 100%; border: none; background: #050510; }
         .profile-section {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 20px;
@@ -236,17 +238,46 @@
             85% { opacity: 1; bottom: 30px; }
             100% { opacity: 0; bottom: 0; }
         }
+
+        /* FULLSCREEN GAME OVERLAY */
+        #gameOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            z-index: 10000;
+            display: none;
+        }
+        #gameFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        #closeGame {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10001;
+            background: linear-gradient(135deg, #ff0066, #ff3300);
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        #closeGame:hover {
+            background: linear-gradient(135deg, #ff3300, #ff0066);
+            transform: scale(1.02);
+        }
+
         @media (max-width: 768px) {
-            .game-area { display: none; }
-            .mobile-play-btn {
-                display: inline-flex;
-                margin-left: 8px;
-                background: linear-gradient(135deg, #00ffff, #0088ff);
-                border: none;
-                border-radius: 20px;
-                padding: 8px 14px;
-                cursor: pointer;
-            }
+            .profile-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -269,19 +300,19 @@
                     <div class="game-icon">🚀</div>
                     <div class="game-info"><h3>NEON RUSH</h3></div>
                     <div class="game-earned" id="earnedNeon">0 PMT</div>
-                    <button class="mobile-play-btn" data-game="neonrush">▶ PLAY</button>
+                    <button class="play-btn" onclick="openGame('neonrush.html')">▶ PLAY</button>
                 </div>
                 <div class="game-card" data-game="fruitrush">
                     <div class="game-icon">🍍</div>
                     <div class="game-info"><h3>FRUIT RUSH</h3></div>
                     <div class="game-earned" id="earnedFruit">0 PMT</div>
-                    <button class="mobile-play-btn" data-game="fruitrush">▶ PLAY</button>
+                    <button class="play-btn" onclick="openGame('fruitrush.html')">▶ PLAY</button>
                 </div>
                 <div class="game-card" data-game="slidepuzzle">
                     <div class="game-icon">🧩</div>
                     <div class="game-info"><h3>SLIDE PUZZLE</h3></div>
                     <div class="game-earned" id="earnedSlide">0 PMT</div>
-                    <button class="mobile-play-btn" data-game="slidepuzzle">▶ PLAY</button>
+                    <button class="play-btn" onclick="openGame('slidepuzzle.html')">▶ PLAY</button>
                 </div>
             </div>
         </div>
@@ -356,6 +387,12 @@
             <div class="auth-link" id="backToLoginLink">← Back to Login</div>
         </div>
     </div>
+</div>
+
+<!-- FULLSCREEN GAME OVERLAY -->
+<div id="gameOverlay">
+    <iframe id="gameFrame"></iframe>
+    <button id="closeGame">✕ EXIT GAME</button>
 </div>
 
 <script type="module">
@@ -442,7 +479,6 @@
         document.getElementById('referralStats').innerHTML = `Referrals: ${currentUserData.referredUsersCount || 0} | Earned: ${referralEarnings.toFixed(3)} PMT`;
     }
     
-    // SIMPLIFIED addEarnings function - NO transaction for now
     async function addEarnings(gameId, amount) {
         if (!currentAuthUser) {
             console.log("❌ No user logged in");
@@ -452,7 +488,7 @@
         let gameKey = gameId === 'fruitrush' ? 'fruit' : (gameId === 'slidepuzzle' ? 'slide' : 'neon');
         const userRef = doc(db, 'users', currentAuthUser.uid);
         
-        console.log(`💰 Adding ${amount} PMT to ${gameKey} for ${currentAuthUser.uid}`);
+        console.log(`💰 Adding ${amount} PMT to ${gameKey}`);
         
         try {
             const userDoc = await getDoc(userRef);
@@ -487,23 +523,30 @@
             console.log(`✅ Successfully added ${amount} PMT`);
         } catch (error) {
             console.error("❌ Error adding earnings:", error);
-            showToast("Error adding earnings: " + error.message);
         }
     }
     
-    // FIXED: Message listener with debug logging
+    // Listen for messages from game (inside iframe)
     window.addEventListener('message', (e) => {
-        console.log("📩 MAIN PAGE received message:", e.data, "from origin:", e.origin);
+        console.log("📩 MAIN PAGE received message:", e.data);
         if (e.data && e.data.type === 'earnPMT') {
             console.log(`🎯 EARNING DETECTED! Game: ${e.data.game}, Amount: ${e.data.amount}`);
             addEarnings(e.data.game, e.data.amount);
         }
     });
     
-    // Direct function for testing
-    window.testEarnings = function() {
-        console.log("🔵 TEST: Adding 10 PMT manually");
-        addEarnings('neonrush', 10);
+    // Open game in fullscreen overlay
+    window.openGame = function(url) {
+        const overlay = document.getElementById("gameOverlay");
+        const frame = document.getElementById("gameFrame");
+        frame.src = url;
+        overlay.style.display = "block";
+    };
+    
+    // Close game overlay
+    document.getElementById("closeGame").onclick = function() {
+        document.getElementById("gameOverlay").style.display = "none";
+        document.getElementById("gameFrame").src = "";
     };
     
     async function processReferralBonus(newUserId, referrerCode) {
@@ -583,7 +626,7 @@
         if (!email) { showToast('Enter email'); return; }
         try {
             await sendPasswordResetEmail(auth, email);
-            showToast('📧 Reset email sent! Check your inbox.');
+            showToast('📧 Reset email sent!');
         } catch (error) {
             showToast('❌ Error: ' + error.message);
         }
@@ -599,7 +642,7 @@
             await loadUserData(currentAuthUser.uid);
             updateUI();
             showToast('✅ Wallet saved!');
-        } else if (wallet) { showToast('❌ Invalid BNB Chain address!'); }
+        } else if (wallet) { showToast('❌ Invalid address'); }
     }
     
     async function editProfile() {
@@ -622,7 +665,7 @@
     
     async function withdraw() {
         if (!currentUserData?.wallet) { showToast('Set wallet first'); return; }
-        if (currentUserData.balance < 1000) { showToast(`Minimum 1000 PMT! You have ${currentUserData.balance.toFixed(3)} PMT`); return; }
+        if (currentUserData.balance < 1000) { showToast(`Need 1000 PMT, have ${currentUserData.balance.toFixed(3)}`); return; }
         showToast('⏳ Withdrawal feature - backend pending');
     }
     
@@ -636,7 +679,7 @@
                 document.getElementById('siteHeader').style.display = 'flex';
                 document.getElementById('mainContainer').style.display = 'block';
                 updateUI();
-                console.log("🎮 App ready! User:", currentUserData.username);
+                console.log("🎮 App ready!");
             } else {
                 showToast("User profile not found. Please re-register.");
                 await auth.signOut();
@@ -647,7 +690,6 @@
             document.getElementById('authOverlay').style.display = 'flex';
             document.getElementById('siteHeader').style.display = 'none';
             document.getElementById('mainContainer').style.display = 'none';
-            document.getElementById('gameFrame').src = 'about:blank';
         }
     });
     
@@ -681,47 +723,7 @@
         document.getElementById('forgotFormContent').style.display = 'none';
     };
     
-    // Game card click handlers
-    document.querySelectorAll('.game-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-            if (e.target.classList.contains('mobile-play-btn')) return;
-            const gameId = card.dataset.game;
-            if (!gameId) return;
-            
-            document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
-            card.classList.add('active');
-            
-            if (window.innerWidth > 768) {
-                const gameUrl = GAMES[gameId]?.url;
-                if (gameUrl) {
-                    document.getElementById('gameFrame').src = gameUrl;
-                }
-            }
-        });
-    });
-    
-    document.querySelectorAll('.mobile-play-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const gameId = btn.dataset.game;
-            if (gameId) {
-                window.open(GAMES[gameId]?.url, '_blank');
-            }
-        });
-    });
-    
-    if (window.innerWidth > 768) {
-        const firstCard = document.querySelector('.game-card');
-        if (firstCard) {
-            firstCard.classList.add('active');
-            const firstGameId = firstCard.dataset.game;
-            if (firstGameId && GAMES[firstGameId]) {
-                document.getElementById('gameFrame').src = GAMES[firstGameId].url;
-            }
-        }
-    }
-    
-    console.log("🎮 PMT Arcade ready! Type 'testEarnings()' in console to test.");
+    console.log("🎮 PMT Arcade ready! Games open in fullscreen overlay.");
 </script>
 </body>
 </html>
