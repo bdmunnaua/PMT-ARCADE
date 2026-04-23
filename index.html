@@ -361,7 +361,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, runTransaction, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
     
     const firebaseConfig = {
         apiKey: "AIzaSyAOgqAHHRLTr_2f2GHOX1jempvveDj-Jnk",
@@ -413,7 +413,7 @@
         const userDoc = await getDoc(doc(db, 'users', uid));
         if (userDoc.exists()) {
             currentUserData = userDoc.data();
-            console.log("User data loaded:", currentUserData.username, "Balance:", currentUserData.balance);
+            console.log("✅ User data loaded:", currentUserData.username, "Balance:", currentUserData.balance);
             return currentUserData;
         }
         return null;
@@ -442,61 +442,69 @@
         document.getElementById('referralStats').innerHTML = `Referrals: ${currentUserData.referredUsersCount || 0} | Earned: ${referralEarnings.toFixed(3)} PMT`;
     }
     
+    // SIMPLIFIED addEarnings function - NO transaction for now
     async function addEarnings(gameId, amount) {
         if (!currentAuthUser) {
-            console.log("No user logged in, cannot add earnings");
+            console.log("❌ No user logged in");
             return;
         }
         
         let gameKey = gameId === 'fruitrush' ? 'fruit' : (gameId === 'slidepuzzle' ? 'slide' : 'neon');
         const userRef = doc(db, 'users', currentAuthUser.uid);
         
-        console.log(`Adding ${amount} PMT to ${gameKey} for user ${currentAuthUser.uid}`);
+        console.log(`💰 Adding ${amount} PMT to ${gameKey} for ${currentAuthUser.uid}`);
         
         try {
-            await runTransaction(db, async (transaction) => {
-                const userDoc = await transaction.get(userRef);
-                if (!userDoc.exists()) {
-                    throw new Error("User document does not exist!");
-                }
-                
-                const currentBalance = userDoc.data().balance || 0;
-                const currentEarnings = userDoc.data().gameEarnings || { neon: 0, fruit: 0, slide: 0 };
-                const currentTransactions = userDoc.data().transactions || [];
-                
-                currentEarnings[gameKey] = (currentEarnings[gameKey] || 0) + amount;
-                
-                const newTransaction = {
-                    date: new Date().toLocaleString(),
-                    game: GAMES[gameId]?.name || gameId,
-                    amount: amount
-                };
-                
-                transaction.update(userRef, {
-                    balance: currentBalance + amount,
-                    [`gameEarnings.${gameKey}`]: currentEarnings[gameKey],
-                    transactions: [...currentTransactions, newTransaction]
-                });
+            const userDoc = await getDoc(userRef);
+            if (!userDoc.exists()) {
+                console.log("❌ User document not found");
+                return;
+            }
+            
+            const currentData = userDoc.data();
+            const currentBalance = currentData.balance || 0;
+            const currentEarnings = currentData.gameEarnings || { neon: 0, fruit: 0, slide: 0 };
+            const currentTransactions = currentData.transactions || [];
+            
+            currentEarnings[gameKey] = (currentEarnings[gameKey] || 0) + amount;
+            
+            const newTransaction = {
+                date: new Date().toLocaleString(),
+                game: GAMES[gameId]?.name || gameId,
+                amount: amount
+            };
+            
+            await updateDoc(userRef, {
+                balance: currentBalance + amount,
+                [`gameEarnings.${gameKey}`]: currentEarnings[gameKey],
+                transactions: [...currentTransactions, newTransaction]
             });
             
             await loadUserData(currentAuthUser.uid);
             updateUI();
-            showToast(`+${amount} PMT from ${GAMES[gameId]?.name}!`);
+            showToast(`🎉 +${amount} PMT from ${GAMES[gameId]?.name}!`);
             if (typeof confetti === 'function') confetti({ particleCount: 50, spread: 40 });
+            console.log(`✅ Successfully added ${amount} PMT`);
         } catch (error) {
-            console.error("Error adding earnings:", error);
+            console.error("❌ Error adding earnings:", error);
             showToast("Error adding earnings: " + error.message);
         }
     }
     
     // FIXED: Message listener with debug logging
     window.addEventListener('message', (e) => {
-        console.log("📩 Main page received message:", e.data);
+        console.log("📩 MAIN PAGE received message:", e.data, "from origin:", e.origin);
         if (e.data && e.data.type === 'earnPMT') {
-            console.log(`✅ Earning detected! Game: ${e.data.game}, Amount: ${e.data.amount}`);
+            console.log(`🎯 EARNING DETECTED! Game: ${e.data.game}, Amount: ${e.data.amount}`);
             addEarnings(e.data.game, e.data.amount);
         }
     });
+    
+    // Direct function for testing
+    window.testEarnings = function() {
+        console.log("🔵 TEST: Adding 10 PMT manually");
+        addEarnings('neonrush', 10);
+    };
     
     async function processReferralBonus(newUserId, referrerCode) {
         if (!referrerCode) return;
@@ -519,7 +527,7 @@
                         amount: 1500
                     }]
                 });
-                showToast('Referrer got 1500 PMT!');
+                showToast('🎁 Referrer got 1500 PMT!');
             }
         }
     }
@@ -530,9 +538,9 @@
         if (!email || !password) { showToast('Fill all fields'); return; }
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            showToast('Login successful!');
+            showToast('✅ Login successful!');
         } catch (error) {
-            showToast('Login failed: ' + error.message);
+            showToast('❌ Login failed: ' + error.message);
         }
     }
     
@@ -564,9 +572,9 @@
             });
             
             if (referralCode) await processReferralBonus(userCred.user.uid, referralCode);
-            showToast('Registration successful! +5 PMT!');
+            showToast('✅ Registration successful! +5 PMT!');
         } catch (error) {
-            showToast('Registration failed: ' + error.message);
+            showToast('❌ Registration failed: ' + error.message);
         }
     }
     
@@ -575,9 +583,9 @@
         if (!email) { showToast('Enter email'); return; }
         try {
             await sendPasswordResetEmail(auth, email);
-            showToast('Reset email sent! Check your inbox.');
+            showToast('📧 Reset email sent! Check your inbox.');
         } catch (error) {
-            showToast('Error: ' + error.message);
+            showToast('❌ Error: ' + error.message);
         }
     }
     
@@ -585,23 +593,23 @@
     
     async function setWallet() {
         if (!currentAuthUser) { showToast('Login first'); return; }
-        const wallet = prompt('Enter BNB Chain wallet address (0x...):\n\nYou can get this from:\n• Binance Web3 Wallet\n• Trust Wallet\n• MetaMask');
+        const wallet = prompt('Enter BNB Chain wallet address (0x...):');
         if (wallet?.match(/^0x[a-fA-F0-9]{40}$/)) {
             await updateDoc(doc(db, 'users', currentAuthUser.uid), { wallet: wallet });
             await loadUserData(currentAuthUser.uid);
             updateUI();
-            showToast('Wallet saved!');
-        } else if (wallet) { showToast('Invalid BNB Chain address!'); }
+            showToast('✅ Wallet saved!');
+        } else if (wallet) { showToast('❌ Invalid BNB Chain address!'); }
     }
     
     async function editProfile() {
         if (!currentUserData) return;
-        const newEmail = prompt('Enter new email:', currentUserData.email);
+        const newEmail = prompt('New email:', currentUserData.email);
         if (newEmail?.trim() && newEmail !== currentUserData.email) {
             await updateDoc(doc(db, 'users', currentAuthUser.uid), { email: newEmail.trim() });
             await loadUserData(currentAuthUser.uid);
             updateUI();
-            showToast('Email updated!');
+            showToast('✅ Email updated!');
         }
     }
     
@@ -609,13 +617,13 @@
         if (!currentUserData) return;
         const link = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralCode}`;
         navigator.clipboard.writeText(link);
-        showToast('Referral link copied! Share with friends!');
+        showToast('📋 Referral link copied!');
     }
     
     async function withdraw() {
         if (!currentUserData?.wallet) { showToast('Set wallet first'); return; }
         if (currentUserData.balance < 1000) { showToast(`Minimum 1000 PMT! You have ${currentUserData.balance.toFixed(3)} PMT`); return; }
-        showToast('Withdrawal feature ready - backend pending');
+        showToast('⏳ Withdrawal feature - backend pending');
     }
     
     onAuthStateChanged(auth, async (user) => {
@@ -628,6 +636,7 @@
                 document.getElementById('siteHeader').style.display = 'flex';
                 document.getElementById('mainContainer').style.display = 'block';
                 updateUI();
+                console.log("🎮 App ready! User:", currentUserData.username);
             } else {
                 showToast("User profile not found. Please re-register.");
                 await auth.signOut();
@@ -712,7 +721,7 @@
         }
     }
     
-    console.log("PMT Arcade ready! Waiting for game messages...");
+    console.log("🎮 PMT Arcade ready! Type 'testEarnings()' in console to test.");
 </script>
 </body>
 </html>
