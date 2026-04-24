@@ -126,6 +126,36 @@
         }
         .btn:active { transform: scale(0.98); background: rgba(0,255,255,0.3); }
 
+        /* EXIT BUTTON - Well Organized */
+        .exit-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            z-index: 200;
+            box-shadow: 0 0 15px rgba(255,0,0,0.5);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .exit-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #ff6666, #ff0000);
+            box-shadow: 0 0 25px rgba(255,0,0,0.7);
+        }
+        .exit-btn:active {
+            transform: scale(0.95);
+        }
+
         .result-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -157,12 +187,13 @@
         }
         @media (max-width: 768px) {
             .keyboard-hint { display: none; }
+            .exit-btn { padding: 8px 16px; font-size: 0.75rem; bottom: 15px; right: 15px; }
         }
 
         .ad-container {
             position: fixed;
             bottom: 20px;
-            right: 20px;
+            right: 120px;
             z-index: 200;
             background: rgba(0,0,0,0.5);
             border-radius: 8px;
@@ -171,11 +202,17 @@
             color: rgba(255,255,255,0.3);
             pointer-events: none;
         }
+        @media (max-width: 768px) {
+            .ad-container { right: 100px; }
+        }
     </style>
 </head>
 <body>
 <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
+    
+    <!-- EXIT BUTTON - WELL ORGANIZED -->
+    <button class="exit-btn" id="exitGameBtn">🚪 EXIT GAME</button>
     
     <div class="keyboard-hint">← →  ARROW KEYS TO MOVE SU-57</div>
     <div class="ad-container">📢 AD SPACE</div>
@@ -216,25 +253,29 @@
             <div class="result-box"><div class="result-label">Earned</div><div id="finalEarned">0</div></div>
         </div>
         <button class="btn" id="restartBtn">🔄 PLAY AGAIN</button>
+        <button class="btn" id="exitFromGameOverBtn" style="background: linear-gradient(135deg, rgba(255,0,0,0.2), rgba(200,0,0,0.2)); border-color: #ff5555;">🚪 EXIT TO ARCADE</button>
     </div>
 </div>
 
 <script>
 // =====================================================
-// NEON RUSH 2077 — Pure Gameplay (No Auth)
-// PROGRESSIVE EARNINGS:
-// Coins 1-10: 3 PMT each
-// Coins 11-50: 5 PMT each  
-// Coins 51+: 10 PMT each
-// Sends earnings to parent hub via postMessage
+// NEON RUSH 2077 — WITH EXIT BUTTON & FIXED REWARD SYSTEM
 // =====================================================
 
-// Send earnings to parent hub (if inside iframe)
+// Send earnings to parent hub (inside iframe)
 function reportEarnings(amount) {
     if (window.parent !== window) {
         window.parent.postMessage({ type: 'earnPMT', game: 'neonrush', amount: amount }, '*');
     }
-    console.log(`💰 Earned: ${amount} PMT`);
+    console.log(`💰 Neon Rush: Earned ${amount} PMT`);
+}
+
+// Exit game function
+function exitGame() {
+    if (window.parent !== window) {
+        window.parent.postMessage({ type: 'closeGame' }, '*');
+    }
+    console.log('🚪 Exiting game...');
 }
 
 // Calculate PMT per coin based on total coins collected
@@ -254,7 +295,7 @@ class NeonRushGame {
         
         this.score = 0;
         this.pmtEarned = 0;
-        this.coinsCollected = 0;      // Total coins collected this game
+        this.coinsCollected = 0;
         this.level = 1;
         this.lives = 3;
         this.gameRunning = false;
@@ -263,6 +304,7 @@ class NeonRushGame {
         this.obstacles = [];
         this.coins = [];
         this.particles = [];
+        this.popups = [];
         this.lastObstacleTime = 0;
         this.lastCoinTime = 0;
         this.totalHeight = 0;
@@ -274,6 +316,7 @@ class NeonRushGame {
     init() {
         this.resize();
         this.setupControls();
+        this.setupExitButton();
         this.gameLoop();
         
         window.addEventListener('resize', () => this.resize());
@@ -281,8 +324,16 @@ class NeonRushGame {
         
         document.getElementById('startBtn').onclick = () => this.startGame();
         document.getElementById('restartBtn').onclick = () => this.startGame();
+        document.getElementById('exitFromGameOverBtn').onclick = () => exitGame();
         
-        console.log('Neon Rush 2077 — Progressive Earnings Mode');
+        console.log('Neon Rush 2077 — Exit button added, reward system fixed');
+    }
+    
+    setupExitButton() {
+        const exitBtn = document.getElementById('exitGameBtn');
+        if (exitBtn) {
+            exitBtn.onclick = () => exitGame();
+        }
     }
     
     resize() {
@@ -299,6 +350,7 @@ class NeonRushGame {
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') { this.leftPressed = true; e.preventDefault(); }
             if (e.key === 'ArrowRight') { this.rightPressed = true; e.preventDefault(); }
+            if (e.key === 'Escape') { exitGame(); e.preventDefault(); }
         });
         window.addEventListener('keyup', (e) => {
             if (e.key === 'ArrowLeft') { this.leftPressed = false; e.preventDefault(); }
@@ -351,6 +403,7 @@ class NeonRushGame {
         this.obstacles = [];
         this.coins = [];
         this.particles = [];
+        this.popups = [];
         this.totalHeight = 0;
         this.cameraY = 0;
         this.player = {
@@ -384,7 +437,6 @@ class NeonRushGame {
     }
     
     update() {
-        // Movement
         const MOVE_SPEED = 8;
         if (this.leftPressed) this.player.x -= MOVE_SPEED;
         if (this.rightPressed) this.player.x += MOVE_SPEED;
@@ -444,21 +496,16 @@ class NeonRushGame {
                 this.score += 100;
                 this.coinsCollected++;
                 
-                // Calculate PMT based on total coins collected
                 const pmtValue = getPmtPerCoin(this.coinsCollected);
                 this.pmtEarned += pmtValue;
                 
-                // Show popup for PMT earned
                 this.showPmtPopup(c.x, sy, pmtValue);
-                
-                // Report earnings to parent hub
                 reportEarnings(pmtValue);
                 
                 this.createParticles(c.x, sy, '#ffdd00');
                 this.coins.splice(i, 1);
                 this.updateHUD();
                 
-                // Level up every 500 score
                 if (this.score % 500 === 0) {
                     this.level++;
                     this.scrollSpeed += 0.7;
@@ -482,21 +529,27 @@ class NeonRushGame {
             }
         }
         
+        // Popups
+        for (let i = this.popups.length - 1; i >= 0; i--) {
+            const p = this.popups[i];
+            p.life--;
+            p.y -= 1.5;
+            if (p.life <= 0) {
+                this.popups.splice(i, 1);
+            }
+        }
+        
         this.score++;
         if (this.score % 100 === 0) this.updateHUD();
     }
     
     showPmtPopup(x, y, amount) {
-        // Create floating text popup
-        const popup = {
+        this.popups.push({
             x: x,
             y: y,
             text: `+${amount} PMT`,
-            alpha: 1,
             life: 30
-        };
-        if (!this.popups) this.popups = [];
-        this.popups.push(popup);
+        });
     }
     
     render() {
@@ -504,14 +557,12 @@ class NeonRushGame {
         const W = this.canvas.width;
         const H = this.canvas.height;
         
-        // Background
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, '#000814');
         grad.addColorStop(1, '#050510');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
         
-        // Stars
         ctx.fillStyle = '#ffffff';
         for (let i = 0; i < 100; i++) {
             const x = ((i * 137 + 50) % W);
@@ -595,26 +646,17 @@ class NeonRushGame {
         });
         
         // PMT Popups
-        if (this.popups) {
-            for (let i = this.popups.length - 1; i >= 0; i--) {
-                const p = this.popups[i];
-                p.life--;
-                p.y -= 1.5;
-                p.alpha = p.life / 30;
-                ctx.save();
-                ctx.globalAlpha = p.alpha;
-                ctx.font = 'bold 16px "Orbitron", monospace';
-                ctx.fillStyle = '#ffdd00';
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = '#ffaa00';
-                ctx.textAlign = 'center';
-                ctx.fillText(p.text, p.x, p.y - 20);
-                ctx.restore();
-                if (p.life <= 0) {
-                    this.popups.splice(i, 1);
-                }
-            }
-        }
+        this.popups.forEach(p => {
+            ctx.save();
+            ctx.globalAlpha = p.life / 30;
+            ctx.font = 'bold 16px "Orbitron", monospace';
+            ctx.fillStyle = '#ffdd00';
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = '#ffaa00';
+            ctx.textAlign = 'center';
+            ctx.fillText(p.text, p.x, p.y - 20);
+            ctx.restore();
+        });
         
         // Particles
         this.particles.forEach(p => {
@@ -699,7 +741,7 @@ class NeonRushGame {
 
 // Start the game
 window.addEventListener('load', () => {
-    console.log('Neon Rush 2077 — Progressive Earnings (3 → 5 → 10 PMT per coin)');
+    console.log('Neon Rush 2077 — Exit button ready, reward system fixed');
     new NeonRushGame();
 });
 </script>
