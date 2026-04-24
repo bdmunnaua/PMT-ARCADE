@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>PMT ARCADE · Official Whitepaper · Deflationary Play-to-Earn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' text-anchor='middle' dy='.35em' font-size='80' fill='%23ff8844'>⚡</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 20% 30%, #0a0a1a, #020210);
+            font-family: 'Rajdhani', sans-serif;
+            color: #eef5ff;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 30px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 48px;
+            border: 1px solid rgba(255,136,68,0.3);
+        }
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ffff, #ff44ee, #ffcc44);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 3px;
+        }
+        .whitepaper-title {
+            font-size: 2rem;
+            margin-top: 20px;
+            color: #ffaa66;
+            font-family: 'Orbitron', monospace;
+        }
+        .version {
+            color: #888;
+            margin-top: 10px;
+            font-size: 0.8rem;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+        .nav-link {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #33ffaa;
+            padding: 8px 20px;
+            border-radius: 40px;
+            text-decoration: none;
+            color: #88ffcc;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .nav-link:hover {
+            background: #ff8844;
+            color: black;
+            border-color: #ff8844;
+        }
+        .section {
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            border-radius: 32px;
+            padding: 35px;
+            margin-bottom: 35px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.6rem;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #ffaa66, #ff6644);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border-left: 4px solid #ff8844;
+            padding-left: 20px;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        .card {
+            background: rgba(5, 10, 25, 0.6);
+            border-radius: 24px;
+            padding: 20px;
+            border-left: 3px solid #ff8844;
+        }
+        .card h3 {
+            color: #ffaa66;
+            margin-bottom: 12px;
+            font-family: 'Orbitron', monospace;
+        }
+        .burn-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .burn-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,68,68,0.1);
+            padding: 15px 20px;
+            border-radius: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .burn-percent {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ffcc55;
+        }
+        .burn-desc {
+            flex: 1;
+            text-align: right;
+            color: #ccddff;
+        }
+        .progress-bar-container {
+            background: #1a1a2e;
+            border-radius: 40px;
+            height: 30px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6644, #ffaa33);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+            font-weight: bold;
+            color: black;
+        }
+        .stats-mini {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-number {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: #ffaa66;
+        }
+        .roadmap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .roadmap-phase {
+            background: rgba(0,0,0,0.4);
+            border-radius: 24px;
+            padding: 20px;
+            text-align: center;
+            border-top: 3px solid #ff8844;
+        }
+        .phase-number {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            color: #ffaa66;
+            margin-bottom: 10px;
+        }
+        .btn-download {
+            background: linear-gradient(95deg, #33ffaa, #00cc88);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 20px;
+            color: #000;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .highlight {
+            color: #ffcc55;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            font-size: 0.7rem;
+            color: #777;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 30px;
+        }
+        @media (max-width: 700px) {
+            .section { padding: 20px; }
+            .section-title { font-size: 1.2rem; }
+            .stat-number { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">⚡ PMT ARCADE ⚡</div>
+        <div class="whitepaper-title">OFFICIAL WHITEPAPER</div>
+        <div class="version">Version 2.0 · April 2026</div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🎮 PLAY ARCADE</a>
+            <a href="whitepaper.html" class="nav-link" style="background:#ff8844; color:black;">📄 WHITEPAPER</a>
+            <a href="admin.html" class="nav-link">🔐 ADMIN</a>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="section">
+        <div class="section-title">📋 EXECUTIVE SUMMARY</div>
+        <p style="font-size:1.1rem; margin-bottom:15px;">PMT ARCADE is a <strong class="highlight">deflationary play-to-earn ecosystem</strong> built on BNB Chain where players earn real PMT tokens by playing arcade games. Every month, ad revenue is used to buy PMT from the market and permanently send it to the dead wallet — creating <strong>genuine scarcity and long-term value appreciation</strong>.</p>
+        <p>Unlike traditional gaming tokens that inflate over time, PMT is designed to become <strong>rarer with every player activity</strong>. More players = more ad revenue = more burns = higher token value.</p>
+    </div>
+
+    <!-- Tokenomics -->
+    <div class="section">
+        <div class="section-title">🪙 TOKENOMICS</div>
+        <div class="grid-2">
+            <div class="card">
+                <h3>📦 Total Supply</h3>
+                <p><strong>24,708,000,001,000,000,000 PMT</strong> (Genesis)</p>
+                <p>No minting function — supply only decreases over time.</p>
+            </div>
+            <div class="card">
+                <h3>🔥 Burn Mechanism</h3>
+                <p>100% of ad revenue is used to buy PMT from the market and send to dead wallet.</p>
+            </div>
+            <div class="card">
+                <h3>🎮 Game Rewards</h3>
+                <p>Players earn PMT by playing Neon Rush, Fruit Rush, and Slide Puzzle.</p>
+            </div>
+            <div class="card">
+                <h3>👥 Referral System</h3>
+                <p>1500 PMT per successful referral — no limits.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Burn Schedule -->
+    <div class="section">
+        <div class="section-title">🔥 DEFLATIONARY BURN SCHEDULE</div>
+        <div class="burn-timeline">
+            <div class="burn-item">
+                <span class="burn-percent">95%</span>
+                <span class="burn-desc"><strong>Phase 1 Burn</strong> — Massive supply shock, removes majority of tokens</span>
+            </div>
+            <div class="burn-item">
+                <span class="burn-percent">65%</span>
+                <span class="burn-desc"><strong>Phase 2 Burn</strong> — Accelerated deflation of remaining supply</span>
+            </div>
+            <div class="burn-item">
+                <span class="burn-percent">35%</span>
+                <span class="burn-desc"><strong>Phase 3 Burn</strong> — Deep scarcity phase</span>
+            </div>
+            <div class="burn-item">
+                <span class="burn-percent">15% Monthly</span>
+                <span class="burn-desc"><strong>Ongoing Burns</strong> — Continuous deflation funded by ad revenue</span>
+            </div>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" style="width:0%;">0% Burned to Date</div>
+        </div>
+        <p style="text-align:center; margin-top:10px;">📊 As more players join, burn percentage increases — more burns = higher token value</p>
+    </div>
+
+    <!-- How Value Grows -->
+    <div class="section">
+        <div class="section-title">📈 HOW PMT VALUE GROWS</div>
+        <div class="grid-2">
+            <div class="card">
+                <h3>1️⃣ Play-to-Earn Demand</h3>
+                <p>More players need PMT for withdrawals → natural buy pressure on the open market.</p>
+            </div>
+            <div class="card">
+                <h3>2️⃣ Ad-Funded Burns</h3>
+                <p>Ad revenue buys PMT from market → sends to dead wallet → supply decreases permanently.</p>
+            </div>
+            <div class="card">
+                <h3>3️⃣ Scarcity Effect</h3>
+                <p>As supply decreases, each remaining PMT token becomes rarer and more valuable.</p>
+            </div>
+            <div class="card">
+                <h3>4️⃣ Exchange Listings</h3>
+                <p>Future exchange listings will bring additional liquidity and demand.</p>
+            </div>
+        </div>
+        <div class="stats-mini">
+            <div class="stat-box"><div class="stat-number">🔥 95%→15%</div><div>Monthly Burn Schedule</div></div>
+            <div class="stat-box"><div class="stat-number">💀 0x000...dead</div><div>Transparent Dead Wallet</div></div>
+            <div class="stat-box"><div class="stat-number">🎮 3 Games</div><div>Play & Earn</div></div>
+            <div class="stat-box"><div class="stat-number">👥 Unlimited</div><div>Referral Rewards</div></div>
+        </div>
+    </div>
+
+    <!-- Roadmap -->
+    <div class="section">
+        <div class="section-title">🗺️ ROADMAP</div>
+        <div class="roadmap-grid">
+            <div class="roadmap-phase">
+                <div class="phase-number">✅ PHASE 1 (COMPLETED)</div>
+                <p>• Token launch on BNB Chain<br>• PMT ARCADE website launch<br>• 3 play-to-earn games (Neon Rush, Fruit Rush, Slide Puzzle)<br>• Referral system implemented</p>
+            </div>
+            <div class="roadmap-phase">
+                <div class="phase-number">🔥 PHASE 2 (CURRENT)</div>
+                <p>• Phase 1 burn (95%)<br>• Ad revenue integration<br>• Dead wallet portfolio tracker<br>• Community growth</p>
+            </div>
+            <div class="roadmap-phase">
+                <div class="phase-number">🚀 PHASE 3 (Q3 2026)</div>
+                <p>• Phase 2 burn (65%)<br>• More games added<br>• Mobile app launch<br>• CEX listings (first exchange)</p>
+            </div>
+            <div class="roadmap-phase">
+                <div class="phase-number">🌕 PHASE 4 (Q4 2026+)</div>
+                <p>• Phase 3 burn (35%)<br>• Ongoing monthly burns (15%)<br>• NFT integration<br>• DAO governance</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dead Wallet Transparency -->
+    <div class="section">
+        <div class="section-title">💀 DEAD WALLET TRANSPARENCY</div>
+        <p>All burned PMT tokens are sent to the public dead wallet address:</p>
+        <div style="background:#000000aa; border-radius: 60px; padding: 12px 20px; margin: 15px 0; text-align: center; font-family: monospace; word-break: break-all;">
+            <strong>0x000000000000000000000000000000000000dead</strong>
+        </div>
+        <p>✅ Fully verifiable on <a href="https://bscscan.com/token/0x084b0479AD31a0F53938d15B66fdEEDc1cbfB1b9" target="_blank" style="color:#88ffcc;">BscScan</a><br>✅ Every burn transaction is visible on-chain<br>✅ No hidden tokens — total transparency</p>
+    </div>
+
+    <!-- Token Distribution -->
+    <div class="section">
+        <div class="section-title">📊 TOKEN DISTRIBUTION</div>
+        <div class="grid-2">
+            <div class="card">
+                <h3>🎮 Game Rewards Pool</h3>
+                <p>60% — Distributed to players through gameplay</p>
+            </div>
+            <div class="card">
+                <h3>👥 Referral Program</h3>
+                <p>15% — Rewards for inviting new players</p>
+            </div>
+            <div class="card">
+                <h3>🔥 Burn Reserve</h3>
+                <p>10% — Reserved for ad-funded buyback & burn</p>
+            </div>
+            <div class="card">
+                <h3>📢 Marketing & Development</h3>
+                <p>10% — Exchange listings, promotions, partnerships</p>
+            </div>
+            <div class="card">
+                <h3>💧 Liquidity</h3>
+                <p>5% — Initial liquidity on PancakeSwap</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Why Invest -->
+    <div class="section">
+        <div class="section-title">💎 WHY INVEST IN PMT?</div>
+        <div class="grid-2">
+            <div class="card">
+                <h3>📉 Deflationary Asset</h3>
+                <p>Supply decreases every month — your holdings become rarer over time.</p>
+            </div>
+            <div class="card">
+                <h3>🎮 Real Utility</h3>
+                <p>PMT is the core currency of PMT ARCADE — used for rewards and withdrawals.</p>
+            </div>
+            <div class="card">
+                <h3>📺 Ad-Funded Growth</h3>
+                <p>Burns are funded by real revenue, not dilution or printing.</p>
+            </div>
+            <div class="card">
+                <h3>🔓 Transparent</h3>
+                <p>All burns visible on blockchain. No hidden supply.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Why Play -->
+    <div class="section">
+        <div class="section-title">🎮 WHY PLAY PMT ARCADE?</div>
+        <div class="grid-2">
+            <div class="card">
+                <h3>💰 Earn Real Tokens</h3>
+                <p>Every game session rewards you with PMT — no entry fees.</p>
+            </div>
+            <div class="card">
+                <h3>🎯 Three Games</h3>
+                <p>Neon Rush, Fruit Rush, and Slide Puzzle — more coming soon.</p>
+            </div>
+            <div class="card">
+                <h3>👥 Referral Rewards</h3>
+                <p>Invite friends and earn 1500 PMT each — unlimited.</p>
+            </div>
+            <div class="card">
+                <h3>🏦 Withdraw Anytime</h3>
+                <p>Minimum 100,000 PMT — withdraw to your BNB Chain wallet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Disclaimer -->
+    <div class="section">
+        <div class="section-title">⚠️ RISK DISCLAIMER</div>
+        <p>Cryptocurrency investments carry high risk. PMT ARCADE is a community-driven project, not a registered financial entity. Token value can go up or down. Always do your own research (DYOR). Past performance does not guarantee future results.</p>
+        <p style="margin-top: 15px;">📧 For inquiries: <strong>admin@pmtarcade.com</strong></p>
+    </div>
+
+    <!-- Download Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <button class="btn-download" id="downloadPDFBtn">📄 DOWNLOAD WHITEPAPER (PDF)</button>
+    </div>
+
+    <div class="footer">
+        © 2025 PMT ARCADE · Built on BNB Chain · Deflationary Play-to-Earn · Version 2.0<br>
+        Dead Wallet: 0x000000000000000000000000000000000000dead | All burns on-chain
+    </div>
+</div>
+
+<script>
+    document.getElementById('downloadPDFBtn').addEventListener('click', () => {
+        alert('📄 To save as PDF: Press Ctrl+P (Cmd+P on Mac) → Select "Save as PDF" → Save.');
+        window.print();
+    });
+</script>
+</body>
+</html>
