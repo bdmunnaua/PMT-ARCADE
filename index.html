@@ -2,58 +2,176 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>PMT ARCADE · Play · Invest · About</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>PMT ARCADE · Play to Earn · Deflationary Token</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/web3@4.16.0/dist/web3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <!-- Favicon / Logo -->
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' text-anchor='middle' dy='.35em' font-size='80' fill='%23ff8844'>⚡</text></svg>">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: radial-gradient(circle at 20% 30%, #0a0a1a, #020210);
             font-family: 'Rajdhani', sans-serif;
-            color: #eef5ff;
             min-height: 100vh;
+            color: #eef5ff;
         }
-        .nav-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            padding: 16px 20px;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0,255,255,0.3);
-            flex-wrap: wrap;
-            position: sticky;
+        /* Login Overlay - Two Column Layout */
+        .login-overlay {
+            position: fixed;
             top: 0;
-            z-index: 100;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, #0a0a1a, #020210);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
         }
-        .tab-btn {
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(0,255,255,0.4);
-            padding: 10px 28px;
-            border-radius: 60px;
+        .login-container {
+            display: flex;
+            max-width: 1300px;
+            width: 100%;
+            gap: 40px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        /* Left Side - Introduction */
+        .intro-section {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 48px;
+            padding: 40px;
+            border: 1px solid rgba(255,136,68,0.3);
+        }
+        .logo-large {
             font-family: 'Orbitron', monospace;
+            font-size: 2.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ffff, #ff44ee, #ffcc44);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+        .intro-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #ffaa66;
+        }
+        .intro-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #ddeeff;
+            margin-bottom: 20px;
+        }
+        .highlight {
+            color: #ffcc55;
+            font-weight: bold;
+        }
+        .feature-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+        .feature-list li {
+            margin-bottom: 12px;
+            padding-left: 24px;
+            position: relative;
+        }
+        .feature-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #33ffaa;
+            font-weight: bold;
+        }
+        .burn-badge-intro {
+            background: #ff330022;
+            border-radius: 20px;
+            padding: 16px;
+            margin-top: 20px;
+            border-left: 4px solid #ff8844;
+            font-size: 0.85rem;
+        }
+        /* Right Side - Auth Card */
+        .auth-card {
+            flex: 0.8;
+            min-width: 320px;
+            background: linear-gradient(145deg, #11112a, #07071a);
+            border: 1px solid rgba(0,255,255,0.5);
+            border-radius: 40px;
+            padding: 40px;
+        }
+        .auth-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            text-align: center;
+            background: linear-gradient(135deg, cyan, #ff66cc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+        }
+        .auth-input {
+            width: 100%;
+            background: #0a0a1e;
+            border: 1px solid #33ccff;
+            border-radius: 60px;
+            padding: 14px 20px;
+            color: white;
+            margin-bottom: 16px;
+            font-size: 1rem;
+        }
+        .password-wrapper {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        .password-wrapper input {
+            width: 100%;
+            padding: 14px 20px;
+            background: #0a0a1e;
+            border: 1px solid #33ccff;
+            border-radius: 60px;
+            color: white;
+            font-size: 1rem;
+            padding-right: 50px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #33ffaa;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .auth-btn {
+            width: 100%;
+            background: linear-gradient(95deg, #ff8844, #ff4400);
+            border: none;
+            padding: 14px;
+            border-radius: 60px;
             font-weight: bold;
             cursor: pointer;
-            color: #ccffff;
-            transition: 0.2s;
+            font-size: 1rem;
+            margin-top: 10px;
         }
-        .tab-btn.active {
-            background: linear-gradient(95deg, #ff8844, #ff4400);
-            border-color: #ffcc44;
-            color: black;
+        .auth-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #7df9ff;
+            cursor: pointer;
         }
-        .tab-btn:hover:not(.active) {
-            border-color: #ff8844;
-            color: #ffcc88;
-        }
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Main Arcade Styles */
+        /* Main App Styles (unchanged from original) */
         .site-header {
             background: rgba(2, 2, 12, 0.92);
             backdrop-filter: blur(12px);
@@ -174,24 +292,6 @@
         .withdraw-input { flex: 2; background: #0a0a1e; border: 1px solid #ffaa33; border-radius: 60px; padding: 10px 16px; color: white; font-family: 'Orbitron', monospace; }
         .max-btn { background: #33ffaa; color: #000; border: none; padding: 8px 20px; border-radius: 60px; font-weight: bold; cursor: pointer; }
         .withdraw-info { font-size: 0.7rem; color: #ffaa88; margin-top: 8px; }
-        .auth-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.96);
-            backdrop-filter: blur(20px);
-            z-index: 2000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .auth-card { background: linear-gradient(145deg, #11112a, #07071a); border: 1px solid rgba(0,255,255,0.5); border-radius: 40px; padding: 32px; max-width: 440px; width: 90%; }
-        .auth-title { font-family: 'Orbitron', monospace; font-size: 1.8rem; text-align: center; background: linear-gradient(135deg, cyan, #ff66cc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-        .auth-input { width: 100%; background: #0a0a1e; border: 1px solid #33ccff; border-radius: 60px; padding: 12px 20px; color: white; margin-bottom: 16px; }
-        .auth-btn { width: 100%; background: linear-gradient(95deg, #0af, #0066cc); border: none; padding: 12px; border-radius: 60px; font-weight: bold; cursor: pointer; }
-        .auth-link { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #7df9ff; cursor: pointer; }
-        .toast { position: fixed; bottom: 35px; left: 50%; transform: translateX(-50%); background: #0ff; color: #000; font-weight: bold; padding: 12px 28px; border-radius: 50px; z-index: 2100; animation: fadeGlow 2.8s ease forwards; }
-        @keyframes fadeGlow { 0% { opacity: 0; bottom: 0; } 15% { opacity: 1; bottom: 35px; } 80% { opacity: 1; bottom: 35px; } 100% { opacity: 0; bottom: 0; } }
         .deadwallet-section {
             background: linear-gradient(135deg, #0a0a1a, #1a0a1a);
             border-radius: 28px;
@@ -212,132 +312,143 @@
         .bar-container { background: #1a1a2e; border-radius: 40px; height: 20px; overflow: hidden; margin: 6px 0; }
         .burn-bar { height: 100%; background: linear-gradient(90deg, #ff6644, #ffaa33); border-radius: 40px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 0.6rem; font-weight: bold; color: black; transition: width 0.4s ease; }
         @keyframes pulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
-        @media (max-width: 780px) { .game-area { display: none; } .mobile-play-btn { display: inline-block; } .desktop-fullscreen-btn { display: none; } }
-        @media (min-width: 781px) { .mobile-play-btn { display: none; } .desktop-fullscreen-btn { display: inline-block; } }
-        
-        /* Investment Card Styles */
-        .card { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(10px); border-radius: 32px; padding: 28px; border: 1px solid rgba(0, 255, 255, 0.3); margin-bottom: 30px; }
-        .card-title { font-family: 'Orbitron', monospace; font-size: 1.4rem; margin-bottom: 20px; background: linear-gradient(135deg, #ffaa66, #ff6644); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-        .wallet-address { background: #000000aa; padding: 14px; border-radius: 60px; font-family: monospace; word-break: break-all; text-align: center; font-size: 0.8rem; margin: 16px 0; border: 1px solid #ff8844; }
-        .qr-container { display: flex; justify-content: center; margin: 20px 0; background: white; padding: 16px; border-radius: 20px; }
-        .amount-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; justify-content: center; }
-        .amount-btn { background: #0a0a2e; border: 1px solid #33ffaa; padding: 10px 18px; border-radius: 40px; cursor: pointer; font-weight: bold; }
-        .amount-btn.active { background: #ff8844; color: black; border-color: #ffcc44; }
-        .invest-input, .email-input, .tx-input, .wallet-input { width: 100%; background: #0a0a1e; border: 1px solid #33ccff; border-radius: 60px; padding: 12px 20px; color: white; margin: 12px 0; }
-        .submit-btn { background: linear-gradient(95deg, #ff8844, #ff4400); border: none; padding: 14px 28px; border-radius: 60px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 16px; }
-        .premarket-box { background: #33ffaa22; border-radius: 20px; padding: 16px; text-align: center; margin-bottom: 16px; border: 1px solid #33ffaa; }
-        .warning { background: #ff330022; border-radius: 20px; padding: 16px; margin-top: 16px; border-left: 4px solid #ff8844; }
-        
-        /* About Us Styles */
-        .about-hero { background: linear-gradient(135deg, rgba(0,0,0,0.65), rgba(20,10,30,0.7)); backdrop-filter: blur(12px); border-radius: 48px; padding: 40px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(255,136,68,0.5); }
-        .about-description { font-size: 1rem; max-width: 800px; margin: 20px auto; color: #ddeeff; }
-        .not-org-badge { background: #ff3300aa; display: inline-block; padding: 8px 24px; border-radius: 60px; font-weight: bold; margin-bottom: 20px; }
-        .money-statement { background: linear-gradient(135deg, #ff8844, #ff4400); border-radius: 80px; padding: 18px 30px; display: inline-block; margin: 20px 0; }
-        .money-statement span { font-size: 1.3rem; font-weight: bold; font-family: 'Orbitron', monospace; }
-        .values-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0; }
-        .value-card { background: rgba(0, 0, 0, 0.5); border-radius: 28px; padding: 24px; text-align: center; border: 1px solid rgba(255,136,68,0.3); }
-        .value-icon { font-size: 2.5rem; margin-bottom: 12px; }
-        .benefit-section { background: rgba(0,0,0,0.5); border-radius: 32px; padding: 30px; margin: 30px 0; border-left: 5px solid #ff8844; }
-        .benefit-title { font-family: 'Orbitron', monospace; font-size: 1.5rem; margin-bottom: 20px; color: #ffcc55; }
-        .benefit-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-        .benefit-item { background: #00000055; padding: 12px 16px; border-radius: 20px; display: flex; align-items: center; gap: 12px; }
-        .bonus-box { background: #33ffaa22; border-radius: 24px; padding: 20px; margin-top: 20px; text-align: center; }
-        .stats-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 30px 0; }
-        .stat-card { background: rgba(0,0,0,0.5); border-radius: 24px; padding: 20px; text-align: center; }
-        .stat-number { font-family: 'Orbitron', monospace; font-size: 1.4rem; color: #ffaa66; }
-        .cta-section { background: linear-gradient(135deg, #ff440022, #00aaff22); border-radius: 40px; padding: 40px; text-align: center; margin: 30px 0; }
-        .footer { text-align: center; padding: 30px; font-size: 0.75rem; color: #777; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px; }
+        .toast {
+            position: fixed;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0ff;
+            color: #000;
+            font-weight: bold;
+            padding: 12px 28px;
+            border-radius: 50px;
+            z-index: 2100;
+            animation: fadeGlow 2.8s ease forwards;
+        }
+        @keyframes fadeGlow {
+            0% { opacity: 0; bottom: 0; }
+            15% { opacity: 1; bottom: 35px; }
+            80% { opacity: 1; bottom: 35px; }
+            100% { opacity: 0; bottom: 0; }
+        }
+        @media (max-width: 900px) {
+            .login-container { flex-direction: column; }
+            .intro-section { order: 2; }
+            .auth-card { order: 1; width: 100%; }
+        }
+        @media (max-width: 780px) {
+            .game-area { display: none; }
+            .mobile-play-btn { display: inline-block; }
+            .desktop-fullscreen-btn { display: none; }
+        }
+        @media (min-width: 781px) {
+            .mobile-play-btn { display: none; }
+            .desktop-fullscreen-btn { display: inline-block; }
+        }
     </style>
 </head>
 <body>
 
-<!-- Navigation Tabs -->
-<div class="nav-tabs">
-    <button class="tab-btn active" data-tab="games">🎮 PLAY GAMES</button>
-    <button class="tab-btn" data-tab="invest">💸 PRE-LAUNCH INVEST</button>
-    <button class="tab-btn" data-tab="about">📢 ABOUT US</button>
-</div>
-
-<!-- ==================== TAB 1: GAMES ==================== -->
-<div id="tab-games" class="tab-content active">
-    <div class="site-header" id="siteHeader" style="display: none;">
-        <div class="logo">⚡ PMT ARCADE ⚡</div>
-        <div class="user-info">
-            <span id="headerUsername" style="font-weight:600;">—</span>
-            <span class="balance-display" id="headerBalance">0 PMT</span>
-            <button class="logout-btn" id="logoutBtn">⤉ EXIT</button>
+<!-- LOGIN OVERLAY (Two Column with Introduction) -->
+<div id="authOverlay" class="login-overlay">
+    <div class="login-container">
+        <!-- LEFT: INTRODUCTION -->
+        <div class="intro-section">
+            <div class="logo-large">⚡ PMT ARCADE ⚡</div>
+            <div class="intro-title">Play. Earn. Burn. Grow.</div>
+            <div class="intro-text">
+                PMT ARCADE is a <span class="highlight">deflationary play-to-earn ecosystem</span> where every game session rewards you with real PMT tokens.
+            </div>
+            <ul class="feature-list">
+                <li><span class="highlight">Earn PMT</span> by playing Neon Rush, Fruit Rush, and Slide Puzzle</li>
+                <li><span class="highlight">Refer friends</span> and earn 1500 PMT each</li>
+                <li><span class="highlight">Monthly burns</span> reduce supply — making your tokens rarer</li>
+                <li><span class="highlight">Ad-funded deflation</span> — ad revenue buys and burns PMT</li>
+                <li><span class="highlight">Withdraw directly</span> to your BNB Chain wallet</li>
+            </ul>
+            <div class="burn-badge-intro">
+                🔥 <strong>Burn Schedule:</strong> 95% → 65% → 35% → 15% monthly<br>
+                💀 <strong>Dead Wallet:</strong> 0x000...dead (fully transparent)<br>
+                📈 <strong>Value grows</strong> as supply decreases
+            </div>
         </div>
-    </div>
-    <div class="main-container" id="mainContainer" style="display: none;">
-        <div class="games-hub">
-            <div class="game-sidebar">
-                <div class="game-cards">
-                    <div class="game-card" data-game="neonrush"><div class="game-icon">🚀🌀</div><div class="game-info"><h3>NEON RUSH</h3></div><div class="game-earned" id="earnedNeon">0 PMT</div><button class="mobile-play-btn" data-game="neonrush">▶ PLAY</button><button class="desktop-fullscreen-btn" data-game="neonrush">🖥️ FULLSCREEN</button></div>
-                    <div class="game-card" data-game="fruitrush"><div class="game-icon">🍒🍍</div><div class="game-info"><h3>FRUIT RUSH</h3></div><div class="game-earned" id="earnedFruit">0 PMT</div><button class="mobile-play-btn" data-game="fruitrush">▶ PLAY</button><button class="desktop-fullscreen-btn" data-game="fruitrush">🖥️ FULLSCREEN</button></div>
-                    <div class="game-card" data-game="slidepuzzle"><div class="game-icon">🧩✨</div><div class="game-info"><h3>SLIDE PUZZLE</h3></div><div class="game-earned" id="earnedSlide">0 PMT</div><button class="mobile-play-btn" data-game="slidepuzzle">▶ PLAY</button><button class="desktop-fullscreen-btn" data-game="slidepuzzle">🖥️ FULLSCREEN</button></div>
+        <!-- RIGHT: LOGIN FORM -->
+        <div class="auth-card">
+            <div class="auth-title">🔐 WELCOME BACK</div>
+            <div id="loginFormContent">
+                <input type="email" id="loginEmail" class="auth-input" placeholder="Email address">
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" placeholder="Password">
+                    <button type="button" class="toggle-password" onclick="window.togglePasswordField('loginPassword')">👁️</button>
                 </div>
+                <button class="auth-btn" id="loginBtn">⚡ LOGIN ⚡</button>
+                <div class="auth-link" id="showRegisterLink">🆕 Create account →</div>
+                <div class="auth-link" id="showForgotLink">🔐 Forgot password?</div>
             </div>
-            <div class="game-area"><iframe class="game-frame" id="gameFrame" src="about:blank" title="arcade game preview"></iframe></div>
-        </div>
-        <div class="profile-section">
-            <div style="display: flex; justify-content: space-between;"><h2 style="font-family:'Orbitron';">🎮 VAULT PROFILE</h2><button class="edit-btn" id="editProfileBtn">✎ EDIT</button></div>
-            <div class="profile-grid">
-                <div class="info-card"><div class="info-label">🏆 USERNAME</div><div class="info-value" id="profileUsername">—</div></div>
-                <div class="info-card"><div class="info-label">📧 EMAIL</div><div class="info-value" id="profileEmail">—</div></div>
-                <div class="info-card"><div class="info-label">💎 BNB WALLET</div><div class="info-value" id="profileWallet">Not linked</div><button class="edit-btn" id="setWalletBtn" style="margin-top:8px;">🔗 CONNECT</button></div>
+            <div id="registerFormContent" style="display:none;">
+                <input type="text" id="regUsername" class="auth-input" placeholder="Username">
+                <input type="email" id="regEmail" class="auth-input" placeholder="Email">
+                <div class="password-wrapper">
+                    <input type="password" id="regPassword" placeholder="Password (min 6 chars)">
+                    <button type="button" class="toggle-password" onclick="window.togglePasswordField('regPassword')">👁️</button>
+                </div>
+                <input type="text" id="regReferralCode" class="auth-input" placeholder="Referral code (optional)">
+                <button class="auth-btn" id="registerBtn">🎮 REGISTER +1500 for referrer!</button>
+                <div class="auth-link" id="showLoginLink">↩️ Back to Login</div>
             </div>
-            <div class="referral-box"><div>🎁 REFER & EARN 1500 PMT PER FRIEND! 🎁</div><div class="referral-code" id="referralCode">——</div><button class="copy-ref-btn" id="copyReferralBtn">📎 COPY REFERRAL LINK</button><div id="referralStats" style="margin-top:12px;">Referrals: 0 | Earned: 0 PMT</div></div>
-            <div class="info-card"><div class="info-label">💰 EARNINGS BREAKDOWN</div><div id="earningsBreakdown"><div style="display:flex; justify-content:space-between;"><span>🚀 NEON RUSH</span><span id="breakdownNeon">0 PMT</span></div><div style="display:flex; justify-content:space-between;"><span>🍍 FRUIT RUSH</span><span id="breakdownFruit">0 PMT</span></div><div style="display:flex; justify-content:space-between;"><span>🧩 SLIDE PUZZLE</span><span id="breakdownSlide">0 PMT</span></div><div style="display:flex; justify-content:space-between;"><span>👥 REFERRALS</span><span id="breakdownReferral">0 PMT</span></div><div style="display:flex; justify-content:space-between; border-top:1px solid cyan; margin-top:12px; padding-top:10px;"><span>🔮 TOTAL PMT</span><span id="breakdownTotal">0 PMT</span></div></div></div>
-            <div class="withdraw-section" style="margin-top:24px; padding-top:16px; border-top:1px solid rgba(0,255,255,0.4);"><div><div class="info-label">MIN WITHDRAWAL: 100,000 PMT</div><div>⚡ BNB Chain (BEP-20)</div></div><div class="withdraw-input-group"><input type="number" id="withdrawAmountInput" class="withdraw-input" placeholder="Enter amount (min 100,000)" value="100000"><button class="max-btn" id="maxWithdrawBtn">MAX</button><button class="withdraw-btn" id="withdrawCustomBtn">💸 WITHDRAW</button></div><div class="withdraw-info" id="withdrawInfoMsg"></div></div>
-        </div>
-        <div class="deadwallet-section">
-            <div class="deadwallet-title">💀 DEAD WALLET PORTFOLIO 💀<span class="live-badge" id="dwLiveBadge">🟢 LIVE MONITORING</span></div>
-            <div class="burn-address-row"><span>🏦 Burn Address: <strong id="dwAddress">0x000000000000000000000000000000000000dead</strong></span><button class="copy-ref-btn" id="copyDwBtn" style="padding: 4px 16px;">📋 COPY</button></div>
-            <div class="burn-address-row"><span>📄 PMT Contract Address: <strong id="pmtContractAddrDisplay">0x084b0479AD31a0F53938d15B66fdEEDc1cbfB1b9</strong></span><button class="copy-ref-btn" id="copyContractBtn" style="padding: 4px 16px;">📋 COPY</button><a href="https://bscscan.com/token/0x084b0479AD31a0F53938d15B66fdEEDc1cbfB1b9" target="_blank" style="color:#88ffcc; margin-left:10px;">🔗 VIEW ON BSCSCAN</a></div>
-            <div class="burn-stats-grid">
-                <div class="burn-stat-card"><div class="info-label">📦 INITIAL SUPPLY</div><div class="burn-stat-value" id="dwInitialSupply">24,708,000,001,000,000,000</div></div>
-                <div class="burn-stat-card"><div class="info-label">🗑️ TOTAL BURNED</div><div class="burn-stat-value" id="dwTotalBurned">0 PMT</div></div>
-                <div class="burn-stat-card"><div class="info-label">💎 CURRENT SUPPLY</div><div class="burn-stat-value" id="dwCurrentSupply">0 PMT</div></div>
-                <div class="burn-stat-card"><div class="info-label">📉 REWARD REDUCTION</div><div class="burn-stat-value" id="dwRewardReduction">0%</div></div>
+            <div id="forgotFormContent" style="display:none;">
+                <input type="email" id="forgotEmail" class="auth-input" placeholder="Your email">
+                <button class="auth-btn" id="resetPasswordBtn">📧 SEND RESET LINK</button>
+                <div class="auth-link" id="backToLoginLink">← Back to Login</div>
             </div>
-            <div class="progress-section"><div style="display: flex; justify-content: space-between;"><span>🔥 TOTAL BURNED PROGRESS</span><span id="dwBurnPercent">0%</span></div><div class="bar-container"><div class="burn-bar" id="dwBurnBar" style="width:0%;">0%</div></div></div>
-            <div><div style="display: flex; justify-content: space-between;"><span class="info-label">📜 RECENT BURN TRANSACTIONS (auto-detected)</span><button class="edit-btn" id="refreshDwBtn" style="padding: 2px 12px;">🔄 REFRESH</button></div><div style="overflow-x: auto; max-height: 180px;"><table class="tx-table"><thead><tr><th>TX HASH</th><th>DATE</th><th>PMT BURNED</th></tr></thead><tbody id="dwTxBody"><tr><td colspan="3">⏳ Connecting to blockchain...</td></tr></tbody></table></div><div class="info-text" style="margin-top:8px;">✅ Automatically detects any PMT sent to dead wallet. Every burn increases scarcity → reduces rewards.</div></div>
         </div>
     </div>
 </div>
 
-<!-- ==================== TAB 2: INVEST ==================== -->
-<div id="tab-invest" class="tab-content">
-    <div class="main-container" style="padding-top: 20px;">
-        <div class="card"><div class="card-title">💸 SEND USDT (BEP-20)</div><p><strong>Network:</strong> BNB Smart Chain (BEP-20)</p><p><strong>Asset:</strong> USDT (BEP-20 only)</p><div class="wallet-address" id="investWalletAddress">0x778064447Bed8E3d3fE7f8605e5C5F2e7561cddE</div><button class="copy-ref-btn" id="copyInvestWalletBtn">📋 COPY WALLET ADDRESS</button><div class="qr-container"><div id="investQrcode"></div></div><div class="warning">⚠️ Only send USDT on BNB Smart Chain (BEP-20). Other networks will be lost forever.</div></div>
-        <div class="card"><div class="card-title">📝 PRE-LAUNCH INVESTMENT</div><div class="premarket-box">📊 Pre-Market Investment<br>Min 10 USDT · Max 100 USDT<br><span style="color:#ffcc55;">The value after launch will be much higher ⚡</span></div>
-            <label>💰 Select amount (USDT)</label><div class="amount-buttons" id="amountButtons"><button class="amount-btn" data-amount="10">10 USDT</button><button class="amount-btn" data-amount="25">25 USDT</button><button class="amount-btn" data-amount="50">50 USDT</button><button class="amount-btn" data-amount="75">75 USDT</button><button class="amount-btn" data-amount="100">100 USDT</button><button class="amount-btn custom-btn" data-amount="custom">Custom</button></div>
-            <input type="number" id="customAmount" class="invest-input" placeholder="Enter custom amount (10-100 USDT)" style="display:none;">
-            <label>📧 Your Email</label><input type="email" id="investorEmail" class="email-input" placeholder="your@email.com">
-            <label>🔗 Transaction Hash (TX ID) from your wallet</label><input type="text" id="txHash" class="tx-input" placeholder="0x... (paste BSC transaction hash)">
-            <label>🏦 PMT RECEIVING WALLET (BNB Chain)</label><input type="text" id="receivingWallet" class="wallet-input" placeholder="0x... (where you want to receive PMT tokens)">
-            <button class="submit-btn" id="submitInvestment">📩 SUBMIT INVESTMENT</button>
-            <div class="info-text">✅ After sending USDT, fill all fields. We will verify and send PMT directly to your receiving wallet within 24-48 hours.<br>🔥 All fields (Email, TX Hash, Receiving Wallet) are required for distribution.</div>
+<!-- MAIN APP CONTENT (hidden until login) -->
+<div class="site-header" id="siteHeader" style="display: none;">
+    <div class="logo">⚡ PMT ARCADE ⚡</div>
+    <div class="user-info">
+        <span id="headerUsername" style="font-weight:600;">—</span>
+        <span class="balance-display" id="headerBalance">0 PMT</span>
+        <button class="logout-btn" id="logoutBtn">⤉ EXIT</button>
+    </div>
+</div>
+
+<div class="main-container" id="mainContainer" style="display: none;">
+    <div class="games-hub">
+        <div class="game-sidebar">
+            <div class="game-cards">
+                <div class="game-card" data-game="neonrush"><div class="game-icon">🚀🌀</div><div class="game-info"><h3>NEON RUSH</h3></div><div class="game-earned" id="earnedNeon">0 PMT</div><button class="mobile-play-btn" data-game="neonrush">▶ PLAY</button><button class="desktop-fullscreen-btn" data-game="neonrush">🖥️ FULLSCREEN</button></div>
+                <div class="game-card" data-game="fruitrush"><div class="game-icon">🍒🍍</div><div class="game-info"><h3>FRUIT RUSH</h3></div><div class="game-earned" id="earnedFruit">0 PMT</div><button class="mobile-play-btn" data-game="fruitrush">▶ PLAY</button><button class="desktop-fullscreen-btn" data-game="fruitrush">🖥️ FULLSCREEN</button></div>
+                <div class="game-card" data-game="slidepuzzle"><div class="game-icon">🧩✨</div><div class="game-info"><h3>SLIDE PUZZLE</h3></div><div class="game-earned" id="earnedSlide">0 PMT</div><button class="mobile-play-btn" data-game="slidepuzzle">▶ PLAY</button><button class="desktop-fullscreen-btn" data-game="slidepuzzle">🖥️ FULLSCREEN</button></div>
+            </div>
         </div>
-        <div class="card"><div class="card-title">📈 HOW PMT VALUE GROWS</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 20px; text-align:center;"><div><span style="font-size:2rem;">🎮</span><h3>Play-to-Earn Demand</h3><p>More players need PMT → natural buy pressure</p></div><div><span style="font-size:2rem;">📺</span><h3>Ad-Funded Burns</h3><p>Ad revenue buys PMT → sends to dead wallet → supply decreases</p></div><div><span style="font-size:2rem;">💎</span><h3>Pre-Launch Advantage</h3><p>Early investors get the best entry price</p></div></div><div class="premarket-box">🔥 THE FORMULA: (Player Demand + Ad Revenue) + Monthly Burns = Decreasing Supply + Increasing Value</div></div>
+        <div class="game-area"><iframe class="game-frame" id="gameFrame" src="about:blank" title="arcade game preview"></iframe></div>
+    </div>
+    <div class="profile-section">
+        <div style="display: flex; justify-content: space-between;"><h2 style="font-family:'Orbitron';">🎮 VAULT PROFILE</h2><button class="edit-btn" id="editProfileBtn">✎ EDIT</button></div>
+        <div class="profile-grid">
+            <div class="info-card"><div class="info-label">🏆 USERNAME</div><div class="info-value" id="profileUsername">—</div></div>
+            <div class="info-card"><div class="info-label">📧 EMAIL</div><div class="info-value" id="profileEmail">—</div></div>
+            <div class="info-card"><div class="info-label">💎 BNB WALLET</div><div class="info-value" id="profileWallet">Not linked</div><button class="edit-btn" id="setWalletBtn" style="margin-top:8px;">🔗 CONNECT</button></div>
+        </div>
+        <div class="referral-box"><div>🎁 REFER & EARN 1500 PMT PER FRIEND! 🎁</div><div class="referral-code" id="referralCode">——</div><button class="copy-ref-btn" id="copyReferralBtn">📎 COPY REFERRAL LINK</button><div id="referralStats" style="margin-top:12px;">Referrals: 0 | Earned: 0 PMT</div></div>
+        <div class="info-card"><div class="info-label">💰 EARNINGS BREAKDOWN</div><div id="earningsBreakdown"><div style="display:flex; justify-content:space-between;"><span>🚀 NEON RUSH</span><span id="breakdownNeon">0 PMT</span></div><div style="display:flex; justify-content:space-between;"><span>🍍 FRUIT RUSH</span><span id="breakdownFruit">0 PMT</span></div><div style="display:flex; justify-content:space-between;"><span>🧩 SLIDE PUZZLE</span><span id="breakdownSlide">0 PMT</span></div><div style="display:flex; justify-content:space-between;"><span>👥 REFERRALS</span><span id="breakdownReferral">0 PMT</span></div><div style="display:flex; justify-content:space-between; border-top:1px solid cyan; margin-top:12px; padding-top:10px;"><span>🔮 TOTAL PMT</span><span id="breakdownTotal">0 PMT</span></div></div></div>
+        <div class="withdraw-section" style="margin-top:24px; padding-top:16px; border-top:1px solid rgba(0,255,255,0.4);"><div><div class="info-label">MIN WITHDRAWAL: 100,000 PMT</div><div>⚡ BNB Chain (BEP-20)</div></div><div class="withdraw-input-group"><input type="number" id="withdrawAmountInput" class="withdraw-input" placeholder="Enter amount (min 100,000)" value="100000"><button class="max-btn" id="maxWithdrawBtn">MAX</button><button class="withdraw-btn" id="withdrawCustomBtn">💸 WITHDRAW</button></div><div class="withdraw-info" id="withdrawInfoMsg"></div></div>
+    </div>
+    <div class="deadwallet-section">
+        <div class="deadwallet-title">💀 DEAD WALLET PORTFOLIO 💀<span class="live-badge" id="dwLiveBadge">🟢 LIVE MONITORING</span></div>
+        <div class="burn-address-row"><span>🏦 Burn Address: <strong id="dwAddress">0x000000000000000000000000000000000000dead</strong></span><button class="copy-ref-btn" id="copyDwBtn" style="padding: 4px 16px;">📋 COPY</button></div>
+        <div class="burn-address-row"><span>📄 PMT Contract Address: <strong id="pmtContractAddrDisplay">0x084b0479AD31a0F53938d15B66fdEEDc1cbfB1b9</strong></span><button class="copy-ref-btn" id="copyContractBtn" style="padding: 4px 16px;">📋 COPY</button><a href="https://bscscan.com/token/0x084b0479AD31a0F53938d15B66fdEEDc1cbfB1b9" target="_blank" style="color:#88ffcc; margin-left:10px;">🔗 VIEW ON BSCSCAN</a></div>
+        <div class="burn-stats-grid"><div class="burn-stat-card"><div class="info-label">📦 INITIAL SUPPLY</div><div class="burn-stat-value" id="dwInitialSupply">24,708,000,001,000,000,000</div></div><div class="burn-stat-card"><div class="info-label">🗑️ TOTAL BURNED</div><div class="burn-stat-value" id="dwTotalBurned">0 PMT</div></div><div class="burn-stat-card"><div class="info-label">💎 CURRENT SUPPLY</div><div class="burn-stat-value" id="dwCurrentSupply">0 PMT</div></div><div class="burn-stat-card"><div class="info-label">📉 REWARD REDUCTION</div><div class="burn-stat-value" id="dwRewardReduction">0%</div></div></div>
+        <div class="progress-section"><div style="display: flex; justify-content: space-between;"><span>🔥 TOTAL BURNED PROGRESS</span><span id="dwBurnPercent">0%</span></div><div class="bar-container"><div class="burn-bar" id="dwBurnBar" style="width:0%;">0%</div></div></div>
+        <div><div style="display: flex; justify-content: space-between;"><span class="info-label">📜 RECENT BURN TRANSACTIONS (auto-detected)</span><button class="edit-btn" id="refreshDwBtn" style="padding: 2px 12px;">🔄 REFRESH</button></div><div style="overflow-x: auto; max-height: 180px;"><table class="tx-table"><thead><tr><th>TX HASH</th><th>DATE</th><th>PMT BURNED</th></tr></thead><tbody id="dwTxBody"><tr><td colspan="3">⏳ Connecting to blockchain......可能</tbody></table></div><div class="info-text" style="margin-top:8px;">✅ Automatically detects any PMT sent to dead wallet. Every burn increases scarcity → reduces rewards.</div></div>
     </div>
 </div>
-
-<!-- ==================== TAB 3: ABOUT US ==================== -->
-<div id="tab-about" class="tab-content">
-    <div class="main-container" style="padding-top: 20px;">
-        <div class="about-hero"><div class="not-org-badge">🚫 NOT AN ORGANIZATION 🚫</div><div class="money-statement"><span>💰 WE JUST WANT EVERYONE TO MAKE MONEY 💰</span></div><div class="about-description">PMT ARCADE was built by <strong style="color:#ffcc55;">regular people, for regular people</strong>. No banks, no CEOs, no corporate nonsense.</div><div class="about-description">Just a simple idea: <strong style="color:#ffcc55;">Play games → Earn tokens → Hold → Value goes up → Everyone profits together.</strong></div></div>
-        <div class="values-grid"><div class="value-card"><div class="value-icon">🚫</div><h3>No Corporation</h3><p>No board of directors, no shareholders. Just a community.</p></div><div class="value-card"><div class="value-icon">🔓</div><h3>100% Transparent</h3><p>Every burn on blockchain. Dead wallet public.</p></div><div class="value-card"><div class="value-icon">🤝</div><h3>Win Together</h3><p>When token value rises, EVERYONE wins.</p></div><div class="value-card"><div class="value-icon">🔥</div><h3>Ad-Funded Burns</h3><p>Ad revenue buys and burns PMT — making tokens rarer.</p></div></div>
-        <div class="benefit-section"><div class="benefit-title">📌 INVESTOR BENEFITS</div><div class="benefit-list"><div class="benefit-item">✅ Price – before launch – development</div><div class="benefit-item">✅ Burning funded only by ad revenue (not your investment)</div><div class="benefit-item">✅ PMT sent directly to your wallet after verification</div><div class="benefit-item">✅ Bonus for first 100 participants</div><div class="benefit-item">✅ Minimum investment: 10 USDT | Maximum: 100 USDT</div></div><div class="bonus-box">🎁 BONUS FOR FIRST 100 INVESTORS 🎁<br>Early supporters receive additional PMT allocation. Be among the first 100!</div></div>
-        <div class="stats-mini"><div class="stat-card"><div class="stat-number">95% → 65% → 35% → 15%</div><div>Monthly Burn Schedule</div></div><div class="stat-card"><div class="stat-number">24.7 Quadrillion</div><div>Initial Supply</div></div><div class="stat-card"><div class="stat-number">10-100 USDT</div><div>Pre-Launch Investment Range</div></div></div>
-        <div class="cta-section"><div style="font-family:'Orbitron'; font-size: 1.4rem;">🚀 JOIN THE MOVEMENT</div><p>You are not a "user". You are not a "customer". You are part of the <strong style="color:#ffcc55;">PMT community</strong>.</p><p style="margin-bottom: 20px;">Play games. Earn tokens. Hold. Watch the burns happen. Watch your value grow.<br><strong style="color:#ffcc55;">Let's make money — together.</strong></p><div class="cta-buttons" style="display: flex; gap: 16px; justify-content: center; margin-top: 20px;"><button class="tab-btn" data-tab="games" style="background: #ff8844; color:black;">🎮 START PLAYING</button><button class="tab-btn" data-tab="invest" style="background: #00c9ff;">💸 PRE-LAUNCH INVEST</button></div></div>
-        <div class="footer">© 2025 PMT ARCADE | Not a corporation · Just a community | Dead wallet: 0x000...dead | All burns on-chain and verifiable</div>
-    </div>
-</div>
-
-<div id="authOverlay" class="auth-overlay"><div class="auth-card"><div class="auth-title">PMT ARCADE</div><div id="loginFormContent"><input type="email" id="loginEmail" class="auth-input" placeholder="Email"><div><input type="password" id="loginPassword" placeholder="Password" style="width:100%; padding:12px 20px; background:#0a0a1e; border:1px solid #33ccff; border-radius:60px; color:white;"><button type="button" style="position:absolute; right:12px; top:10px; background:none; border:none; color:cyan;" onclick="window.togglePasswordField('loginPassword')">👁️</button></div><button class="auth-btn" id="loginBtn">⚡ LOGIN ⚡</button><div class="auth-link" id="showRegisterLink">🆕 Create account →</div><div class="auth-link" id="showForgotLink">🔐 Forgot password?</div></div><div id="registerFormContent" style="display:none;"><input type="text" id="regUsername" class="auth-input" placeholder="Username"><input type="email" id="regEmail" class="auth-input" placeholder="Email"><div><input type="password" id="regPassword" placeholder="Password (min 6 chars)" style="width:100%; padding:12px 20px; background:#0a0a1e; border:1px solid #33ccff; border-radius:60px; color:white;"><button type="button" style="position:absolute; right:12px; top:10px; background:none; border:none; color:cyan;" onclick="window.togglePasswordField('regPassword')">👁️</button></div><input type="text" id="regReferralCode" class="auth-input" placeholder="Referral code (optional)"><button class="auth-btn" id="registerBtn">🎮 REGISTER +1500 for referrer!</button><div class="auth-link" id="showLoginLink">↩️ Back to Login</div></div><div id="forgotFormContent" style="display:none;"><input type="email" id="forgotEmail" class="auth-input" placeholder="Your email"><button class="auth-btn" id="resetPasswordBtn">📧 SEND RESET LINK</button><div class="auth-link" id="backToLoginLink">← Back to Login</div></div></div></div>
 
 <script type="module">
+    // Full Firebase implementation (same as original working version)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
@@ -399,7 +510,6 @@
     function handleCustomWithdraw() { const amount = parseFloat(document.getElementById('withdrawAmountInput').value); if (isNaN(amount) || amount <= 0) return showToast('Enter valid amount'); withdrawWithAmount(amount); }
     function handleMaxWithdraw() { if (!currentUserData) return; const balance = currentUserData.balance || 0; if (balance < MIN_WITHDRAWAL) return showToast(`Balance (${balance.toFixed(2)} PMT) below minimum withdrawal`); document.getElementById('withdrawAmountInput').value = balance.toFixed(0); showToast(`Max amount set: ${balance.toFixed(2)} PMT`); }
     
-    // Dead Wallet Tracker with YOUR contract address
     const INITIAL_SUPPLY_DW = 24708000001000000000n;
     const DEAD_WALLET_ADDR = "0x000000000000000000000000000000000000dead";
     let currentSupplyDW = INITIAL_SUPPLY_DW, burnTxList = [];
@@ -407,25 +517,8 @@
     function shortHash(h) { return h.slice(0,6)+"..."+h.slice(-4); }
     async function updateDeadWalletUI() { const totalBurned = INITIAL_SUPPLY_DW - currentSupplyDW; const bp = Number(totalBurned)/Number(INITIAL_SUPPLY_DW)*100; document.getElementById('dwTotalBurned').innerText = formatPMTdw(totalBurned); document.getElementById('dwCurrentSupply').innerText = formatPMTdw(currentSupplyDW); document.getElementById('dwRewardReduction').innerText = bp.toFixed(6)+'%'; document.getElementById('dwBurnPercent').innerText = bp.toFixed(4)+'%'; const bar = document.getElementById('dwBurnBar'); if(bar) { bar.style.width = Math.min(100,bp)+'%'; bar.innerText = Math.floor(bp)+'%'; } const tbody = document.getElementById('dwTxBody'); if(!burnTxList.length) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">⏳ No burns detected yet. Send PMT to dead wallet.办</td></tr>'; else { tbody.innerHTML = ''; burnTxList.slice(-8).reverse().forEach(tx => { const row = tbody.insertRow(); row.insertCell(0).innerHTML = `<a href="https://bscscan.com/tx/${tx.hash}" target="_blank" style="color:#88ffcc;">${shortHash(tx.hash)}</a>`; row.insertCell(1).innerText = tx.date; row.insertCell(2).innerText = formatPMTdw(tx.amount); }); } }
     async function addDetectedBurn(txHash, amountWei) { const amountPMT = BigInt(amountWei); if(amountPMT <= 0n || burnTxList.find(t=>t.hash===txHash)) return; if(amountPMT > currentSupplyDW) currentSupplyDW = 0n; else currentSupplyDW = currentSupplyDW - amountPMT; burnTxList.push({ hash: txHash, date: new Date().toLocaleString(), amount: amountPMT }); await updateDeadWalletUI(); showToast(`🔥 AUTO BURN: ${formatPMTdw(amountPMT)} sent to dead wallet!`); if(typeof confetti === 'function') confetti({ particleCount: 80, spread: 50 }); }
-    async function initBlockchainWatcher() { try { const Web3Lib = window.Web3; const web3Inst = new Web3Lib("https://bsc-dataseed.binance.org/"); const contract = new web3Inst.eth.Contract(["event Transfer(address indexed from, address indexed to, uint256 value)"], PMT_CONTRACT); const pastEvents = await contract.getPastEvents('Transfer', { filter: { to: DEAD_WALLET_ADDR }, fromBlock: 0, toBlock: 'latest' }); for(let ev of pastEvents) await addDetectedBurn(ev.transactionHash, ev.returnValues.value); contract.events.Transfer({ filter: { to: DEAD_WALLET_ADDR }, fromBlock: 'latest' }).on('data', async (event) => { await addDetectedBurn(event.transactionHash, event.returnValues.value); }).on('error', console.error); document.getElementById('dwLiveBadge').innerHTML = "🟢 LIVE • WATCHING"; } catch(e) { console.warn("Blockchain watch limited", e); document.getElementById('dwLiveBadge').innerHTML = "🟡 FALLBACK MODE"; } }
+    async function initBlockchainWatcher() { try { const Web3Lib = window.Web3; const web3Inst = new Web3Lib("https://bsc-dataseed.binance.org/"); const contract = new web3Inst.eth.Contract(["event Transfer(address indexed from, address indexed to, uint256 value)"], PMT_CONTRACT); const pastEvents = await contract.getPastEvents('Transfer', { filter: { to: DEAD_WALLET_ADDR }, fromBlock: 0, toBlock: 'latest' }); for(let ev of pastEvents) await addDetectedBurn(ev.transactionHash, ev.returnValues.value); contract.events.Transfer({ filter: { to: DEAD_WALLET_ADDR }, fromBlock: 'latest' }).on('data', async (event) => { await addDetectedBurn(event.transactionHash, event.returnValues.value); }).on('error', console.error); document.getElementById('dwLiveBadge').innerHTML = "🟢 LIVE • WATCHING"; } catch(e) { console.warn(e); document.getElementById('dwLiveBadge').innerHTML = "🟡 FALLBACK MODE"; } }
     
-    // Investment Logic
-    const paymentWalletAddr = "0x778064447Bed8E3d3fE7f8605e5C5F2e7561cddE";
-    new QRCode(document.getElementById("investQrcode"), { text: paymentWalletAddr, width: 180, height: 180 });
-    document.getElementById('copyInvestWalletBtn')?.addEventListener('click', () => { navigator.clipboard.writeText(paymentWalletAddr); const btn = document.getElementById('copyInvestWalletBtn'); btn.innerText = '✓ COPIED!'; setTimeout(() => btn.innerText = '📋 COPY WALLET ADDRESS', 2000); });
-    const amountBtns = document.querySelectorAll('#amountButtons .amount-btn');
-    const customInputInv = document.getElementById('customAmount');
-    let selectedAmount = 10;
-    amountBtns.forEach(btn => { btn.addEventListener('click', () => { amountBtns.forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const val = btn.getAttribute('data-amount'); if(val === 'custom') { customInputInv.style.display = 'block'; selectedAmount = null; } else { customInputInv.style.display = 'none'; selectedAmount = parseFloat(val); } }); });
-    document.querySelector('#amountButtons .amount-btn[data-amount="10"]')?.classList.add('active');
-    customInputInv?.addEventListener('input', () => { let v = parseFloat(customInputInv.value); if(!isNaN(v) && v>=10 && v<=100) selectedAmount = v; else selectedAmount = null; });
-    function isValidBnbAddress(addr) { return addr && addr.startsWith('0x') && addr.length === 42; }
-    document.getElementById('submitInvestment')?.addEventListener('click', () => { let final = selectedAmount; if(!final && customInputInv.style.display==='block') { const cv = parseFloat(customInputInv.value); if(isNaN(cv) || cv<10 || cv>100) return alert("Please enter a valid amount between 10 and 100 USDT"); final = cv; } if(!final || final<10 || final>100) return alert("Please select or enter an amount between 10 and 100 USDT"); const email = document.getElementById('investorEmail').value.trim(); if(!email || !email.includes('@')) return alert("Please enter a valid email address"); const txHash = document.getElementById('txHash').value.trim(); if(!txHash || txHash.length<10) return alert("Please paste your transaction hash (TX ID) from BSC Scan or your wallet"); const recWallet = document.getElementById('receivingWallet').value.trim(); if(!recWallet || !isValidBnbAddress(recWallet)) return alert("Please enter a valid BNB Chain wallet address (0x... 42 characters)"); const investData = { amountUSDT: final, paymentWallet: paymentWalletAddr, investorEmail: email, transactionHash: txHash, receivingWallet: recWallet, timestamp: new Date().toISOString(), status: "pending_verification" }; let invs = JSON.parse(localStorage.getItem('pmt_investments')||'[]'); invs.push(investData); localStorage.setItem('pmt_investments', JSON.stringify(invs)); alert(`✅ Investment submitted!\n\nAmount: ${final} USDT\nReceiving Wallet: ${recWallet.substring(0,10)}...\n\nAdmin will verify your transaction and send PMT tokens to your receiving wallet within 24-48 hours.`); if(typeof confetti === 'function') confetti({ particleCount: 100, spread: 60 }); document.getElementById('investorEmail').value = ''; document.getElementById('txHash').value = ''; document.getElementById('receivingWallet').value = ''; customInputInv.value = ''; customInputInv.style.display = 'none'; selectedAmount = 10; document.querySelector('#amountButtons .amount-btn[data-amount="10"]')?.classList.add('active'); });
-    
-    // Tab switching
-    document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { const tabId = btn.getAttribute('data-tab'); document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); document.getElementById(`tab-${tabId}`).classList.add('active'); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }); });
-    
-    // Auth State and Event Listeners
     document.getElementById('copyDwBtn')?.addEventListener('click', () => { navigator.clipboard.writeText(DEAD_WALLET_ADDR); const btn = document.getElementById('copyDwBtn'); btn.innerText = '✓ COPIED!'; setTimeout(() => btn.innerText = '📋 COPY', 1500); });
     document.getElementById('refreshDwBtn')?.addEventListener('click', () => { initBlockchainWatcher(); showToast("Refreshing blockchain..."); });
     document.getElementById('withdrawCustomBtn')?.addEventListener('click', handleCustomWithdraw);
@@ -447,10 +540,6 @@
     
     onAuthStateChanged(auth, async (user) => { if(user) { currentAuthUser = user; const data = await loadUserData(user.uid); if(data) { currentUserData = data; document.getElementById('authOverlay').style.display = 'none'; document.getElementById('siteHeader').style.display = 'flex'; document.getElementById('mainContainer').style.display = 'block'; updateUI(); if(window.innerWidth > 768) { const first = document.querySelector('.game-card'); if(first) document.getElementById('gameFrame').src = GAMES[first.dataset.game]?.url; } initBlockchainWatcher(); } else { await auth.signOut(); showToast('Profile missing'); } } else { currentAuthUser = null; currentUserData = null; document.getElementById('authOverlay').style.display = 'flex'; document.getElementById('siteHeader').style.display = 'none'; document.getElementById('mainContainer').style.display = 'none'; } });
     setInterval(() => { if(currentAuthUser) updateDeadWalletUI(); }, 8000);
-    
-    const dlBtn = document.createElement('button'); dlBtn.innerText = "📥 ADMIN: DOWNLOAD INVESTMENTS"; dlBtn.style.position = "fixed"; dlBtn.style.bottom = "20px"; dlBtn.style.right = "20px"; dlBtn.style.zIndex = "999"; dlBtn.style.background = "#ff8844"; dlBtn.style.color = "#000"; dlBtn.style.border = "none"; dlBtn.style.padding = "8px 16px"; dlBtn.style.borderRadius = "40px"; dlBtn.style.fontWeight = "bold"; dlBtn.style.cursor = "pointer"; dlBtn.style.fontSize = "0.7rem"; dlBtn.onclick = () => { const invs = JSON.parse(localStorage.getItem('pmt_investments')||'[]'); const blob = new Blob([JSON.stringify(invs,null,2)], {type:"application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `pmt_investments_${new Date().toISOString().slice(0,19)}.json`; a.click(); URL.revokeObjectURL(url); alert(`✅ Exported ${invs.length} investment records.`); }; document.body.appendChild(dlBtn);
-    
-    console.log("%c🔐 PMT ARCADE FULLY LOADED | Contract: " + PMT_CONTRACT, "color: #ff8844; font-size: 12px");
 </script>
 </body>
 </html>
