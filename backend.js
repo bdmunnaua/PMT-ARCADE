@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const { Web3 } = require('web3');
 const cors = require('cors');
 require('dotenv').config();
@@ -18,6 +19,36 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// ==================== SERVE STATIC HTML FILES ====================
+// Serve all HTML, CSS, JS files from the current directory
+app.use(express.static(__dirname));
+
+// Explicit routes for HTML pages
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.get('/neonrush.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'neonrush.html'));
+});
+
+app.get('/fruitrush.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'fruitrush.html'));
+});
+
+app.get('/slidepuzzle.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'slidepuzzle.html'));
+});
+// ==================== END STATIC FILE SERVING ====================
 
 // BSC Mainnet RPC endpoints
 const RPC_ENDPOINTS = [
@@ -232,7 +263,7 @@ app.post('/reward-player', async (req, res) => {
         }
 
         // ============ MINIMUM WITHDRAWAL VALIDATION ============
-        const MIN_WITHDRAWAL_PMT = 1000; // Minimum 1000 PMT
+        const MIN_WITHDRAWAL_PMT = 100000; // 100,000 PMT minimum
         const requestedPMT = score / 1000; // Convert score to PMT
         
         if (requestedPMT < MIN_WITHDRAWAL_PMT) {
@@ -416,12 +447,18 @@ app.use((error, req, res, next) => {
     });
 });
 
-// 404 handler
+// 404 handler - MUST be at the END after all routes
 app.use((req, res) => {
-    res.status(404).json({ 
-        success: false, 
-        error: 'Endpoint not found' 
-    });
+    // Only return JSON for API endpoints, serve HTML for other paths
+    if (req.path.startsWith('/api/')) {
+        res.status(404).json({ 
+            success: false, 
+            error: 'Endpoint not found' 
+        });
+    } else {
+        // Try to serve index.html for unknown paths (SPA behavior)
+        res.sendFile(path.join(__dirname, 'index.html'));
+    }
 });
 
 // Initialize and start server
@@ -460,9 +497,15 @@ const startServer = async () => {
             console.log("💰 BNB Balance:", bnbBalance, 'BNB');
             console.log("🪙 PMT Balance:", pmtBalance, 'PMT');
             console.log("🔄 MODE: TRANSFER (Using existing tokens)");
-            console.log("💰 MINIMUM WITHDRAWAL: 1000 PMT");
+            console.log("💰 MINIMUM WITHDRAWAL: 100,000 PMT");
             console.log("⚠️  REAL MONEY MODE - BE CAREFUL!");
             console.log("📍 Status URL: http://localhost:3000/api/status\n");
+            console.log("🌐 HTML Pages available at:");
+            console.log("   - http://localhost:3000/");
+            console.log("   - http://localhost:3000/admin.html");
+            console.log("   - http://localhost:3000/neonrush.html");
+            console.log("   - http://localhost:3000/fruitrush.html");
+            console.log("   - http://localhost:3000/slidepuzzle.html\n");
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);
