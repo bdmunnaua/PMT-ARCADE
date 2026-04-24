@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/web3@4.16.0/dist/web3.min.js"></script>
-    <!-- Favicon / Logo -->
     <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' text-anchor='middle' dy='.35em' font-size='80' fill='%23ff8844'>⚡</text></svg>">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -18,7 +17,7 @@
             min-height: 100vh;
             color: #eef5ff;
         }
-        /* Login Overlay - Two Column Layout */
+        /* Login Overlay - moved DOWN by 60px to show full banner */
         .login-overlay {
             position: fixed;
             top: 0;
@@ -28,95 +27,130 @@
             background: radial-gradient(circle at 20% 30%, #0a0a1a, #020210);
             z-index: 2000;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             overflow-y: auto;
-            padding: 20px;
+            padding: 80px 20px 40px 20px;
         }
-        .login-container {
-            display: flex;
-            max-width: 1300px;
+        .login-page {
+            max-width: 550px;
             width: 100%;
-            gap: 40px;
-            align-items: center;
-            flex-wrap: wrap;
+            margin: 0 auto;
         }
-        /* Left Side - Introduction */
-        .intro-section {
-            flex: 1;
+        /* Banner - fully visible now */
+        .banner {
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(10px);
-            border-radius: 48px;
-            padding: 40px;
+            border-radius: 32px;
+            padding: 28px 24px;
+            margin-bottom: 30px;
             border: 1px solid rgba(255,136,68,0.3);
+            text-align: center;
         }
-        .logo-large {
+        .logo {
             font-family: 'Orbitron', monospace;
-            font-size: 2.8rem;
+            font-size: 2.2rem;
             font-weight: 900;
             background: linear-gradient(135deg, #00ffff, #ff44ee, #ffcc44);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
         }
-        .intro-title {
-            font-size: 1.8rem;
-            margin-bottom: 20px;
+        .tagline {
             color: #ffaa66;
-        }
-        .intro-text {
-            font-size: 1rem;
-            line-height: 1.6;
-            color: #ddeeff;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
             margin-bottom: 20px;
+        }
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #ff8844, #ff8844, transparent);
+            margin: 16px 0;
+        }
+        .banner-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .banner-stat {
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 8px 6px;
+        }
+        .banner-stat-label {
+            font-size: 0.6rem;
+            color: #88ccff;
+            text-transform: uppercase;
+        }
+        .banner-stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.85rem;
+            color: #ffaa66;
+            font-weight: bold;
+        }
+        .burn-schedule {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+        .burn-step {
+            flex: 1;
+            background: #ff330022;
+            border-radius: 16px;
+            padding: 8px 4px;
+            text-align: center;
+            min-width: 60px;
+        }
+        .burn-percent {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #ffcc55;
+        }
+        .burn-label {
+            font-size: 0.6rem;
+            color: #aaa;
         }
         .highlight {
             color: #ffcc55;
             font-weight: bold;
         }
-        .feature-list {
-            list-style: none;
-            margin: 20px 0;
+        .banner-text {
+            font-size: 0.8rem;
+            color: #ddeeff;
+            line-height: 1.4;
+            margin: 12px 0;
         }
-        .feature-list li {
-            margin-bottom: 12px;
-            padding-left: 24px;
-            position: relative;
+        .referral-badge {
+            background: #33ffaa22;
+            border-radius: 40px;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin-top: 8px;
         }
-        .feature-list li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #33ffaa;
-            font-weight: bold;
-        }
-        .burn-badge-intro {
-            background: #ff330022;
-            border-radius: 20px;
-            padding: 16px;
-            margin-top: 20px;
-            border-left: 4px solid #ff8844;
-            font-size: 0.85rem;
-        }
-        /* Right Side - Auth Card */
+        /* Login Form Card */
         .auth-card {
-            flex: 0.8;
-            min-width: 320px;
             background: linear-gradient(145deg, #11112a, #07071a);
             border: 1px solid rgba(0,255,255,0.5);
             border-radius: 40px;
-            padding: 40px;
+            padding: 35px 30px;
+            box-shadow: 0 0 40px rgba(0,255,255,0.1);
         }
         .auth-title {
             font-family: 'Orbitron', monospace;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             text-align: center;
             background: linear-gradient(135deg, cyan, #ff66cc);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         .auth-input {
             width: 100%;
@@ -151,7 +185,7 @@
             border: none;
             color: #33ffaa;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1.1rem;
         }
         .auth-btn {
             width: 100%;
@@ -163,6 +197,8 @@
             cursor: pointer;
             font-size: 1rem;
             margin-top: 10px;
+            color: white;
+            font-family: 'Orbitron', monospace;
         }
         .auth-link {
             text-align: center;
@@ -171,7 +207,7 @@
             color: #7df9ff;
             cursor: pointer;
         }
-        /* Main App Styles (unchanged from original) */
+        /* Main App Styles */
         .site-header {
             background: rgba(2, 2, 12, 0.92);
             backdrop-filter: blur(12px);
@@ -183,35 +219,7 @@
             flex-wrap: wrap;
             gap: 14px;
         }
-        .logo {
-            font-family: 'Orbitron', monospace;
-            font-size: 1.7rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #00ffff, #ff44ee, #ffcc44);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 2px;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            background: rgba(0, 255, 255, 0.1);
-            padding: 6px 20px;
-            border-radius: 60px;
-            border: 1px solid rgba(0,255,255,0.3);
-        }
-        .balance-display { font-family: 'Orbitron', monospace; color: #f5e56b; font-weight: bold; }
-        .logout-btn {
-            background: rgba(255, 80, 120, 0.2);
-            border: 1px solid rgba(255,100,150,0.5);
-            color: #ffccdd;
-            padding: 5px 16px;
-            border-radius: 30px;
-            cursor: pointer;
-        }
-        .main-container { max-width: 1500px; margin: 20px auto; padding: 0 18px; gap: 24px; }
+        .main-container { max-width: 1500px; margin: 20px auto; padding: 0 18px; }
         .games-hub { display: flex; gap: 24px; flex-wrap: wrap; }
         .game-sidebar {
             flex: 1.2;
@@ -232,7 +240,6 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            transition: all 0.2s ease;
         }
         .game-card.active {
             background: linear-gradient(135deg, rgba(0, 200, 255, 0.25), rgba(200, 0, 255, 0.15));
@@ -310,7 +317,7 @@
         .tx-table a { color: #88ffcc; text-decoration: none; }
         .progress-section { background: rgba(0,0,0,0.5); border-radius: 24px; padding: 12px; margin: 12px 0; }
         .bar-container { background: #1a1a2e; border-radius: 40px; height: 20px; overflow: hidden; margin: 6px 0; }
-        .burn-bar { height: 100%; background: linear-gradient(90deg, #ff6644, #ffaa33); border-radius: 40px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 0.6rem; font-weight: bold; color: black; transition: width 0.4s ease; }
+        .burn-bar { height: 100%; background: linear-gradient(90deg, #ff6644, #ffaa33); border-radius: 40px; transition: width 0.4s ease; }
         @keyframes pulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
         .toast {
             position: fixed;
@@ -331,11 +338,6 @@
             80% { opacity: 1; bottom: 35px; }
             100% { opacity: 0; bottom: 0; }
         }
-        @media (max-width: 900px) {
-            .login-container { flex-direction: column; }
-            .intro-section { order: 2; }
-            .auth-card { order: 1; width: 100%; }
-        }
         @media (max-width: 780px) {
             .game-area { display: none; }
             .mobile-play-btn { display: inline-block; }
@@ -349,32 +351,33 @@
 </head>
 <body>
 
-<!-- LOGIN OVERLAY (Two Column with Introduction) -->
+<!-- LOGIN OVERLAY - PUSHED DOWN 80px FROM TOP -->
 <div id="authOverlay" class="login-overlay">
-    <div class="login-container">
-        <!-- LEFT: INTRODUCTION -->
-        <div class="intro-section">
-            <div class="logo-large">⚡ PMT ARCADE ⚡</div>
-            <div class="intro-title">Play. Earn. Burn. Grow.</div>
-            <div class="intro-text">
-                PMT ARCADE is a <span class="highlight">deflationary play-to-earn ecosystem</span> where every game session rewards you with real PMT tokens.
+    <div class="login-page">
+        <!-- BANNER SECTION -->
+        <div class="banner">
+            <div class="logo">⚡ PMT ARCADE ⚡</div>
+            <div class="tagline">Play · Earn · Burn · Grow</div>
+            <div class="divider"></div>
+            <div class="banner-stats">
+                <div class="banner-stat"><div class="banner-stat-label">Initial Supply</div><div class="banner-stat-value">24.7 Quadrillion</div></div>
+                <div class="banner-stat"><div class="banner-stat-label">Deflation</div><div class="banner-stat-value">95% → 15% Monthly</div></div>
+                <div class="banner-stat"><div class="banner-stat-label">Referral Bonus</div><div class="banner-stat-value">+1500 PMT</div></div>
+                <div class="banner-stat"><div class="banner-stat-label">Min Withdrawal</div><div class="banner-stat-value">100,000 PMT</div></div>
             </div>
-            <ul class="feature-list">
-                <li><span class="highlight">Earn PMT</span> by playing Neon Rush, Fruit Rush, and Slide Puzzle</li>
-                <li><span class="highlight">Refer friends</span> and earn 1500 PMT each</li>
-                <li><span class="highlight">Monthly burns</span> reduce supply — making your tokens rarer</li>
-                <li><span class="highlight">Ad-funded deflation</span> — ad revenue buys and burns PMT</li>
-                <li><span class="highlight">Withdraw directly</span> to your BNB Chain wallet</li>
-            </ul>
-            <div class="burn-badge-intro">
-                🔥 <strong>Burn Schedule:</strong> 95% → 65% → 35% → 15% monthly<br>
-                💀 <strong>Dead Wallet:</strong> 0x000...dead (fully transparent)<br>
-                📈 <strong>Value grows</strong> as supply decreases
+            <div class="burn-schedule">
+                <div class="burn-step"><div class="burn-percent">95%</div><div class="burn-label">Phase 1</div></div>
+                <div class="burn-step"><div class="burn-percent">65%</div><div class="burn-label">Phase 2</div></div>
+                <div class="burn-step"><div class="burn-percent">35%</div><div class="burn-label">Phase 3</div></div>
+                <div class="burn-step"><div class="burn-percent">15%</div><div class="burn-label">Monthly</div></div>
             </div>
+            <div class="banner-text">🔥 <span class="highlight">Ad-Funded Deflation</span> — Every month, ad revenue buys PMT from the market and sends it to the <span class="highlight">Dead Wallet</span>. Supply decreases. Your tokens become rarer.</div>
+            <div class="banner-text">💀 <span class="highlight">Dead Wallet:</span> 0x000...dead (fully transparent, verifiable on BscScan)</div>
+            <div class="referral-badge">🎁 Invite friends → Earn 1500 PMT each → No limit!</div>
         </div>
-        <!-- RIGHT: LOGIN FORM -->
+        <!-- LOGIN FORM -->
         <div class="auth-card">
-            <div class="auth-title">🔐 WELCOME BACK</div>
+            <div class="auth-title">🔐 ACCESS ARCADE</div>
             <div id="loginFormContent">
                 <input type="email" id="loginEmail" class="auth-input" placeholder="Email address">
                 <div class="password-wrapper">
@@ -442,13 +445,10 @@
         <div class="burn-address-row"><span>🏦 Burn Address: <strong id="dwAddress">0x000000000000000000000000000000000000dead</strong></span><button class="copy-ref-btn" id="copyDwBtn" style="padding: 4px 16px;">📋 COPY</button></div>
         <div class="burn-address-row"><span>📄 PMT Contract Address: <strong id="pmtContractAddrDisplay">0x084b0479AD31a0F53938d15B66fdEEDc1cbfB1b9</strong></span><button class="copy-ref-btn" id="copyContractBtn" style="padding: 4px 16px;">📋 COPY</button><a href="https://bscscan.com/token/0x084b0479AD31a0F53938d15B66fdEEDc1cbfB1b9" target="_blank" style="color:#88ffcc; margin-left:10px;">🔗 VIEW ON BSCSCAN</a></div>
         <div class="burn-stats-grid"><div class="burn-stat-card"><div class="info-label">📦 INITIAL SUPPLY</div><div class="burn-stat-value" id="dwInitialSupply">24,708,000,001,000,000,000</div></div><div class="burn-stat-card"><div class="info-label">🗑️ TOTAL BURNED</div><div class="burn-stat-value" id="dwTotalBurned">0 PMT</div></div><div class="burn-stat-card"><div class="info-label">💎 CURRENT SUPPLY</div><div class="burn-stat-value" id="dwCurrentSupply">0 PMT</div></div><div class="burn-stat-card"><div class="info-label">📉 REWARD REDUCTION</div><div class="burn-stat-value" id="dwRewardReduction">0%</div></div></div>
-        <div class="progress-section"><div style="display: flex; justify-content: space-between;"><span>🔥 TOTAL BURNED PROGRESS</span><span id="dwBurnPercent">0%</span></div><div class="bar-container"><div class="burn-bar" id="dwBurnBar" style="width:0%;">0%</div></div></div>
-        <div><div style="display: flex; justify-content: space-between;"><span class="info-label">📜 RECENT BURN TRANSACTIONS (auto-detected)</span><button class="edit-btn" id="refreshDwBtn" style="padding: 2px 12px;">🔄 REFRESH</button></div><div style="overflow-x: auto; max-height: 180px;"><table class="tx-table"><thead><tr><th>TX HASH</th><th>DATE</th><th>PMT BURNED</th></tr></thead><tbody id="dwTxBody"><tr><td colspan="3">⏳ Connecting to blockchain......可能</tbody></table></div><div class="info-text" style="margin-top:8px;">✅ Automatically detects any PMT sent to dead wallet. Every burn increases scarcity → reduces rewards.</div></div>
-    </div>
-</div>
+        <div class="progress-section"><div style="display: flex; justify-content: space-between;"><span>🔥 TOTAL BURNED PROGRESS</span><span id="dwBurnPercent">0%</span></div><div class="bar-container"><div class="burn-bar" id="dwBurnBar" style="width:0%; height:100%; background:linear-gradient(90deg,#ff6644,#ffaa33); border-radius:40px;"></div></div></div>
+        <div><div style="display: flex; justify-content: space-between;"><span class="info-label">📜 RECENT BURN TRANSACTIONS (auto-detected)</span><button class="edit-btn" id="refreshDwBtn" style="padding: 2px 12px;">🔄 REFRESH</button></div><div style="overflow-x: auto; max-height: 180px;"><table class="tx-table"><thead><tr><th>TX HASH</th><th>DATE</th><th>PMT BURNED</th></tr></thead><tbody id="dwTxBody"><tr><td colspan="3">⏳ Connecting to blockchain...<\/td><\/tr><\/tbody><\/table><\/div><div class="info-text" style="margin-top:8px;">✅ Automatically detects any PMT sent to dead wallet. Every burn increases scarcity → reduces rewards.<\/div><\/div><\/div><\/div>
 
 <script type="module">
-    // Full Firebase implementation (same as original working version)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
@@ -515,7 +515,7 @@
     let currentSupplyDW = INITIAL_SUPPLY_DW, burnTxList = [];
     function formatPMTdw(val) { return (typeof val === 'bigint') ? val.toLocaleString('en-US') + " PMT" : Number(val).toLocaleString('en-US') + " PMT"; }
     function shortHash(h) { return h.slice(0,6)+"..."+h.slice(-4); }
-    async function updateDeadWalletUI() { const totalBurned = INITIAL_SUPPLY_DW - currentSupplyDW; const bp = Number(totalBurned)/Number(INITIAL_SUPPLY_DW)*100; document.getElementById('dwTotalBurned').innerText = formatPMTdw(totalBurned); document.getElementById('dwCurrentSupply').innerText = formatPMTdw(currentSupplyDW); document.getElementById('dwRewardReduction').innerText = bp.toFixed(6)+'%'; document.getElementById('dwBurnPercent').innerText = bp.toFixed(4)+'%'; const bar = document.getElementById('dwBurnBar'); if(bar) { bar.style.width = Math.min(100,bp)+'%'; bar.innerText = Math.floor(bp)+'%'; } const tbody = document.getElementById('dwTxBody'); if(!burnTxList.length) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">⏳ No burns detected yet. Send PMT to dead wallet.办</td></tr>'; else { tbody.innerHTML = ''; burnTxList.slice(-8).reverse().forEach(tx => { const row = tbody.insertRow(); row.insertCell(0).innerHTML = `<a href="https://bscscan.com/tx/${tx.hash}" target="_blank" style="color:#88ffcc;">${shortHash(tx.hash)}</a>`; row.insertCell(1).innerText = tx.date; row.insertCell(2).innerText = formatPMTdw(tx.amount); }); } }
+    async function updateDeadWalletUI() { const totalBurned = INITIAL_SUPPLY_DW - currentSupplyDW; const bp = Number(totalBurned)/Number(INITIAL_SUPPLY_DW)*100; document.getElementById('dwTotalBurned').innerText = formatPMTdw(totalBurned); document.getElementById('dwCurrentSupply').innerText = formatPMTdw(currentSupplyDW); document.getElementById('dwRewardReduction').innerText = bp.toFixed(6)+'%'; document.getElementById('dwBurnPercent').innerText = bp.toFixed(4)+'%'; const bar = document.getElementById('dwBurnBar'); if(bar) { bar.style.width = Math.min(100,bp)+'%'; bar.innerText = Math.floor(bp)+'%'; } const tbody = document.getElementById('dwTxBody'); if(!burnTxList.length) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">⏳ No burns detected yet. Send PMT to dead wallet.<\/td><\/tr>'; else { tbody.innerHTML = ''; burnTxList.slice(-8).reverse().forEach(tx => { const row = tbody.insertRow(); row.insertCell(0).innerHTML = `<a href="https://bscscan.com/tx/${tx.hash}" target="_blank" style="color:#88ffcc;">${shortHash(tx.hash)}<\/a>`; row.insertCell(1).innerText = tx.date; row.insertCell(2).innerText = formatPMTdw(tx.amount); }); } }
     async function addDetectedBurn(txHash, amountWei) { const amountPMT = BigInt(amountWei); if(amountPMT <= 0n || burnTxList.find(t=>t.hash===txHash)) return; if(amountPMT > currentSupplyDW) currentSupplyDW = 0n; else currentSupplyDW = currentSupplyDW - amountPMT; burnTxList.push({ hash: txHash, date: new Date().toLocaleString(), amount: amountPMT }); await updateDeadWalletUI(); showToast(`🔥 AUTO BURN: ${formatPMTdw(amountPMT)} sent to dead wallet!`); if(typeof confetti === 'function') confetti({ particleCount: 80, spread: 50 }); }
     async function initBlockchainWatcher() { try { const Web3Lib = window.Web3; const web3Inst = new Web3Lib("https://bsc-dataseed.binance.org/"); const contract = new web3Inst.eth.Contract(["event Transfer(address indexed from, address indexed to, uint256 value)"], PMT_CONTRACT); const pastEvents = await contract.getPastEvents('Transfer', { filter: { to: DEAD_WALLET_ADDR }, fromBlock: 0, toBlock: 'latest' }); for(let ev of pastEvents) await addDetectedBurn(ev.transactionHash, ev.returnValues.value); contract.events.Transfer({ filter: { to: DEAD_WALLET_ADDR }, fromBlock: 'latest' }).on('data', async (event) => { await addDetectedBurn(event.transactionHash, event.returnValues.value); }).on('error', console.error); document.getElementById('dwLiveBadge').innerHTML = "🟢 LIVE • WATCHING"; } catch(e) { console.warn(e); document.getElementById('dwLiveBadge').innerHTML = "🟡 FALLBACK MODE"; } }
     
