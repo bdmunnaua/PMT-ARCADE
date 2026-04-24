@@ -1,0 +1,11 @@
+{
+  "build": {
+    "commands": {
+      "build": "echo 'Static site ready'"
+    }
+  },
+  "deploy": {
+    "startCommand": "npx serve -s . -l 3000",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
