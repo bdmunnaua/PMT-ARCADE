@@ -1,11 +1,10 @@
 {
   "build": {
-    "commands": {
-      "build": "echo 'Static site ready'"
-    }
+    "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "npx serve -s . -l 3000",
-    "restartPolicyType": "ON_FAILURE"
+    "startCommand": "npm start",
+    "restartPolicyType": "ON_FAILURE",
+    "numReplicas": 1
   }
 }
