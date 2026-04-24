@@ -21,6 +21,53 @@
             min-height: 100vh;
             color: #eef5ff;
         }
+        /* FULLSCREEN GAME OVERLAY */
+        #fullscreenGameOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+        }
+        #fullscreenGameFrame {
+            width: 100%;
+            height: calc(100% - 60px);
+            border: none;
+            background: #000;
+        }
+        .game-overlay-header {
+            background: rgba(0,0,0,0.9);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ff4444;
+        }
+        .game-overlay-title {
+            font-family: 'Orbitron', monospace;
+            color: #ffaa66;
+            font-size: 1rem;
+        }
+        .close-game-btn {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 24px;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .close-game-btn:hover {
+            transform: scale(1.02);
+            background: linear-gradient(135deg, #ff6666, #ff0000);
+        }
+        /* Login Overlay */
         .login-overlay {
             position: fixed;
             top: 0;
@@ -119,8 +166,7 @@
         .game-icon { font-size: 2.2rem; }
         .game-info h3 { font-family: 'Orbitron', monospace; font-size: 1rem; color: #aaffff; }
         .game-earned { margin-left: auto; font-size: 0.75rem; background: #00000066; padding: 4px 10px; border-radius: 40px; color: #ffdd88; }
-        .mobile-play-btn, .desktop-fullscreen-btn { background: #0ff22e; border: none; border-radius: 30px; padding: 6px 14px; font-weight: bold; cursor: pointer; margin-left: 8px; }
-        .desktop-fullscreen-btn { background: linear-gradient(135deg, #00c853, #00a86b); color: white; }
+        .play-btn { background: #0ff22e; border: none; border-radius: 30px; padding: 6px 14px; font-weight: bold; cursor: pointer; margin-left: 8px; }
         .game-area { flex: 3; background: #010114; border-radius: 28px; overflow: hidden; aspect-ratio: 16 / 9; border: 1px solid cyan; }
         .game-frame { width: 100%; height: 100%; border: none; background: #000; }
         .profile-section { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); border-radius: 28px; padding: 24px; margin-top: 30px; border: 1px solid rgba(0, 255, 255, 0.3); }
@@ -161,16 +207,23 @@
         .toast { position: fixed; bottom: 35px; left: 50%; transform: translateX(-50%); background: #0ff; color: #000; font-weight: bold; padding: 12px 28px; border-radius: 50px; z-index: 2100; animation: fadeGlow 2.8s ease forwards; }
         @keyframes fadeGlow { 0% { opacity: 0; bottom: 0; } 15% { opacity: 1; bottom: 35px; } 80% { opacity: 1; bottom: 35px; } 100% { opacity: 0; bottom: 0; } }
         @keyframes pulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
-        @media (max-width: 780px) { .game-area { display: none; } .mobile-play-btn { display: inline-block; } .desktop-fullscreen-btn { display: none; } }
-        @media (min-width: 781px) { .mobile-play-btn { display: none; } .desktop-fullscreen-btn { display: inline-block; } }
+        @media (max-width: 780px) { .game-area { display: none; } }
     </style>
 </head>
 <body>
 
+<!-- FULLSCREEN GAME OVERLAY -->
+<div id="fullscreenGameOverlay">
+    <div class="game-overlay-header">
+        <span class="game-overlay-title" id="gameOverlayTitle">🎮 NEON RUSH</span>
+        <button class="close-game-btn" id="closeGameOverlayBtn">🚪 EXIT GAME</button>
+    </div>
+    <iframe id="fullscreenGameFrame" src="about:blank"></iframe>
+</div>
+
 <!-- LOGIN OVERLAY -->
 <div id="authOverlay" class="login-overlay">
     <div class="login-page">
-        <!-- BANNER SECTION -->
         <div class="banner">
             <div class="logo">⚡ PMT ARCADE ⚡</div>
             <div class="tagline">Play · Earn · Burn · Grow</div>
@@ -192,7 +245,6 @@
             <div class="referral-badge">🎁 Invite friends → Earn 1500 PMT each → No limit!</div>
         </div>
         
-        <!-- LOGIN FORM -->
         <div class="auth-card">
             <div class="auth-title">🔐 ACCESS ARCADE</div>
             <div id="loginFormContent">
@@ -223,7 +275,6 @@
             </div>
         </div>
 
-        <!-- WHITEPAPER LINK BUTTON -->
         <a href="whitepaper.html" class="whitepaper-link-btn">📄 READ FULL WHITEPAPER</a>
     </div>
 </div>
@@ -258,9 +309,24 @@
     <div class="games-hub">
         <div class="game-sidebar">
             <div class="game-cards">
-                <div class="game-card" data-game="neonrush"><div class="game-icon">🚀🌀</div><div class="game-info"><h3>NEON RUSH</h3></div><div class="game-earned" id="earnedNeon">0 PMT</div><button class="mobile-play-btn" data-game="neonrush">▶ PLAY</button><button class="desktop-fullscreen-btn" data-game="neonrush">🖥️ FULLSCREEN</button></div>
-                <div class="game-card" data-game="fruitrush"><div class="game-icon">🍒🍍</div><div class="game-info"><h3>FRUIT RUSH</h3></div><div class="game-earned" id="earnedFruit">0 PMT</div><button class="mobile-play-btn" data-game="fruitrush">▶ PLAY</button><button class="desktop-fullscreen-btn" data-game="fruitrush">🖥️ FULLSCREEN</button></div>
-                <div class="game-card" data-game="slidepuzzle"><div class="game-icon">🧩✨</div><div class="game-info"><h3>SLIDE PUZZLE</h3></div><div class="game-earned" id="earnedSlide">0 PMT</div><button class="mobile-play-btn" data-game="slidepuzzle">▶ PLAY</button><button class="desktop-fullscreen-btn" data-game="slidepuzzle">🖥️ FULLSCREEN</button></div>
+                <div class="game-card" data-game="neonrush" data-name="NEON RUSH">
+                    <div class="game-icon">🚀🌀</div>
+                    <div class="game-info"><h3>NEON RUSH</h3></div>
+                    <div class="game-earned" id="earnedNeon">0 PMT</div>
+                    <button class="play-btn" data-game="neonrush">▶ PLAY</button>
+                </div>
+                <div class="game-card" data-game="fruitrush" data-name="FRUIT RUSH">
+                    <div class="game-icon">🍒🍍</div>
+                    <div class="game-info"><h3>FRUIT RUSH</h3></div>
+                    <div class="game-earned" id="earnedFruit">0 PMT</div>
+                    <button class="play-btn" data-game="fruitrush">▶ PLAY</button>
+                </div>
+                <div class="game-card" data-game="slidepuzzle" data-name="SLIDE PUZZLE">
+                    <div class="game-icon">🧩✨</div>
+                    <div class="game-info"><h3>SLIDE PUZZLE</h3></div>
+                    <div class="game-earned" id="earnedSlide">0 PMT</div>
+                    <button class="play-btn" data-game="slidepuzzle">▶ PLAY</button>
+                </div>
             </div>
         </div>
         <div class="game-area"><iframe class="game-frame" id="gameFrame" src="about:blank" title="arcade game preview"></iframe></div>
@@ -284,7 +350,8 @@
         <div class="burn-address-row"><span>📄 PMT Contract Address: <strong id="pmtContractAddrDisplay">0x084b0479AD31a0F53938d15B66fdEEDc1cbfB1b9</strong></span><button class="copy-ref-btn" id="copyContractBtn" style="padding: 4px 16px;">📋 COPY</button><a href="https://bscscan.com/token/0x084b0479AD31a0F53938d15B66fdEEDc1cbfB1b9" target="_blank" style="color:#88ffcc; margin-left:10px;">🔗 VIEW ON BSCSCAN</a></div>
         <div class="burn-stats-grid"><div class="burn-stat-card"><div class="info-label">📦 INITIAL SUPPLY</div><div class="burn-stat-value" id="dwInitialSupply">24,708,000,001,000,000,000</div></div><div class="burn-stat-card"><div class="info-label">🗑️ TOTAL BURNED</div><div class="burn-stat-value" id="dwTotalBurned">0 PMT</div></div><div class="burn-stat-card"><div class="info-label">💎 CURRENT SUPPLY</div><div class="burn-stat-value" id="dwCurrentSupply">0 PMT</div></div><div class="burn-stat-card"><div class="info-label">📉 REWARD REDUCTION</div><div class="burn-stat-value" id="dwRewardReduction">0%</div></div></div>
         <div class="progress-section"><div style="display: flex; justify-content: space-between;"><span>🔥 TOTAL BURNED PROGRESS</span><span id="dwBurnPercent">0%</span></div><div class="bar-container"><div class="burn-bar" id="dwBurnBar" style="width:0%; height:100%;"></div></div></div>
-        <div><div style="display: flex; justify-content: space-between;"><span class="info-label">📜 RECENT BURN TRANSACTIONS (auto-detected)</span><button class="edit-btn" id="refreshDwBtn" style="padding: 2px 12px;">🔄 REFRESH</button></div><div style="overflow-x: auto; max-height: 180px;"><table class="tx-table"><thead><tr><th>TX HASH</th><th>DATE</th><th>PMT BURNED</th></tr></thead><tbody id="dwTxBody"><tr><td colspan="3">⏳ Connecting to blockchain...<\/td><\/tr><\/tbody><\/table><\/div><div class="info-text" style="margin-top:8px;">✅ Automatically detects any PMT sent to dead wallet. Every burn increases scarcity → reduces rewards.<\/div><\/div><\/div>
+        <div><div style="display: flex; justify-content: space-between;"><span class="info-label">📜 RECENT BURN TRANSACTIONS (auto-detected)</span><button class="edit-btn" id="refreshDwBtn" style="padding: 2px 12px;">🔄 REFRESH</button></div><div style="overflow-x: auto; max-height: 180px;"><table class="tx-table"><thead><tr><th>TX HASH</th><th>DATE</th><th>PMT BURNED</th></td></thead><tbody id="dwTxBody"><tr><td colspan="3">⏳ Connecting to blockchain...</td></tr></tbody></table></div><div class="info-text" style="margin-top:8px;">✅ Automatically detects any PMT sent to dead wallet. Every burn increases scarcity → reduces rewards.</div></div>
+    </div>
 </div>
 
 <script type="module">
@@ -301,6 +368,39 @@
     const GAMES = { neonrush: { name: 'Neon Rush', url: 'neonrush.html', earnedKey: 'neon' }, fruitrush: { name: 'Fruit Rush', url: 'fruitrush.html', earnedKey: 'fruit' }, slidepuzzle: { name: 'Slide Puzzle', url: 'slidepuzzle.html', earnedKey: 'slide' } };
     const MIN_WITHDRAWAL = 100000;
     const PMT_CONTRACT = "0x084b0479AD31a0F53938d15B66fdEEDc1cbfB1b9";
+    
+    // FULLSCREEN GAME OVERLAY FUNCTIONS
+    const gameOverlay = document.getElementById('fullscreenGameOverlay');
+    const gameFrame = document.getElementById('fullscreenGameFrame');
+    const gameOverlayTitle = document.getElementById('gameOverlayTitle');
+    
+    function openGameFullscreen(gameId, gameName) {
+        const gameUrl = GAMES[gameId]?.url;
+        if (!gameUrl) return;
+        gameOverlayTitle.innerText = `🎮 ${gameName}`;
+        gameFrame.src = gameUrl;
+        gameOverlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeGameFullscreen() {
+        gameOverlay.style.display = 'none';
+        gameFrame.src = 'about:blank';
+        document.body.style.overflow = '';
+        showToast('🚪 Game closed. Thanks for playing!');
+    }
+    
+    document.getElementById('closeGameOverlayBtn').addEventListener('click', closeGameFullscreen);
+    
+    // Listen for messages from games (earnPMT and closeGame)
+    window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'earnPMT' && e.data.game && typeof e.data.amount === 'number') {
+            addEarnings(e.data.game, e.data.amount);
+        }
+        if (e.data && e.data.type === 'closeGame') {
+            closeGameFullscreen();
+        }
+    });
     
     function showToast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2900); }
     window.togglePasswordField = function(id) { const inp = document.getElementById(id); if (inp) inp.type = inp.type === 'password' ? 'text' : 'password'; };
@@ -352,8 +452,23 @@
         if(withdrawMsg) withdrawMsg.innerHTML = `💰 Balance: ${(currentUserData.balance || 0).toFixed(2)} PMT | Minimum: ${MIN_WITHDRAWAL.toLocaleString()} PMT`;
     }
     
-    async function addEarnings(gameId, amount) { if (!currentAuthUser) return; let gameKey = gameId === 'fruitrush' ? 'fruit' : (gameId === 'slidepuzzle' ? 'slide' : 'neon'); const userRef = doc(db, 'users', currentAuthUser.uid); try { const snap = await getDoc(userRef); if (!snap.exists()) return; const data = snap.data(); const gameEarnings = data.gameEarnings || { neon:0, fruit:0, slide:0 }; gameEarnings[gameKey] = (gameEarnings[gameKey] || 0) + amount; await updateDoc(userRef, { balance: (data.balance || 0) + amount, [`gameEarnings.${gameKey}`]: gameEarnings[gameKey], transactions: [...(data.transactions || []), { date: new Date().toISOString(), game: GAMES[gameId]?.name || gameId, amount }] }); await loadUserData(currentAuthUser.uid); updateUI(); showToast(`🎉 +${amount} PMT from ${GAMES[gameId]?.name}!`); if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 55 }); } catch (err) { console.error(err); showToast("Earn failed"); } }
-    window.addEventListener('message', (e) => { if (e.data && e.data.type === 'earnPMT' && e.data.game && typeof e.data.amount === 'number') addEarnings(e.data.game, e.data.amount); });
+    async function addEarnings(gameId, amount) { 
+        if (!currentAuthUser) return; 
+        let gameKey = gameId === 'fruitrush' ? 'fruit' : (gameId === 'slidepuzzle' ? 'slide' : 'neon'); 
+        const userRef = doc(db, 'users', currentAuthUser.uid); 
+        try { 
+            const snap = await getDoc(userRef); 
+            if (!snap.exists()) return; 
+            const data = snap.data(); 
+            const gameEarnings = data.gameEarnings || { neon:0, fruit:0, slide:0 }; 
+            gameEarnings[gameKey] = (gameEarnings[gameKey] || 0) + amount; 
+            await updateDoc(userRef, { balance: (data.balance || 0) + amount, [`gameEarnings.${gameKey}`]: gameEarnings[gameKey], transactions: [...(data.transactions || []), { date: new Date().toISOString(), game: GAMES[gameId]?.name || gameId, amount }] }); 
+            await loadUserData(currentAuthUser.uid); 
+            updateUI(); 
+            showToast(`🎉 +${amount} PMT from ${GAMES[gameId]?.name}!`); 
+            if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 55 }); 
+        } catch (err) { console.error(err); showToast("Earn failed"); } 
+    }
     
     async function processReferralBonus(newUserId, referrerCode) { if (!referrerCode) return; const q = query(collection(db, 'users'), where('referralCode', '==', referrerCode)); const snap = await getDocs(q); if (!snap.empty && snap.docs[0].id !== newUserId) { const ref = doc(db, 'users', snap.docs[0].id); const refData = snap.docs[0].data(); await updateDoc(ref, { balance: (refData.balance || 0) + 1500, referralEarnings: (refData.referralEarnings || 0) + 1500, referredUsersCount: (refData.referredUsersCount || 0) + 1, transactions: [...(refData.transactions || []), { date: new Date().toISOString(), game: 'Referral Bonus', amount: 1500 }] }); showToast('🎁 Referrer earned 1500 PMT!'); } }
     
@@ -368,12 +483,12 @@
     function handleCustomWithdraw() { const amount = parseFloat(document.getElementById('withdrawAmountInput').value); if (isNaN(amount) || amount <= 0) return showToast('Enter valid amount'); withdrawWithAmount(amount); }
     function handleMaxWithdraw() { if (!currentUserData) return; const balance = currentUserData.balance || 0; if (balance < MIN_WITHDRAWAL) return showToast(`Balance (${balance.toFixed(2)} PMT) below minimum withdrawal`); document.getElementById('withdrawAmountInput').value = balance.toFixed(0); showToast(`Max amount set: ${balance.toFixed(2)} PMT`); }
     
-    const INITIAL_SUPPLY_DW = 1000000000000n; // 1 Trillion remaining
+    const INITIAL_SUPPLY_DW = 1000000000000n;
     const DEAD_WALLET_ADDR = "0x000000000000000000000000000000000000dead";
     let currentSupplyDW = INITIAL_SUPPLY_DW, burnTxList = [];
     function formatPMTdw(val) { return (typeof val === 'bigint') ? val.toLocaleString('en-US') + " PMT" : Number(val).toLocaleString('en-US') + " PMT"; }
     function shortHash(h) { return h.slice(0,6)+"..."+h.slice(-4); }
-    async function updateDeadWalletUI() { const totalBurned = 24708000001000000000n - currentSupplyDW; const bp = Number(totalBurned)/Number(24708000001000000000n)*100; document.getElementById('dwTotalBurned').innerText = formatPMTdw(totalBurned); document.getElementById('dwCurrentSupply').innerText = formatPMTdw(currentSupplyDW); document.getElementById('dwRewardReduction').innerText = bp.toFixed(6)+'%'; document.getElementById('dwBurnPercent').innerText = bp.toFixed(4)+'%'; const bar = document.getElementById('dwBurnBar'); if(bar) { bar.style.width = Math.min(100,bp)+'%'; } const tbody = document.getElementById('dwTxBody'); if(!burnTxList.length) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">⏳ No burns detected yet. Send PMT to dead wallet.<\/td><\/tr>'; else { tbody.innerHTML = ''; burnTxList.slice(-8).reverse().forEach(tx => { const row = tbody.insertRow(); row.insertCell(0).innerHTML = `<a href="https://bscscan.com/tx/${tx.hash}" target="_blank" style="color:#88ffcc;">${shortHash(tx.hash)}<\/a>`; row.insertCell(1).innerText = tx.date; row.insertCell(2).innerText = formatPMTdw(tx.amount); }); } }
+    async function updateDeadWalletUI() { const totalBurned = 24708000001000000000n - currentSupplyDW; const bp = Number(totalBurned)/Number(24708000001000000000n)*100; document.getElementById('dwTotalBurned').innerText = formatPMTdw(totalBurned); document.getElementById('dwCurrentSupply').innerText = formatPMTdw(currentSupplyDW); document.getElementById('dwRewardReduction').innerText = bp.toFixed(6)+'%'; document.getElementById('dwBurnPercent').innerText = bp.toFixed(4)+'%'; const bar = document.getElementById('dwBurnBar'); if(bar) { bar.style.width = Math.min(100,bp)+'%'; } const tbody = document.getElementById('dwTxBody'); if(!burnTxList.length) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">⏳ No burns detected yet. Send PMT to dead wallet.</td></tr>'; else { tbody.innerHTML = ''; burnTxList.slice(-8).reverse().forEach(tx => { const row = tbody.insertRow(); row.insertCell(0).innerHTML = `<a href="https://bscscan.com/tx/${tx.hash}" target="_blank" style="color:#88ffcc;">${shortHash(tx.hash)}</a>`; row.insertCell(1).innerText = tx.date; row.insertCell(2).innerText = formatPMTdw(tx.amount); }); } }
     async function addDetectedBurn(txHash, amountWei) { const amountPMT = BigInt(amountWei); if(amountPMT <= 0n || burnTxList.find(t=>t.hash===txHash)) return; if(amountPMT > currentSupplyDW) currentSupplyDW = 0n; else currentSupplyDW = currentSupplyDW - amountPMT; burnTxList.push({ hash: txHash, date: new Date().toLocaleString(), amount: amountPMT }); await updateDeadWalletUI(); showToast(`🔥 AUTO BURN: ${formatPMTdw(amountPMT)} sent to dead wallet!`); if(typeof confetti === 'function') confetti({ particleCount: 80, spread: 50 }); }
     async function initBlockchainWatcher() { try { const Web3Lib = window.Web3; const web3Inst = new Web3Lib("https://bsc-dataseed.binance.org/"); const contract = new web3Inst.eth.Contract(["event Transfer(address indexed from, address indexed to, uint256 value)"], PMT_CONTRACT); const pastEvents = await contract.getPastEvents('Transfer', { filter: { to: DEAD_WALLET_ADDR }, fromBlock: 0, toBlock: 'latest' }); for(let ev of pastEvents) await addDetectedBurn(ev.transactionHash, ev.returnValues.value); contract.events.Transfer({ filter: { to: DEAD_WALLET_ADDR }, fromBlock: 'latest' }).on('data', async (event) => { await addDetectedBurn(event.transactionHash, event.returnValues.value); }).on('error', console.error); document.getElementById('dwLiveBadge').innerHTML = "🟢 LIVE • WATCHING"; } catch(e) { console.warn(e); document.getElementById('dwLiveBadge').innerHTML = "🟡 FALLBACK MODE"; } }
     
@@ -393,10 +508,34 @@
     document.getElementById('showForgotLink').onclick = () => { document.getElementById('loginFormContent').style.display='none'; document.getElementById('registerFormContent').style.display='none'; document.getElementById('forgotFormContent').style.display='block'; };
     document.getElementById('backToLoginLink').onclick = () => { document.getElementById('loginFormContent').style.display='block'; document.getElementById('registerFormContent').style.display='none'; document.getElementById('forgotFormContent').style.display='none'; };
     
-    document.querySelectorAll('.game-card').forEach(card => { card.addEventListener('click', (e) => { if(e.target.classList.contains('mobile-play-btn') || e.target.classList.contains('desktop-fullscreen-btn')) return; const gid = card.dataset.game; if(!gid) return; document.querySelectorAll('.game-card').forEach(c=>c.classList.remove('active')); card.classList.add('active'); if(window.innerWidth > 768 && GAMES[gid]) document.getElementById('gameFrame').src = GAMES[gid].url; }); });
-    document.querySelectorAll('.mobile-play-btn, .desktop-fullscreen-btn').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const gid = btn.dataset.game; if(gid && GAMES[gid]) window.open(GAMES[gid].url, '_blank'); }); });
+    // Game card click handlers - OPEN IN FULLSCREEN OVERLAY
+    document.querySelectorAll('.game-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if(e.target.classList.contains('play-btn')) return;
+            const gid = card.dataset.game;
+            const gname = card.dataset.name || GAMES[gid]?.name || gid;
+            if(!gid) return;
+            document.querySelectorAll('.game-card').forEach(c=>c.classList.remove('active'));
+            card.classList.add('active');
+            if(window.innerWidth > 768 && GAMES[gid]) {
+                document.getElementById('gameFrame').src = GAMES[gid].url;
+            }
+        });
+    });
     
-    onAuthStateChanged(auth, async (user) => { if(user) { currentAuthUser = user; const data = await loadUserData(user.uid); if(data) { currentUserData = data; document.getElementById('authOverlay').style.display = 'none'; document.getElementById('siteHeader').style.display = 'flex'; document.getElementById('mainContainer').style.display = 'block'; updateUI(); if(window.innerWidth > 768) { const first = document.querySelector('.game-card'); if(first) document.getElementById('gameFrame').src = GAMES[first.dataset.game]?.url; } initBlockchainWatcher(); } else { await auth.signOut(); showToast('Profile missing'); } } else { currentAuthUser = null; currentUserData = null; document.getElementById('authOverlay').style.display = 'flex'; document.getElementById('siteHeader').style.display = 'none'; document.getElementById('mainContainer').style.display = 'none'; } });
+    // Play button handlers - OPEN IN FULLSCREEN OVERLAY
+    document.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const gid = btn.dataset.game;
+            const gname = GAMES[gid]?.name || gid;
+            if(gid && GAMES[gid]) {
+                openGameFullscreen(gid, gname);
+            }
+        });
+    });
+    
+    onAuthStateChanged(auth, async (user) => { if(user) { currentAuthUser = user; const data = await loadUserData(user.uid); if(data) { currentUserData = data; document.getElementById('authOverlay').style.display = 'none'; document.getElementById('siteHeader').style.display = 'flex'; document.getElementById('mainContainer').style.display = 'block'; updateUI(); if(window.innerWidth > 768) { const first = document.querySelector('.game-card'); if(first && GAMES[first.dataset.game]) document.getElementById('gameFrame').src = GAMES[first.dataset.game].url; } initBlockchainWatcher(); } else { await auth.signOut(); showToast('Profile missing'); } } else { currentAuthUser = null; currentUserData = null; document.getElementById('authOverlay').style.display = 'flex'; document.getElementById('siteHeader').style.display = 'none'; document.getElementById('mainContainer').style.display = 'none'; } });
     setInterval(() => { if(currentAuthUser) updateDeadWalletUI(); }, 8000);
 </script>
 </body>
