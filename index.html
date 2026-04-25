@@ -145,6 +145,97 @@
         .toggle-password { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #33ffaa; cursor: pointer; font-size: 1.1rem; }
         .auth-btn { width: 100%; background: linear-gradient(95deg, #ff8844, #ff4400); border: none; padding: 14px; border-radius: 60px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 10px; color: white; font-family: 'Orbitron', monospace; }
         .auth-link { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #7df9ff; cursor: pointer; }
+        
+        /* INVESTMENT CARD STYLES */
+        .investment-card {
+            background: linear-gradient(145deg, #0f0f2a, #080818);
+            border: 2px solid #ff8844;
+            border-radius: 32px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(255,136,68,0.2);
+        }
+        .investment-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .investment-header h3 {
+            font-family: 'Orbitron', monospace;
+            color: #ffaa66;
+            font-size: 1.3rem;
+        }
+        .limited-badge {
+            background: #33ffaa22;
+            padding: 5px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            color: #33ffaa;
+        }
+        .investment-minmax {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .investment-minmax-box {
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 10px;
+            text-align: center;
+        }
+        .investment-minmax-label {
+            font-size: 0.6rem;
+            color: #88ccff;
+        }
+        .investment-minmax-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            color: #ffcc55;
+        }
+        .investment-wallet-box {
+            background: #00000066;
+            border-radius: 60px;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            word-break: break-all;
+            text-align: center;
+            border: 1px solid #ff8844;
+        }
+        .investment-wallet-label {
+            font-size: 0.7rem;
+            color: #ffaa88;
+        }
+        .investment-wallet-address {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #88ffcc;
+        }
+        .copy-invest-btn {
+            background: rgba(255,136,68,0.2);
+            border: 1px solid #ff8844;
+            padding: 4px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin-top: 6px;
+        }
+        .investment-form input {
+            margin-bottom: 10px;
+            padding: 10px 16px;
+        }
+        .investment-note {
+            margin-top: 15px;
+            font-size: 0.65rem;
+            color: #888;
+            text-align: center;
+            border-top: 1px solid rgba(255,136,68,0.3);
+            padding-top: 12px;
+        }
+        
         .site-header {
             background: rgba(2, 2, 12, 0.92);
             backdrop-filter: blur(12px);
@@ -311,6 +402,46 @@
             </div>
         </div>
 
+        <!-- INVESTMENT CARD - ADDED AS SEPARATE CARD -->
+        <div class="investment-card">
+            <div class="investment-header">
+                <h3>💸 PRE-LAUNCH INVESTMENT</h3>
+                <span class="limited-badge">🔥 LIMITED OPPORTUNITY</span>
+            </div>
+            <p style="font-size: 0.85rem; color: #ccddff; margin-bottom: 15px;">Buy PMT at pre-market price before exchange listing. <span style="color: #ffcc55;">The value after launch will be much higher!</span></p>
+            
+            <div class="investment-minmax">
+                <div class="investment-minmax-box">
+                    <div class="investment-minmax-label">MIN INVESTMENT</div>
+                    <div class="investment-minmax-value">10 USDT</div>
+                </div>
+                <div class="investment-minmax-box">
+                    <div class="investment-minmax-label">MAX INVESTMENT</div>
+                    <div class="investment-minmax-value">100 USDT</div>
+                </div>
+            </div>
+            
+            <div class="investment-wallet-box">
+                <div class="investment-wallet-label">📤 SEND USDT (BEP-20) TO:</div>
+                <div class="investment-wallet-address" id="investWalletAddress">0x778064447Bed8E3d3fE7f8605e5C5F2e7561cddE</div>
+                <button class="copy-invest-btn" onclick="copyInvestWallet()">📋 COPY ADDRESS</button>
+            </div>
+            
+            <div class="investment-form">
+                <div style="font-size: 0.7rem; color: #ffaa88; margin-bottom: 8px;">⬇️ AFTER SENDING USDT, SUBMIT YOUR DETAILS ⬇️</div>
+                <input type="text" id="investorName" class="auth-input" placeholder="Your Name" style="margin-bottom: 10px; padding: 10px 16px;">
+                <input type="email" id="investorEmail" class="auth-input" placeholder="Your Email" style="margin-bottom: 10px; padding: 10px 16px;">
+                <input type="text" id="investTxHash" class="auth-input" placeholder="Transaction Hash (TX ID)" style="margin-bottom: 10px; padding: 10px 16px;">
+                <input type="text" id="investReceivingWallet" class="auth-input" placeholder="Your BNB Wallet to Receive PMT" style="margin-bottom: 15px; padding: 10px 16px;">
+                <button id="submitInvestmentBtn" class="auth-btn" style="background: linear-gradient(95deg, #ff8844, #ff4400);">📩 SUBMIT INVESTMENT</button>
+            </div>
+            
+            <div class="investment-note">
+                ⚡ Your investment goes to development & liquidity. Burning is funded separately by ad revenue.<br>
+                ✅ Bonus for first 100 investors!
+            </div>
+        </div>
+
         <a href="whitepaper.html" class="whitepaper-link-btn">📄 READ FULL WHITEPAPER</a>
     </div>
 </div>
@@ -446,6 +577,60 @@
     function showToast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2900); }
     window.togglePasswordField = function(id) { const inp = document.getElementById(id); if (inp) inp.type = inp.type === 'password' ? 'text' : 'password'; };
     function genReferralCode() { return 'PMT' + Math.random().toString(36).substring(2, 9).toUpperCase(); }
+    
+    // Investment functions
+    window.copyInvestWallet = function() {
+        const wallet = "0x778064447Bed8E3d3fE7f8605e5C5F2e7561cddE";
+        navigator.clipboard.writeText(wallet);
+        const btn = document.querySelector('.copy-invest-btn');
+        if (btn) {
+            btn.innerText = '✓ COPIED!';
+            setTimeout(() => btn.innerText = '📋 COPY ADDRESS', 2000);
+        }
+        showToast('✅ Wallet address copied!');
+    };
+    
+    document.getElementById('submitInvestmentBtn')?.addEventListener('click', function() {
+        const name = document.getElementById('investorName')?.value.trim();
+        const email = document.getElementById('investorEmail')?.value.trim();
+        const txHash = document.getElementById('investTxHash')?.value.trim();
+        const receivingWallet = document.getElementById('investReceivingWallet')?.value.trim();
+        
+        if (!name || !email || !txHash || !receivingWallet) {
+            alert('Please fill all fields');
+            return;
+        }
+        
+        if (!email.includes('@')) {
+            alert('Please enter a valid email');
+            return;
+        }
+        
+        if (!receivingWallet.startsWith('0x') || receivingWallet.length !== 42) {
+            alert('Please enter a valid BNB Chain wallet address (0x... 42 characters)');
+            return;
+        }
+        
+        const investmentData = {
+            name: name,
+            email: email,
+            transactionHash: txHash,
+            receivingWallet: receivingWallet,
+            timestamp: new Date().toISOString(),
+            status: 'pending'
+        };
+        
+        let investments = JSON.parse(localStorage.getItem('pmt_investments') || '[]');
+        investments.push(investmentData);
+        localStorage.setItem('pmt_investments', JSON.stringify(investments));
+        
+        alert('✅ Investment submitted! Admin will verify your transaction and send PMT to your wallet within 24-48 hours.');
+        
+        document.getElementById('investorName').value = '';
+        document.getElementById('investorEmail').value = '';
+        document.getElementById('investTxHash').value = '';
+        document.getElementById('investReceivingWallet').value = '';
+    });
     
     // Fullscreen game functions
     const gameOverlay = document.getElementById('fullscreenGameOverlay');
