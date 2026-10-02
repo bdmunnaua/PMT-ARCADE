@@ -44,6 +44,8 @@ export interface CreateMatchInput {
 interface Options {
   /** development simulator only: allows disabled/maintenance games */
   allowDisabledGame?: boolean;
+  /** a 🤖 bot seat (BotService): bots may sit in many rooms at once */
+  asBot?: boolean;
 }
 
 export class MatchService {
@@ -179,7 +181,7 @@ export class MatchService {
     if (match.player_count >= match.max_players) throw new AppError('MATCH_FULL');
     const game = await this.games.get(match.game_id);
     this.games.assertPlayable(game, settings, match.stake_units, { allowDisabled: opts.allowDisabledGame });
-    if ((await this.repo.activeCountFor(user.id)) >= MAX_ACTIVE_MATCHES_PER_PLAYER) throw new AppError('TOO_MANY_ACTIVE_MATCHES');
+    if (!opts.asBot && (await this.repo.activeCountFor(user.id)) >= MAX_ACTIVE_MATCHES_PER_PLAYER) throw new AppError('TOO_MANY_ACTIVE_MATCHES');
     const split = await this.stakeSplit(user.id, match.stake_units);
 
     const now = this.now();
@@ -233,7 +235,7 @@ export class MatchService {
           link: `/matches/${matchId}`,
         });
       }
-      await this.fraud.checkMatchOpponents(matchId, players.map((p) => p.user_id));
+      if (!opts.asBot) await this.fraud.checkMatchOpponents(matchId, players.map((p) => p.user_id));
     }
     return dto;
   }

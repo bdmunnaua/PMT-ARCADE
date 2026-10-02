@@ -662,4 +662,10 @@ export const BN: Record<string, string> = {
   'Open bKash → Cash Out → enter the agent number above and the amount.': 'bKash খুলুন → ক্যাশ আউট → উপরের এজেন্ট নম্বর ও টাকার পরিমাণ দিন।',
   'Open bKash → Send Money → enter the number above and the amount.': 'bKash খুলুন → সেন্ড মানি → উপরের নম্বর ও টাকার পরিমাণ দিন।',
   'Open bKash → Payment → enter the merchant number above and the amount.': 'bKash খুলুন → পেমেন্ট → উপরের মার্চেন্ট নম্বর ও টাকার পরিমাণ দিন।',
+  // ---- bots
+  'Play against a 🤖 bot': '🤖 বটের সাথে খেলুন',
+  'Do not want to wait? Fill the {n} empty seat(s) with 🤖 bots and start now. Bots are always shown as bots.': 'অপেক্ষা করতে চান না? খালি {n}টি সিটে 🤖 বট বসিয়ে এখনই শুরু করুন। বট সবসময় বট হিসেবেই দেখানো হয়।',
+  'Bots joined — the game is starting!': 'বট যোগ দিয়েছে — খেলা শুরু হচ্ছে!',
+  'Could not add bots.': 'বট যোগ করা যায়নি।',
+  'Start with bots': 'বট নিয়ে শুরু করুন',
 };

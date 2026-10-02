@@ -69,7 +69,7 @@ export class TransparencyService {
     const [totals, reserve, integrity, wallets] = await Promise.all([
       first<Totals>(
         this.db,
-        `SELECT (SELECT COUNT(*) FROM player_profiles) AS players,
+        `SELECT (SELECT COUNT(*) FROM player_profiles p JOIN users u ON u.id = p.user_id WHERE u.firebase_uid NOT LIKE 'bot:%') AS players,
                 (SELECT -balance FROM wallet_accounts WHERE id = 'sys_issuance') AS issued,
                 (SELECT COALESCE(SUM(balance), 0) FROM wallet_accounts WHERE owner_type = 'PLAYER' AND bucket IN ('AVAILABLE', 'LOCKED_GAME', 'LOCKED_SELL')) AS sellable,
                 (SELECT COALESCE(SUM(balance), 0) FROM wallet_accounts WHERE owner_type = 'PLAYER' AND bucket = 'BONUS') AS bonus,

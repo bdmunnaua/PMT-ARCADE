@@ -1,19 +1,26 @@
 import type { GameModule, MatchOutcome, ModuleResult, RoomContext } from '@arena/shared';
-import { autoToken, eliminate, move, newLudo, roll, type LudoState } from './rules';
+import { autoToken, botToken, eliminate, move, newLudo, roll, type LudoState } from './rules';
 
 export const LUDO_ROLL_MS = 12_000;
 export const LUDO_MOVE_MS = 15_000;
 /** consecutive missed turns before a player is removed from the game */
 export const LUDO_MAX_TIMEOUTS = 3;
+/** a 🤖 bot rolls / moves after this pause, like a person would */
+export const LUDO_BOT_ROLL_MS = 900;
+export const LUDO_BOT_MOVE_MS = 1_100;
 
 export interface LudoRoomState extends LudoState {
   deadline: number | null;
+  /** seats played by a 🤖 bot (absent in rooms created before bots existed) */
+  bots?: boolean[];
 }
 
 const outcomeOf = (s: LudoRoomState): MatchOutcome | undefined => (s.winner !== null ? { type: 'WIN', winnerUserId: s.players[s.winner]!, reason: 'NORMAL' } : undefined);
 
-function withDeadline(s: LudoState, now: number): ModuleResult<LudoRoomState> {
-  const deadline = s.phase === 'OVER' ? null : now + (s.phase === 'ROLL' ? LUDO_ROLL_MS : LUDO_MOVE_MS);
+function withDeadline(s: LudoState & { bots?: boolean[] }, now: number): ModuleResult<LudoRoomState> {
+  const bot = s.bots?.[s.turn] === true;
+  const wait = s.phase === 'ROLL' ? (bot ? LUDO_BOT_ROLL_MS : LUDO_ROLL_MS) : bot ? LUDO_BOT_MOVE_MS : LUDO_MOVE_MS;
+  const deadline = s.phase === 'OVER' ? null : now + wait;
   const state: LudoRoomState = { ...s, deadline };
   return { state, timerAt: deadline, outcome: outcomeOf(state), persist: s.phase === 'OVER' ? [{ type: 'LUDO_FINISHED', payload: { winner: s.winner, tokens: s.tokens } }] : [] };
 }
@@ -28,7 +35,11 @@ export const ludoModule: GameModule<LudoRoomState> = {
   // idle/disconnected players are auto-played by the turn timer and removed after 3 missed turns
   disconnectPolicy: { reconnectWindowMs: 60_000, onTimeout: 'MODULE' },
 
-  createRoom: (ctx) => ({ ...newLudo([...ctx.players].sort((a, b) => a.seat - b.seat).map((p) => p.userId)), deadline: null }),
+  createRoom: (ctx) => {
+    const seated = [...ctx.players].sort((a, b) => a.seat - b.seat);
+    const bots = seated.map((p) => p.isBot === true);
+    return { ...newLudo(seated.map((p) => p.userId)), deadline: null, ...(bots.some(Boolean) ? { bots } : {}) };
+  },
   joinRoom: (state) => ({ state }),
   startMatch: (state, ctx) => withDeadline(state, ctx.now),
 
@@ -50,6 +61,8 @@ export const ludoModule: GameModule<LudoRoomState> = {
   handleTimeout(state, ctx) {
     if (state.phase === 'OVER') return { state, timerAt: null };
     const player = state.turn;
+    // a 🤖 bot's turn: the server plays it (same dice as everyone, never a missed turn)
+    if (state.bots?.[player]) return withDeadline(state.phase === 'ROLL' ? roll(state, player, die(ctx)) : move(state, player, botToken(state)), ctx.now);
     let next: LudoState = { ...state, timeouts: state.timeouts.map((t, i) => (i === player ? t + 1 : t)) };
     if (next.timeouts[player]! >= LUDO_MAX_TIMEOUTS) next = eliminate(next, player);
     else if (next.phase === 'ROLL') next = roll(next, player, die(ctx));

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { DoorOpen, KeyRound, Lock, Users, Zap } from 'lucide-react';
+import { Bot, DoorOpen, KeyRound, Lock, Users, Zap } from 'lucide-react';
 import { computeMatchFee, formatMinor, parseTokenAmount, type GameDto, type MatchDto } from '@arena/shared';
 import { useConfig } from '../../auth/AuthProvider';
 import { BackLink, GameArt } from '../../components/Common';
@@ -41,7 +41,7 @@ function GameLobby({ game }: { game: GameDto }) {
   const [stake, setStake] = useState(formatMinor(Math.max(game.minimumStakeUnits, (config?.minimumMatchStake ?? 10) * 100)).replace(/,/g, ''));
   const [isPrivate, setPrivate] = useState(false);
   const [code, setCode] = useState('');
-  const [confirm, setConfirm] = useState<null | { kind: 'quick' } | { kind: 'room' } | { kind: 'join'; match: MatchDto }>(null);
+  const [confirm, setConfirm] = useState<null | { kind: 'quick' } | { kind: 'room' } | { kind: 'bot' } | { kind: 'join'; match: MatchDto }>(null);
   const open = useApi<MatchDto[]>(`/api/matches/open?gameId=${game.id}`);
 
   const stakeUnits = parseTokenAmount(stake);
@@ -66,6 +66,16 @@ function GameLobby({ game }: { game: GameDto }) {
         idem.rotate();
         toast.success(r.joined ? t("Opponent found — your match is ready!") : t("Waiting for an opponent. Your stake is locked."));
         go(r.match);
+      } else if (confirm.kind === 'bot') {
+        // a private 1-vs-1 room, then a 🤖 bot takes the other seat and the game starts
+        const r = await post<{ match: MatchDto }>('/api/matches', { gameId: game.id, stakeUnits, visibility: 'PRIVATE', maxPlayers: 2 }, idem.key());
+        idem.rotate();
+        try {
+          go(await post<MatchDto>(`/api/matches/${r.match.id}/bots`));
+        } catch (e) {
+          go(r.match); // the room stays open: invite a friend instead, or leave to get the stake back
+          throw e;
+        }
       } else if (confirm.kind === 'room') {
         const r = await post<{ match: MatchDto }>('/api/matches', { gameId: game.id, stakeUnits, visibility: isPrivate ? 'PRIVATE' : 'PUBLIC' }, idem.key());
         idem.rotate();
@@ -139,6 +149,11 @@ function GameLobby({ game }: { game: GameDto }) {
                 <Button className="w-full" disabled={!!stakeError || !stakeUnits} icon={mode === 'quick' ? <Zap className="size-4" /> : <DoorOpen className="size-4" />} onClick={() => setConfirm(mode === 'quick' ? { kind: 'quick' } : { kind: 'room' })}>
                   {mode === 'quick' ? t("Find an opponent") : t("Create room")}
                 </Button>
+                {game.moduleKey === 'ludo' && (
+                  <Button className="w-full" variant="outline" disabled={!!stakeError || !stakeUnits} icon={<Bot className="size-4" />} onClick={() => setConfirm({ kind: 'bot' })}>
+                    {t("Play against a 🤖 bot")}
+                  </Button>
+                )}
               </>
             ) : (
               <>

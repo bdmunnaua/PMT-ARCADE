@@ -202,3 +202,55 @@ export function autoToken(state: LudoState): number {
 function clone(s: LudoState): LudoState {
   return { ...s, colors: [...s.colors], tokens: s.tokens.map((t) => [...t]), movable: [...s.movable], eliminated: [...s.eliminated], timeouts: [...s.timeouts] };
 }
+
+/** How many opponent tokens could reach `abs` with a single roll (1–6) — the risk of being captured there. */
+function threatsAt(state: LudoState, player: number, abs: number): number {
+  if (SAFE_SQUARES.includes(abs)) return 0;
+  let threats = 0;
+  state.tokens.forEach((toks, op) => {
+    if (op === player || state.eliminated[op]) return;
+    for (const p of toks) {
+      const at = absoluteSquare(state.colors[op]!, p);
+      if (at === null) continue;
+      const ahead = (abs - at + TRACK_LENGTH) % TRACK_LENGTH;
+      if (ahead >= 1 && ahead <= 6 && p + ahead <= LAST_TRACK) threats++;
+    }
+  });
+  return threats;
+}
+
+/**
+ * The 🤖 bot's choice: like auto-play (finish, capture, leave base, advance) but it also avoids
+ * landing just in front of opponents, likes safe squares and moves tokens out of danger —
+ * a careful casual player, not a perfect one. It only uses the visible board and the current die.
+ */
+export function botToken(state: LudoState): number {
+  const player = state.turn;
+  const dice = state.dice!;
+  const color = state.colors[player]!;
+  let best = state.movable[0]!;
+  let bestScore = -Infinity;
+  for (const t of state.movable) {
+    const from = state.tokens[player]![t]!;
+    const to = from === -1 ? 0 : from + dice;
+    let score = to;
+    if (to === HOME) score += 1000;
+    const absTo = absoluteSquare(color, to);
+    if (absTo !== null && !SAFE_SQUARES.includes(absTo)) {
+      state.tokens.forEach((toks, op) => {
+        if (op !== player && !state.eliminated[op] && toks.some((p) => absoluteSquare(state.colors[op]!, p) === absTo)) score += 500;
+      });
+    }
+    if (from === -1) score += 120;
+    if (absTo !== null && SAFE_SQUARES.includes(absTo)) score += 40;
+    if (to > LAST_TRACK && from <= LAST_TRACK) score += 60; // into the home column: safe for good
+    const absFrom = absoluteSquare(color, from);
+    if (absFrom !== null) score += 70 * threatsAt(state, player, absFrom); // rescue a token in danger
+    if (absTo !== null) score -= 90 * threatsAt(state, player, absTo); // do not walk into danger
+    if (score > bestScore) {
+      bestScore = score;
+      best = t;
+    }
+  }
+  return best;
+}

@@ -218,12 +218,12 @@ export function LudoClient({ match, room }: GameClientProps) {
     v.phase === 'OVER'
       ? v.winner === v.you
         ? 'You won! 🎉'
-        : `${players[v.winner ?? 0]?.username} won`
+        : `${(players[v.winner ?? 0]?.displayName || players[v.winner ?? 0]?.username)} won`
       : myTurn
         ? v.phase === 'ROLL'
           ? 'Your turn — roll the die'
           : 'Choose a token to move'
-        : `${players[v.turn]?.username}'s turn`;
+        : `${(players[v.turn]?.displayName || players[v.turn]?.username)}'s turn`;
   const turnColor = LUDO_COLORS[v.colors[v.turn] ?? 0];
 
   return (
@@ -269,7 +269,7 @@ export function LudoClient({ match, room }: GameClientProps) {
             <Dice3D value={v.dice ?? v.lastRoll?.dice ?? null} rollId={v.lastRoll?.n ?? 0} size={68} />
           </button>
           <div className="text-right text-white">
-            <p className="text-xs tracking-wide text-white/60 uppercase">{v.lastRoll ? `${players[v.lastRoll.player]?.username ?? 'Player'} rolled` : 'No roll yet'}</p>
+            <p className="text-xs tracking-wide text-white/60 uppercase">{v.lastRoll ? `${players[v.lastRoll.player]?.displayName ?? 'Player'} rolled` : 'No roll yet'}</p>
             <p className="text-3xl font-black">{v.lastRoll?.dice ?? '–'}</p>
             <TurnClock deadline={v.deadline} serverOffset={room.serverOffset} />
           </div>
@@ -283,7 +283,7 @@ export function LudoClient({ match, room }: GameClientProps) {
             <li key={p.playerNumber} className={clsx('flex items-center justify-between rounded-xl border px-3 py-2 text-sm', v.turn === i && v.phase !== 'OVER' ? 'border-brand-400 bg-brand-50 dark:bg-brand-500/10' : 'border-ink-200 dark:border-ink-700')}>
               <span className="flex items-center gap-2 font-semibold">
                 <span className="size-3.5 rounded-full shadow-[inset_-2px_-2px_3px_rgb(0_0_0/0.35)]" style={{ background: LUDO_COLORS[v.colors[i]!] }} />
-                {p.username} {i === v.you && <span className="text-xs text-brand-600">(you)</span>}
+                {p.displayName || p.username} {i === v.you && <span className="text-xs text-brand-600">(you)</span>}
               </span>
               <span className="text-xs text-ink-500">
                 {v.eliminated[i] ? 'out' : `${v.tokens[i]!.filter((x) => x === 56).length}/4 home · ${LUDO_COLOR_NAMES[v.colors[i]!]}`}

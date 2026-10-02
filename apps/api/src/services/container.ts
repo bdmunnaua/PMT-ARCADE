@@ -30,6 +30,7 @@ import { TournamentService } from './tournaments';
 import { createChainClient, type ChainClient } from './chain';
 import { OnchainService } from './onchain';
 import { TransparencyService } from './transparency';
+import { BotService } from './bots';
 import { SettlementService } from './settlement';
 import { TreasuryService } from './treasury';
 
@@ -77,6 +78,7 @@ export function createServices(env: Env, meta: RequestMeta, opts: ContainerOptio
   const chain = (opts.chain ?? createChainClient)(env);
   const onchain = new OnchainService(db, wallets, ledger, settings, notifications, chain, now);
   const transparency = new TransparencyService(db, reserve, chain, now);
+  const bots = new BotService(db, users, ledger, settings, games, matches, matchesRepo, now);
   const integrity = new IntegrityService(db, now);
   const rateLimiter = new RateLimiter(db, resolveRateLimits(env.RATE_LIMIT_OVERRIDES), now);
 
@@ -96,6 +98,7 @@ export function createServices(env: Env, meta: RequestMeta, opts: ContainerOptio
     tournaments,
     onchain,
     transparency,
+    bots,
     notifications,
     fraud,
     ledger,

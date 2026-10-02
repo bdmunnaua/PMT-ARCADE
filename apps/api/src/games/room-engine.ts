@@ -42,10 +42,11 @@ export class RoomEngine<S> {
     private readonly random: () => number,
   ) {}
 
+  /** 🤖 bot seats are played by the server, so they count as connected from the start. */
   static create<S>(module: GameModule<S>, init: { matchId: string; gameId: string; stakeUnits: number; players: GamePlayerInfo[] }, now: number, random: () => number): RoomEngine<S> {
     const ctx: RoomContext = { ...init, now, random };
     const state = module.createRoom(ctx);
-    return new RoomEngine(module, { ...init, state, started: false, finished: false, connected: [], disconnectDeadlines: {}, outcome: null, proof: null, moduleTimerAt: null }, random);
+    return new RoomEngine(module, { ...init, state, started: false, finished: false, connected: init.players.filter((p) => p.isBot).map((p) => p.userId), disconnectDeadlines: {}, outcome: null, proof: null, moduleTimerAt: null }, random);
   }
 
   static restore<S>(module: GameModule<S>, snapshot: EngineSnapshot<S>, random: () => number): RoomEngine<S> {

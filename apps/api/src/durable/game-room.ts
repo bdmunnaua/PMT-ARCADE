@@ -52,12 +52,15 @@ export class GameRoom extends DurableObject<Env> {
       return 'The game server lost this match. It has been voided and all stakes refunded.';
     }
     if (!LIVE.includes(match.status)) return 'This match is not live.';
-    const players: GamePlayerInfo[] = (await s.matchesRepo.players(matchId)).map((p) => ({
+    const rows = await s.matchesRepo.players(matchId);
+    const bots = await s.bots.botIds(rows.map((p) => p.user_id));
+    const players: GamePlayerInfo[] = rows.map((p) => ({
       userId: p.user_id,
       playerNumber: p.player_number,
       username: p.username,
       displayName: p.display_name,
       seat: p.seat,
+      isBot: bots.has(p.user_id),
     }));
     this.engine = RoomEngine.create(module, { matchId, gameId: match.game_id, stakeUnits: match.stake_units, players }, Date.now(), secureRandom);
     await this.ctx.storage.put('engine', this.engine.snapshot);

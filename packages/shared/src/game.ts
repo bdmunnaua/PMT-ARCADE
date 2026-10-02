@@ -14,6 +14,8 @@ export interface GamePlayerInfo {
   username: string;
   displayName: string;
   seat: number;
+  /** a 🤖 bot seat played by the server (always shown as a bot to everyone) */
+  isBot?: boolean;
 }
 
 export interface DisconnectPolicy {

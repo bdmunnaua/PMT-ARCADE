@@ -203,7 +203,7 @@ export class PlayerService {
       this.db,
       `SELECT p.player_number, p.username, p.display_name, s.games_played, s.wins, s.losses, s.draws
        FROM player_stats s JOIN player_profiles p ON p.user_id = s.user_id JOIN users u ON u.id = s.user_id
-       WHERE s.games_played > 0 AND u.account_status <> 'BANNED'
+       WHERE s.games_played > 0 AND u.account_status <> 'BANNED' AND u.firebase_uid NOT LIKE 'bot:%'
        ORDER BY s.wins DESC, s.games_played ASC, p.player_number ASC LIMIT ? OFFSET ?`,
       pageSize + 1,
       (page - 1) * pageSize,

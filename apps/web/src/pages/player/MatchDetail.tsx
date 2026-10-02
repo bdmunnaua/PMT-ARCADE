@@ -59,6 +59,7 @@ export default function MatchDetailPage() {
           {t("Your stake is locked in escrow.")} {m.visibility === 'PRIVATE' && m.joinCode ? <>{t("Room code:")} <CopyText value={m.joinCode} label={t("Room code")} /></> : t("Other players can join from the game lobby.")} {t("Rooms that wait longer than 30 minutes are cancelled and refunded automatically.")}
         </Notice>
       )}
+      {m.status === 'WAITING_FOR_OPPONENT' && m.isCreator && game.data?.moduleKey === 'ludo' && m.playerCount < m.maxPlayers && <BotFill match={m} />}
       {m.status === 'WAITING_FOR_OPPONENT' && m.visibility === 'PRIVATE' && m.joinCode && m.isParticipant && m.playerCount < m.maxPlayers && (
         <Card>
           <CardBody>
@@ -230,5 +231,37 @@ function DisputeModal({ open, onClose, match, onDone }: { open: boolean; onClose
         {error && <Notice tone="danger">{error}</Notice>}
       </div>
     </Modal>
+  );
+}
+
+/** The host fills the empty seats with 🤖 bots (Ludo); the game then starts. */
+function BotFill({ match }: { match: MatchDto }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const empty = match.maxPlayers - match.playerCount;
+  return (
+    <Card>
+      <CardBody className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm">
+          {t('Do not want to wait? Fill the {n} empty seat(s) with 🤖 bots and start now. Bots are always shown as bots.', { n: empty })}
+        </p>
+        <Button
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await post(`/api/matches/${match.id}/bots`);
+              toast.success(t('Bots joined — the game is starting!'));
+            } catch (e) {
+              toast.error(e instanceof ApiError ? e.message : t('Could not add bots.'));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          🤖 {t('Start with bots')}
+        </Button>
+      </CardBody>
+    </Card>
   );
 }
