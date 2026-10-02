@@ -3,7 +3,8 @@
  * to the server: it asks this page to start/finish a session (postMessage, same protocol as the
  * old pmtarcade.com hub) and the server decides the PMT reward.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import clsx from 'clsx';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Medal, Trophy } from 'lucide-react';
 import type { ArcadeLeaderboardDto, ArcadeRunResultDto } from '@arena/shared';
@@ -20,7 +21,8 @@ import { t } from '../../lib/i18n';
 
 interface GameMessage {
   src?: string;
-  type?: 'ready' | 'exit' | 'start' | 'finish';
+  type?: 'ready' | 'exit' | 'start' | 'finish' | 'fullscreen';
+  on?: boolean;
   reqId?: number;
   runId?: string;
   score?: number;
@@ -35,6 +37,8 @@ export default function FreeGamePage() {
   const toast = useToast();
   const navigate = useNavigate();
   const frame = useRef<HTMLIFrameElement>(null);
+  /** the game asked to fill the screen (works even where real full screen is refused, e.g. iPhone) */
+  const [immersive, setImmersive] = useState(false);
   const board = useApi<ArcadeLeaderboardDto>(`/api/arcade/leaderboard?game=${encodeURIComponent(id)}`);
   const game = config.data?.games.find((g) => g.id === id);
   const tour = useTournament();
@@ -49,6 +53,7 @@ export default function FreeGamePage() {
       if (!m || m.src !== 'arcade-game') return;
       const reply = (data: Record<string, unknown>) => toGame({ replyTo: m.reqId, ...data });
       if (m.type === 'ready') toGame({ type: 'hello', signedIn: true, name: me.displayName });
+      if (m.type === 'fullscreen') setImmersive(!!m.on);
       if (m.type === 'exit') navigate('/play');
       if (m.type === 'start') {
         try {
@@ -96,8 +101,8 @@ export default function FreeGamePage() {
           {featured.you && <span className="ml-auto">{t('You are #{rank}', { rank: featured.you.rank })}</span>}
         </Link>
       )}
-      <div className="overflow-hidden rounded-3xl bg-black shadow-[0_24px_48px_-16px_rgb(0_0_0/0.6)] ring-1 ring-white/10">
-        <iframe ref={frame} src={`/games/${id}/index.html`} title={game.name} className="block h-[calc(100dvh-13rem)] min-h-[480px] w-full" allow="fullscreen; autoplay" />
+      <div className={clsx('overflow-hidden bg-black', immersive ? 'fixed inset-0 z-[80]' : 'rounded-3xl shadow-[0_24px_48px_-16px_rgb(0_0_0/0.6)] ring-1 ring-white/10')}>
+        <iframe ref={frame} src={`/games/${id}/index.html`} title={game.name} className={clsx('block w-full', immersive ? 'h-dvh' : 'h-[calc(100dvh-13rem)] min-h-[480px]')} allow="fullscreen; autoplay" />
       </div>
       <Card>
         <CardHeader title={t('{game} — best this week', { game: game.name })} icon={<Trophy className="size-4" />} />

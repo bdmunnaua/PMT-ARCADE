@@ -30,6 +30,7 @@
     "Best": "সেরা",
     "Sound": "শব্দ",
     "Pause": "বিরতি",
+    "Full screen": "পূর্ণ পর্দা",
     "Playing for fun.": "মজা করে খেলছেন।",
     "Open it on PMT Arcade": "PMT Arcade-এ খুলুন",
     "and sign in to earn PMT.": "আর PMT আয় করতে সাইন ইন করুন।",
@@ -312,6 +313,7 @@
       <div class="ag-chip accent"><b data-score>0</b><small>${L('Score')}</small></div>
       <div class="ag-chip"><b data-best>0</b><small>${L('Best')}</small></div>
       <button class="icon-btn" data-act="sound" aria-label="${L('Sound')}">🔊</button>
+      <button class="icon-btn" data-act="full" aria-label="${L('Full screen')}">⛶</button>
       <button class="icon-btn" data-act="pause" aria-label="${L('Pause')}">⏸</button>`;
     const stage = document.getElementById('stage') || el('div');
     stage.classList.add('ag-stage');
@@ -323,6 +325,7 @@
       SFX.click();
       if (b.dataset.act === 'exit') exit();
       if (b.dataset.act === 'pause') state === 'playing' ? pause() : state === 'paused' && resume();
+      if (b.dataset.act === 'full') toggleFullscreen();
       if (b.dataset.act === 'sound') { muted = !muted; store.set('arcade.muted', muted); syncSound(); }
     });
     document.documentElement.style.setProperty('--accent', meta.colors[0]);
@@ -465,16 +468,32 @@
   }
   async function exit() {
     await saveRunInProgress();
-    if (document.fullscreenElement && !inHub) document.exitFullscreen().catch(() => {});
+    leaveFullscreen();
     if (inHub) post('exit'); else location.href = '../../index.html';
   }
-  // Phones: when a game is opened on its own page, go full screen on Play (the hub does this itself).
+  // Full screen. Phones go full screen on Play; the ⛶ button toggles it anywhere. Inside the app the
+  // hub also stretches the game frame over the whole screen, which works even where the browser
+  // refuses real full screen for embedded pages (iPhone Safari).
   const isPhone = () => matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 820;
-  function goFullscreen() {
-    if (inHub || !isPhone() || document.fullscreenElement) return;
+  let immersive = false;
+  function enterFullscreen() {
+    immersive = true;
+    post('fullscreen', { on: true });
+    if (document.fullscreenElement || document.webkitFullscreenElement) return;
     const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
     if (req) Promise.resolve(req.call(el, { navigationUI: 'hide' })).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('portrait').catch(() => {})).catch(() => {});
   }
+  function leaveFullscreen() {
+    immersive = false;
+    post('fullscreen', { on: false });
+    const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+    const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+    if (fsEl && exitFs) Promise.resolve(exitFs.call(document)).catch(() => {});
+  }
+  function toggleFullscreen() { immersive ? leaveFullscreen() : enterFullscreen(); }
+  function goFullscreen() { if (isPhone()) enterFullscreen(); }
+  // the player left full screen with the phone's back gesture / Esc: shrink the frame too
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && immersive && !isPhone()) leaveFullscreen(); });
 
   function floatText(x, y, text, color = '#fff') {
     const f = el('div', 'ag-float'); f.textContent = text; f.style.left = x + 'px'; f.style.top = y + 'px'; f.style.color = color;
