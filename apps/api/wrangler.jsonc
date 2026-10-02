@@ -1,0 +1,110 @@
+// Cloudflare Worker configuration for the API + web app.
+// EXTERNAL SETUP REQUIRED: replace the database_id values with the ids printed by
+//   npx wrangler d1 create token-arena-dev      (local/dev)
+//   npx wrangler d1 create token-arena-prod     (production)
+// and set FIREBASE_* to your Firebase project. Secrets are NEVER put in this file:
+//   npx wrangler secret put REALTIME_TICKET_SECRET --env production
+//   npx wrangler secret put INTERNAL_API_SECRET   --env production
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "token-arena-dev",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+
+  // The React app (npm run build -w @arena/web) is served by this same Worker; /api/* and
+  // /internal/* run the Worker first, every other path falls back to index.html (SPA routing).
+  "assets": {
+    "directory": "../web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/internal/*"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "token-arena-dev",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "../../migrations"
+    }
+  ],
+
+  // SQLite-backed Durable Objects (available on the Workers Free plan)
+  "durable_objects": {
+    "bindings": [
+      { "name": "REALTIME", "class_name": "RealtimeHub" },
+      { "name": "GAME_ROOMS", "class_name": "GameRoom" },
+      { "name": "CRASH_GAMES", "class_name": "CrashGame" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["RealtimeHub", "GameRoom"] },
+    { "tag": "v2", "new_sqlite_classes": ["CrashGame"] }
+  ],
+
+  "triggers": { "crons": ["*/10 * * * *"] },
+
+  "vars": {
+    "ENVIRONMENT": "development",
+    "FIREBASE_PROJECT_ID": "your-firebase-project-id",
+    "FIREBASE_API_KEY": "",
+    "FIREBASE_AUTH_DOMAIN": "your-firebase-project-id.firebaseapp.com",
+    "ALLOWED_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787",
+    "ADMIN_REQUIRE_VERIFIED_EMAIL": "false",
+    "RATE_LIMIT_OVERRIDES": ""
+  },
+
+  "env": {
+    // pmtarcade.com — deployed under the live site's Worker name, so going live replaces the old
+    // arcade Worker in one step and `npx wrangler rollback --env production` restores it.
+    "production": {
+      "name": "pmt-arcade",
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [
+        { "pattern": "pmtarcade.com/*", "zone_name": "pmtarcade.com" },
+        { "pattern": "www.pmtarcade.com/*", "zone_name": "pmtarcade.com" }
+      ],
+      // EXTERNAL SETUP REQUIRED at go-live: npx wrangler d1 create pmt-platform → paste the id here.
+      // The old arcade database ("arcade") is left untouched as a backup.
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "pmt-platform",
+          "database_id": "f3359c8b-7c54-4c60-9b9b-cd1059e3333c",
+          "migrations_dir": "../../migrations"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          { "name": "REALTIME", "class_name": "RealtimeHub" },
+          { "name": "GAME_ROOMS", "class_name": "GameRoom" },
+          { "name": "CRASH_GAMES", "class_name": "CrashGame" }
+        ]
+      },
+      "triggers": { "crons": ["*/10 * * * *"] },
+      "vars": {
+        "ENVIRONMENT": "production",
+        "FIREBASE_PROJECT_ID": "pmt-arcade",
+        "FIREBASE_API_KEY": "AIzaSyAOgqAHHRLTr_2f2GHOX1jempvveDj-Jnk",
+        "FIREBASE_AUTH_DOMAIN": "pmt-arcade.firebaseapp.com",
+        "ALLOWED_ORIGINS": "https://pmtarcade.com,https://www.pmtarcade.com",
+        "ADMIN_REQUIRE_VERIFIED_EMAIL": "true",
+        "RATE_LIMIT_OVERRIDES": "",
+        // PMT on BNB Chain (same token as the old arcade). Secret, never here:
+        //   npx wrangler secret put PAYOUT_PRIVATE_KEY --env production   (a SEPARATE payout wallet)
+        "TOKEN_SYMBOL": "PMT",
+        "TOKEN_ADDRESS": "0xc576c15Bf0E06AF1a65d15B8219A90f1e07f025F",
+        // the main supply wallet: its key must never be used to pay withdrawals
+        "FORBIDDEN_PAYOUT_ADDRESSES": "0xe328A50732109d129BCf9B302Cfe362949F77FB4",
+        "TOKEN_DECIMALS": "18",
+        "CHAIN_ID": "56",
+        "CHAIN_NAME": "BNB Smart Chain",
+        "RPC_URL": "https://bsc-dataseed.binance.org/",
+        "EXPLORER_TX": "https://bscscan.com/tx/"
+      }
+    }
+  }
+}

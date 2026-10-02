@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Snake Arena: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Snake Arena: play the classic snake game free online. Swipe to eat apples, grab golden apples and grow longer without biting your tail.">
+<link rel="canonical" href="https://pmtarcade.com/games/snake-arena/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Snake Arena: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Snake Arena: play the classic snake game free online. Swipe to eat apples, grab golden apples and grow longer without biting your tail.">
+<meta property="og:url" content="https://pmtarcade.com/games/snake-arena/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Snake Arena: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Snake Arena: play the classic snake game free online. Swipe to eat apples, grab golden apples and grow longer without biting your tail.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Snake Arena", "url": "https://pmtarcade.com/games/snake-arena/", "description": "Snake Arena: play the classic snake game free online. Swipe to eat apples, grab golden apples and grow longer without biting your tail.", "genre": "Arcade", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Snake Arena", "item": "https://pmtarcade.com/games/snake-arena/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: radial-gradient(120% 90% at 50% 0%, #052e16 0%, #04200f 50%, #020d06 100%); }
+  .dpad { display: none; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const COLS = 18, CELL = 22, W = COLS * CELL;
+  const canvas = document.getElementById('c');
+  let view, ctx, ROWS = 26;
+  let snake, dir, nextDirs, food, gold, step, acc, eaten, alive, parts, lastT, grow, pulse;
+
+  const free = () => {
+    const taken = new Set(snake.map((s) => s.x + ',' + s.y));
+    if (food) taken.add(food.x + ',' + food.y); if (gold) taken.add(gold.x + ',' + gold.y);
+    for (let i = 0; i < 500; i++) { const x = (Math.random() * COLS) | 0, y = (Math.random() * ROWS) | 0; if (!taken.has(x + ',' + y)) return { x, y }; }
+    return { x: 0, y: 0 };
+  };
+  function reset() {
+    const cy = (ROWS / 2) | 0;
+    snake = [{ x: 6, y: cy }, { x: 5, y: cy }, { x: 4, y: cy }];
+    dir = { x: 1, y: 0 }; nextDirs = []; food = null; gold = null; food = free();
+    step = 0.15; acc = 0; eaten = 0; alive = true; parts = []; grow = 0; pulse = 0;
+    Arcade.setStat('len', 'Length', '3');
+  }
+  function turn(dx, dy) {
+    const last = nextDirs.length ? nextDirs[nextDirs.length - 1] : dir;
+    if ((dx && last.x === -dx) || (dy && last.y === -dy) || (dx === last.x && dy === last.y)) return;
+    if (nextDirs.length < 3) nextDirs.push({ x: dx, y: dy });
+  }
+  function burst(x, y, c, n = 12) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, s = 60 + Math.random() * 200; parts.push({ x: (x + 0.5) * CELL, y: (y + 0.5) * CELL, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.5, c }); } }
+
+  function tick() {
+    if (nextDirs.length) dir = nextDirs.shift();
+    const h = snake[0], nh = { x: h.x + dir.x, y: h.y + dir.y };
+    const hitWall = nh.x < 0 || nh.y < 0 || nh.x >= COLS || nh.y >= ROWS;
+    const hitSelf = snake.slice(0, snake.length - (grow ? 0 : 1)).some((s) => s.x === nh.x && s.y === nh.y);
+    if (hitWall || hitSelf) {
+      alive = false; Arcade.sfx('hit'); Arcade.vibrate(100); burst(h.x, h.y, '#f87171', 24);
+      setTimeout(() => Arcade.gameOver(Arcade.score, { title: hitWall ? 'Hit the wall!' : 'Bit your tail!', stats: [['Apples', eaten], ['Length', snake.length]], meta: { eaten } }), 800);
+      return;
+    }
+    snake.unshift(nh);
+    if (grow) grow--; else snake.pop();
+    if (food && nh.x === food.x && nh.y === food.y) {
+      eaten++; grow += 1; Arcade.addScore(10); Arcade.sfx('coin'); Arcade.vibrate(8); burst(food.x, food.y, '#ef4444');
+      food = free();
+      step = Math.max(0.065, 0.15 - eaten * 0.0025);
+      if (!gold && eaten % 5 === 0) gold = { ...free(), t: 6 };
+      Arcade.setStat('len', 'Length', String(snake.length + grow));
+    }
+    if (gold && nh.x === gold.x && nh.y === gold.y) {
+      eaten++; grow += 3; Arcade.addScore(30); Arcade.sfx('level'); burst(gold.x, gold.y, '#fde047', 20);
+      const s = view.toStage((gold.x + 0.5) * CELL, gold.y * CELL); Arcade.floatText(s.x, s.y, '+30 GOLDEN', '#fde047');
+      gold = null;
+    }
+  }
+  function update(dt) {
+    parts = parts.filter((p) => { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; return p.life > 0; });
+    pulse += dt;
+    if (!Arcade.playing || !alive) return;
+    if (gold && (gold.t -= dt) <= 0) gold = null;
+    acc += dt;
+    while (acc >= step && alive) { acc -= step; tick(); }
+  }
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+  function draw() {
+    const H = ROWS * CELL;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; rr(0, 0, W, H, 14); ctx.fill();
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if ((x + y) % 2) { ctx.fillStyle = 'rgba(255,255,255,0.025)'; ctx.fillRect(x * CELL, y * CELL, CELL, CELL); }
+    ctx.strokeStyle = 'rgba(74,222,128,0.35)'; ctx.lineWidth = 2; rr(1, 1, W - 2, H - 2, 14); ctx.stroke();
+    // food
+    if (food) {
+      const s = 1 + Math.sin(pulse * 6) * 0.08, cx = (food.x + 0.5) * CELL, cy = (food.y + 0.5) * CELL;
+      ctx.save(); ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 14;
+      const g = ctx.createRadialGradient(cx - 3, cy - 3, 1, cx, cy, CELL * 0.45); g.addColorStop(0, '#fecaca'); g.addColorStop(0.5, '#ef4444'); g.addColorStop(1, '#991b1b');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, CELL * 0.4 * s, 0, 6.29); ctx.fill(); ctx.restore();
+      ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.ellipse(cx + 4, cy - 8, 4, 2, 0.6, 0, 6.29); ctx.fill();
+    }
+    if (gold) {
+      const cx = (gold.x + 0.5) * CELL, cy = (gold.y + 0.5) * CELL;
+      ctx.save(); ctx.globalAlpha = gold.t < 2 ? 0.5 + 0.5 * Math.sin(pulse * 20) : 1; ctx.shadowColor = '#fde047'; ctx.shadowBlur = 20;
+      const g = ctx.createRadialGradient(cx - 3, cy - 3, 1, cx, cy, CELL * 0.5); g.addColorStop(0, '#fef9c3'); g.addColorStop(0.5, '#facc15'); g.addColorStop(1, '#a16207');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, CELL * 0.45, 0, 6.29); ctx.fill(); ctx.restore();
+    }
+    // snake (head brightest)
+    const n = snake.length;
+    snake.slice().reverse().forEach((s, ri) => {
+      const i = n - 1 - ri, k = 1 - i / Math.max(1, n), pad = i === 0 ? 1 : 2.5;
+      ctx.fillStyle = `hsl(${140 - k * 10} ${60 + k * 30}% ${32 + k * 28}%)`;
+      if (i === 0) { ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 16; }
+      rr(s.x * CELL + pad, s.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 7); ctx.fill(); ctx.shadowBlur = 0;
+    });
+    const h = snake[0];
+    if (h) { // eyes
+      const cx = (h.x + 0.5) * CELL, cy = (h.y + 0.5) * CELL, ox = dir.y * 5, oy = dir.x * 5, fx = dir.x * 4, fy = dir.y * 4;
+      for (const sgn of [-1, 1]) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx + fx + ox * sgn, cy + fy + oy * sgn, 3.4, 0, 6.29); ctx.fill(); ctx.fillStyle = '#052e16'; ctx.beginPath(); ctx.arc(cx + fx * 1.3 + ox * sgn, cy + fy * 1.3 + oy * sgn, 1.7, 0, 6.29); ctx.fill(); }
+    }
+    parts.forEach((p) => { ctx.globalAlpha = Math.max(0, p.life * 2); ctx.fillStyle = p.c; ctx.fillRect(p.x - 2, p.y - 2, 4, 4); });
+    ctx.globalAlpha = 1;
+  }
+  function loop(ts) {
+    const dt = Math.min(0.05, (ts - (lastT || ts)) / 1000); lastT = ts;
+    if (snake) { update(dt); draw(); }
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('keydown', (e) => {
+    const m = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[e.key];
+    if (m && Arcade.playing) { e.preventDefault(); turn(m[0], m[1]); }
+  });
+  // swipe anywhere; turns as soon as the finger moves far enough (no need to lift)
+  let sw = null;
+  const stageEl = document.getElementById('stage');
+  stageEl.addEventListener('pointerdown', (e) => { if (!e.target.closest('.ag-overlay')) sw = { x: e.clientX, y: e.clientY }; });
+  stageEl.addEventListener('pointermove', (e) => {
+    if (!sw || !Arcade.playing) return;
+    const dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 22) return;
+    Math.abs(dx) > Math.abs(dy) ? turn(Math.sign(dx), 0) : turn(0, Math.sign(dy));
+    sw = { x: e.clientX, y: e.clientY };
+  });
+  stageEl.addEventListener('pointerup', () => (sw = null));
+
+  Arcade.init({
+    id: 'snake-arena',
+    subtitle: 'Eat apples, grow longer, don’t bite yourself!',
+    howTo: ['<b>Swipe</b> (or arrow keys) to turn the snake.', 'Each 🍎 apple is +10 and makes you longer and faster.', 'A <b>golden apple</b> appears every 5 apples: +30, but it vanishes fast!', 'Hitting a wall or your own tail ends the game.'],
+    onStart() { reset(); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: W, minH: 18 * CELL, maxH: 30 * CELL, onResize: (v) => { const r = Math.floor(v.h / CELL); if (r !== ROWS) { ROWS = r; v.h = ROWS * CELL; v.fit(); if (snake && !Arcade.playing) reset(); } } });
+  ctx = view.ctx; ROWS = Math.floor(view.h / CELL); view.h = ROWS * CELL; view.fit();
+  reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

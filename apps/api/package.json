@@ -1,0 +1,24 @@
+{
+  "name": "@arena/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy --env production",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote --env production",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@arena/games": "^1.0.0",
+    "@arena/shared": "*",
+    "ethers": "^6.17.0",
+    "hono": "^4.13.12",
+    "jose": "^6.2.12"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261001.1",
+    "wrangler": "^4.145.0"
+  }
+}

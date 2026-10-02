@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Bounce Up: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Bounce Up: free endless jumping game online. Bounce on platforms, use springs and climb as high as you can. Works on phone and PC.">
+<link rel="canonical" href="https://pmtarcade.com/games/bounce-up/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Bounce Up: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Bounce Up: free endless jumping game online. Bounce on platforms, use springs and climb as high as you can. Works on phone and PC.">
+<meta property="og:url" content="https://pmtarcade.com/games/bounce-up/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bounce Up: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Bounce Up: free endless jumping game online. Bounce on platforms, use springs and climb as high as you can. Works on phone and PC.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Bounce Up", "url": "https://pmtarcade.com/games/bounce-up/", "description": "Bounce Up: free endless jumping game online. Bounce on platforms, use springs and climb as high as you can. Works on phone and PC.", "genre": "Arcade", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Bounce Up", "item": "https://pmtarcade.com/games/bounce-up/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: linear-gradient(180deg, #1e1b4b 0%, #4c1d95 50%, #db2777 100%); }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const W = 400, GRAV = 1500, JUMP = 760, SPRING = 1250, PW = 70, PH = 14, R = 18;
+  const canvas = document.getElementById('c');
+  let view, ctx, H = 700;
+  let p, plats, camY, maxH, stars, parts, alive, lastT, input, tiltX, nextY;
+
+  function makePlat(y) {
+    const h = -y / 10, r = Math.random();
+    let type = 'normal';
+    if (h > 150 && r < Math.min(0.3, h / 3000)) type = 'move';
+    else if (h > 300 && r < 0.42 && r > 0.3) type = 'break';
+    const pl = { x: 20 + Math.random() * (W - PW - 40), y, type, vx: type === 'move' ? (Math.random() < 0.5 ? -1 : 1) * (60 + Math.min(120, h / 20)) : 0, spring: type === 'normal' && Math.random() < 0.08, broken: false };
+    return pl;
+  }
+  function fill() {
+    const gapMax = Math.min(150, 70 + (-camY / 10) * 0.05);
+    while (nextY > camY - 100) {
+      plats.push(makePlat(nextY));
+      nextY -= 55 + Math.random() * (gapMax - 55);
+    }
+    plats = plats.filter((pl) => pl.y < camY + H + 40);
+  }
+  function reset() {
+    p = { x: W / 2, y: H - 120, vx: 0, vy: -JUMP, face: 1, squash: 0 };
+    plats = [{ x: W / 2 - PW / 2, y: H - 80, type: 'normal', vx: 0 }];
+    camY = 0; maxH = 0; nextY = H - 160; parts = []; alive = true; input = 0; tiltX = null;
+    fill();
+    Arcade.setStat('h', 'Height', '0 m');
+  }
+  function initStars() { stars = Array.from({ length: 60 }, () => ({ x: Math.random() * W, y: Math.random() * 2000, z: 0.3 + Math.random() * 0.7 })); }
+
+  function update(dt) {
+    parts = parts.filter((q) => { q.life -= dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 600 * dt; return q.life > 0; });
+    plats.forEach((pl) => { if (pl.type === 'move') { pl.x += pl.vx * dt; if (pl.x < 6 || pl.x > W - PW - 6) pl.vx *= -1; } if (pl.broken) pl.fall = (pl.fall || 0) + dt; });
+    if (!Arcade.playing) return;
+    if (!alive) { p.vy += GRAV * dt; p.y += p.vy * dt; return; }
+    // horizontal control: hold left/right half, drag, keys or tilt
+    const target = input ? input * 460 : (tiltX || 0) * 520; // touch / keys win over tilt
+    p.vx += (target - p.vx) * Math.min(1, dt * 12);
+    p.x += p.vx * dt;
+    if (p.x < -R) p.x = W + R; if (p.x > W + R) p.x = -R;
+    if (Math.abs(p.vx) > 20) p.face = Math.sign(p.vx);
+    const prevY = p.y;
+    p.vy += GRAV * dt; p.y += p.vy * dt;
+    p.squash = Math.max(0, p.squash - dt * 4);
+    if (p.vy > 0) {
+      for (const pl of plats) {
+        if (pl.broken) continue;
+        if (prevY + R <= pl.y && p.y + R >= pl.y && p.x > pl.x - 8 && p.x < pl.x + PW + 8) {
+          if (pl.type === 'break') { pl.broken = true; Arcade.sfx('bad'); continue; }
+          p.y = pl.y - R;
+          const spring = pl.spring && Math.abs(p.x - (pl.x + PW / 2)) < 18;
+          p.vy = spring ? -SPRING : -JUMP; p.squash = 1;
+          Arcade.sfx(spring ? 'level' : 'bounce'); if (spring) Arcade.vibrate(15);
+          for (let i = 0; i < 6; i++) parts.push({ x: p.x, y: pl.y, vx: (Math.random() - 0.5) * 160, vy: -Math.random() * 80, life: 0.35, c: spring ? '#fde047' : '#e9d5ff' });
+          break;
+        }
+      }
+    }
+    const top = H * 0.42;
+    if (p.y - camY < top) camY = p.y - top;
+    const height = Math.max(0, Math.round((H - 120 - p.y) / 10));
+    if (height > maxH) { maxH = height; Arcade.setScore(maxH); Arcade.setStat('h', 'Height', maxH + ' m'); }
+    fill();
+    if (p.y - camY > H + 60) {
+      alive = false; Arcade.sfx('lose'); Arcade.vibrate(80);
+      setTimeout(() => Arcade.gameOver(maxH, { title: 'You fell!', stats: [['Height', maxH + ' m']], meta: { height: maxH } }), 700);
+    }
+  }
+  function drawPlat(pl) {
+    const y = pl.y - camY + (pl.fall ? pl.fall * pl.fall * 600 : 0);
+    if (y < -20 || y > H + 20) return;
+    ctx.globalAlpha = pl.broken ? Math.max(0, 1 - pl.fall * 2) : 1;
+    const col = pl.type === 'move' ? ['#93c5fd', '#2563eb'] : pl.type === 'break' ? ['#fcd34d', '#b45309'] : ['#86efac', '#15803d'];
+    const g = ctx.createLinearGradient(0, y, 0, y + PH); g.addColorStop(0, col[0]); g.addColorStop(1, col[1]);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(pl.x, y, PW, PH, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(pl.x + 8, y + 3, PW - 16, 2);
+    if (pl.type === 'break') { ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(pl.x + PW * 0.4, y); ctx.lineTo(pl.x + PW * 0.5, y + PH); ctx.stroke(); }
+    if (pl.spring) { ctx.fillStyle = '#e5e7eb'; ctx.fillRect(pl.x + PW / 2 - 8, y - 9, 16, 9); ctx.fillStyle = '#ef4444'; ctx.fillRect(pl.x + PW / 2 - 10, y - 12, 20, 4); }
+    ctx.globalAlpha = 1;
+  }
+  function drawPlayer() {
+    const x = p.x, y = p.y - camY, sq = p.squash * 0.25;
+    ctx.save(); ctx.translate(x, y); ctx.scale(p.face * (1 + sq), 1 - sq);
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 5;
+    const g = ctx.createRadialGradient(-6, -8, 2, 0, 0, R + 4); g.addColorStop(0, '#fef3c7'); g.addColorStop(0.5, '#fbbf24'); g.addColorStop(1, '#d97706');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, R, R + 2, 0, 0, 6.29); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(6, -5, 6, 0, 6.29); ctx.fill();
+    ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(8, -5, 3, 0, 6.29); ctx.fill();
+    ctx.strokeStyle = '#92400e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(6, 6, 5, 0.2, Math.PI - 0.6); ctx.stroke();
+    ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.ellipse(-8, R - 2, 7, 4, 0, 0, 6.29); ctx.ellipse(8, R - 2, 7, 4, 0, 0, 6.29); ctx.fill();
+    ctx.restore();
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    stars.forEach((s) => { const y = ((s.y - camY * s.z * 0.3) % 2000 + 2000) % 2000 - 1000 + H / 2; if (y > -5 && y < H + 5) { ctx.fillStyle = `rgba(255,255,255,${s.z * 0.7})`; ctx.fillRect(s.x, y, 2, 2); } });
+    plats.forEach(drawPlat);
+    parts.forEach((q) => { ctx.globalAlpha = Math.max(0, q.life * 3); ctx.fillStyle = q.c; ctx.fillRect(q.x - 2, q.y - camY - 2, 4, 4); });
+    ctx.globalAlpha = 1;
+    drawPlayer();
+    ctx.font = '800 54px Outfit, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillText(maxH + ' m', W / 2, 80);
+  }
+  function loop(ts) {
+    const dt = Math.min(0.033, (ts - (lastT || ts)) / 1000); lastT = ts;
+    if (p) { update(dt); draw(); }
+    requestAnimationFrame(loop);
+  }
+
+  // controls: hold left / right side of the screen, or drag; keys; phone tilt where allowed
+  const stageEl = document.getElementById('stage');
+  const side = (e) => { const r = canvas.getBoundingClientRect(); input = e.clientX < r.left + r.width / 2 ? -1 : 1; };
+  stageEl.addEventListener('pointerdown', (e) => { if (e.target.closest('.ag-overlay')) return; side(e); });
+  stageEl.addEventListener('pointermove', (e) => { if (e.buttons || e.pointerType === 'touch') { if (input) side(e); } });
+  const stop = () => (input = 0);
+  stageEl.addEventListener('pointerup', stop); stageEl.addEventListener('pointercancel', stop);
+  const keys = {};
+  window.addEventListener('keydown', (e) => { keys[e.key] = true; input = keys.ArrowLeft || keys.a ? -1 : keys.ArrowRight || keys.d ? 1 : input; });
+  window.addEventListener('keyup', (e) => { keys[e.key] = false; input = keys.ArrowLeft || keys.a ? -1 : keys.ArrowRight || keys.d ? 1 : 0; });
+  window.addEventListener('deviceorientation', (e) => { if (e.gamma != null && Arcade.playing) tiltX = Math.abs(e.gamma) < 4 ? 0 : Math.max(-1, Math.min(1, e.gamma / 25)); });
+
+  Arcade.init({
+    id: 'bounce-up',
+    subtitle: 'Bounce from platform to platform. How high can you go?',
+    howTo: ['<b>Hold the left or right side</b> of the screen (or arrow keys) to move.', 'You bounce automatically. Land on platforms to keep climbing.', '<b>Blue</b> platforms move, <b>yellow</b> ones break, springs launch you high.', 'Go off one side to appear on the other. Don’t fall!'],
+    onStart() { reset(); if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {}); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: W, minH: 620, maxH: 860, pad: 0, onResize: (v) => (H = v.h) });
+  ctx = view.ctx; H = view.h;
+  initStars(); reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

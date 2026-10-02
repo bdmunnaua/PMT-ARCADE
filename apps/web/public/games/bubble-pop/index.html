@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Bubble Pop: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Bubble Pop: free bubble shooter game online. Aim, bounce and pop groups of 3 or more bubbles, drop clusters for big points and earn PMT.">
+<link rel="canonical" href="https://pmtarcade.com/games/bubble-pop/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Bubble Pop: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Bubble Pop: free bubble shooter game online. Aim, bounce and pop groups of 3 or more bubbles, drop clusters for big points and earn PMT.">
+<meta property="og:url" content="https://pmtarcade.com/games/bubble-pop/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bubble Pop: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Bubble Pop: free bubble shooter game online. Aim, bounce and pop groups of 3 or more bubbles, drop clusters for big points and earn PMT.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Bubble Pop", "url": "https://pmtarcade.com/games/bubble-pop/", "description": "Bubble Pop: free bubble shooter game online. Aim, bounce and pop groups of 3 or more bubbles, drop clusters for big points and earn PMT.", "genre": "Puzzle", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Bubble Pop", "item": "https://pmtarcade.com/games/bubble-pop/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: radial-gradient(120% 90% at 50% 0%, #0c3a5c 0%, #0a1f3a 50%, #060d1f 100%); }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const COLS = 11, R = 400 / (COLS * 2), RH = R * Math.sqrt(3), SPEED = 950, MISS_LIMIT = 5;
+  const PALETTE = [
+    ['#fecdd3', '#f43f5e', '#9f1239'], ['#fde68a', '#f59e0b', '#92400e'], ['#bbf7d0', '#22c55e', '#166534'],
+    ['#bfdbfe', '#3b82f6', '#1e3a8a'], ['#e9d5ff', '#a855f7', '#581c87'], ['#a5f3fc', '#06b6d4', '#155e75'],
+  ];
+  const canvas = document.getElementById('c');
+  let view, ctx;
+  let grid, shift, topY, topTarget, shot, current, next, aim, aiming, misses, level, colorsN, popping, falling, lastT, over, popped;
+
+  const cols = (r) => (odd(r) ? COLS - 1 : COLS);
+  const odd = (r) => (r + shift) % 2 === 1;
+  const pos = (r, c) => ({ x: R + c * 2 * R + (odd(r) ? R : 0), y: topY + R + r * RH });
+  const shooter = () => ({ x: 200, y: view.h - 58 });
+  const deathY = () => view.h - 118;
+
+  function bubble(x, y, ci, rad = R, a = 1) {
+    const p = PALETTE[ci];
+    ctx.globalAlpha = a;
+    const g = ctx.createRadialGradient(x - rad * 0.35, y - rad * 0.4, rad * 0.1, x, y, rad);
+    g.addColorStop(0, p[0]); g.addColorStop(0.45, p[1]); g.addColorStop(1, p[2]);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rad - 0.8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.ellipse(x - rad * 0.33, y - rad * 0.38, rad * 0.26, rad * 0.16, -0.6, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function newRow() { return Array.from({ length: COLS }, () => (Math.random() * colorsN) | 0); }
+  function reset(lv = 1) {
+    level = lv; colorsN = Math.min(6, 3 + lv); shift = 0; topY = 0; topTarget = 0;
+    grid = []; for (let r = 0; r < 6 + Math.min(lv, 4); r++) { const row = newRow(); if (odd(r)) row[COLS - 1] = null; grid.push(row); }
+    shot = null; misses = 0; popping = []; falling = []; over = false; popped = 0;
+    current = pickColor(); next = pickColor(); aim = -Math.PI / 2;
+    Arcade.setStat('lv', 'Level', String(level));
+  }
+  function present() { const s = new Set(); grid.forEach((row) => row.forEach((v) => v != null && s.add(v))); return [...s]; }
+  function pickColor() { const p = present(); return p.length ? p[(Math.random() * p.length) | 0] : (Math.random() * colorsN) | 0; }
+
+  function addRowTop() {
+    shift = (shift + 1) % 2; // parity of existing rows flips when a row is inserted above
+    const row = newRow(); grid.unshift(row);
+    if (odd(0)) row[COLS - 1] = null;
+    topY -= RH; topTarget = 0; // slide down smoothly
+    Arcade.sfx('drop');
+  }
+
+  function neighbors(r, c) {
+    const o = odd(r), list = [[r, c - 1], [r, c + 1]];
+    const d = o ? [0, 1] : [-1, 0];
+    for (const rr of [r - 1, r + 1]) for (const dc of d) list.push([rr, c + dc]);
+    return list.filter(([a, b]) => a >= 0 && b >= 0 && b < cols(a));
+  }
+  const get = (r, c) => (grid[r] ? grid[r][c] : null);
+
+  function snap(x, y) {
+    let best = null, bd = Infinity;
+    const r0 = Math.round((y - topY - R) / RH);
+    for (let r = Math.max(0, r0 - 2); r <= r0 + 2; r++) for (let c = 0; c < cols(r); c++) {
+      if (get(r, c) != null) continue;
+      const p = pos(r, c), d = (p.x - x) ** 2 + (p.y - y) ** 2;
+      if (d < bd && (r === 0 || neighbors(r, c).some(([a, b]) => get(a, b) != null))) { bd = d; best = [r, c]; }
+    }
+    return best;
+  }
+
+  function settle(x, y, ci) {
+    const cell = snap(x, y);
+    if (!cell) { shot = null; return; }
+    const [r, c] = cell;
+    while (grid.length <= r) grid.push(Array(COLS).fill(null));
+    grid[r][c] = ci;
+    // find same-colour cluster
+    const seen = new Set([r + ',' + c]), q = [[r, c]], group = [];
+    while (q.length) { const [a, b] = q.pop(); group.push([a, b]); for (const [n1, n2] of neighbors(a, b)) { const k = n1 + ',' + n2; if (!seen.has(k) && get(n1, n2) === ci) { seen.add(k); q.push([n1, n2]); } } }
+    let gain = 0;
+    if (group.length >= 3) {
+      group.forEach(([a, b], i) => { const p = pos(a, b); popping.push({ x: p.x, y: p.y, ci, t: -i * 0.025 }); grid[a][b] = null; });
+      gain += group.length * 10;
+      // drop anything no longer attached to the top
+      const keep = new Set(), st = [];
+      for (let cc = 0; cc < cols(0); cc++) if (get(0, cc) != null) { keep.add('0,' + cc); st.push([0, cc]); }
+      while (st.length) { const [a, b] = st.pop(); for (const [n1, n2] of neighbors(a, b)) { const k = n1 + ',' + n2; if (!keep.has(k) && get(n1, n2) != null) { keep.add(k); st.push([n1, n2]); } } }
+      let dropped = 0;
+      grid.forEach((row, a) => row.forEach((v, b) => { if (v != null && !keep.has(a + ',' + b)) { const p = pos(a, b); falling.push({ x: p.x, y: p.y, ci: v, vx: (Math.random() - 0.5) * 120, vy: -Math.random() * 120 }); grid[a][b] = null; dropped++; } }));
+      gain += dropped * 25;
+      popped += group.length + dropped;
+      Arcade.sfx('pop', group.length); if (dropped) setTimeout(() => Arcade.sfx('combo', Math.min(10, dropped)), 150);
+      Arcade.vibrate(dropped ? 30 : 12);
+      const p = view.toStage(x, y); Arcade.floatText(p.x, p.y, '+' + gain, dropped ? '#fde68a' : '#fff');
+      misses = Math.max(0, misses - 1);
+    } else {
+      Arcade.sfx('place');
+      if (++misses >= MISS_LIMIT) { misses = 0; addRowTop(); }
+    }
+    while (grid.length && grid[grid.length - 1].every((v) => v == null)) grid.pop();
+    if (gain) Arcade.addScore(gain);
+    shot = null;
+    if (!grid.length) { // board cleared → next level
+      Arcade.addScore(500); Arcade.sfx('level'); Arcade.confetti();
+      const m = view.toStage(200, view.h / 2); Arcade.floatText(m.x, m.y, `LEVEL ${level} CLEAR  +500`, '#6ee7b7');
+      setTimeout(() => { const s = Arcade.score; reset(level + 1); Arcade.setScore(s); }, 900);
+      return;
+    }
+    current = next; if (!present().includes(current)) current = pickColor(); next = pickColor();
+    checkOver();
+  }
+  function checkOver() {
+    for (let r = grid.length - 1; r >= 0; r--) if (grid[r].some((v) => v != null)) {
+      if (pos(r, 0).y + R > deathY()) { over = true; setTimeout(() => Arcade.gameOver(Arcade.score, { title: 'Bubbles reached the line', stats: [['Level', level], ['Popped', popped]], meta: { level, popped } }), 400); }
+      break;
+    }
+  }
+
+  function fire() {
+    if (shot || over || !Arcade.playing) return;
+    const s = shooter();
+    shot = { x: s.x, y: s.y, vx: Math.cos(aim) * SPEED, vy: Math.sin(aim) * SPEED, ci: current };
+    Arcade.sfx('whoosh');
+  }
+
+  function update(dt) {
+    topY += (topTarget - topY) * Math.min(1, dt * 8);
+    if (shot && Arcade.playing) {
+      const steps = Math.ceil((SPEED * dt) / (R / 2));
+      for (let i = 0; i < steps && shot; i++) {
+        shot.x += (shot.vx * dt) / steps; shot.y += (shot.vy * dt) / steps;
+        if (shot.x < R) { shot.x = R; shot.vx = Math.abs(shot.vx); Arcade.sfx('bounce'); }
+        if (shot.x > 400 - R) { shot.x = 400 - R; shot.vx = -Math.abs(shot.vx); Arcade.sfx('bounce'); }
+        if (shot.y - R <= topY) { settle(shot.x, Math.max(shot.y, topY + R), shot.ci); break; }
+        let hit = false;
+        for (let r = 0; r < grid.length && !hit; r++) for (let c = 0; c < cols(r); c++) {
+          if (grid[r][c] == null) continue;
+          const p = pos(r, c);
+          if ((p.x - shot.x) ** 2 + (p.y - shot.y) ** 2 < (2 * R * 0.86) ** 2) { hit = true; break; }
+        }
+        if (hit) settle(shot.x, shot.y, shot.ci);
+      }
+    }
+    popping = popping.filter((p) => (p.t += dt) < 0.25);
+    falling = falling.filter((f) => { f.vy += 1400 * dt; f.x += f.vx * dt; f.y += f.vy * dt; return f.y < view.h + 40; });
+  }
+
+  function drawAim() {
+    const s = shooter();
+    let x = s.x, y = s.y, dx = Math.cos(aim), dy = Math.sin(aim), len = 0;
+    ctx.fillStyle = PALETTE[current][1];
+    for (let i = 0; i < 40 && len < 700; i++) {
+      x += dx * 16; y += dy * 16; len += 16;
+      if (x < R || x > 400 - R) { dx = -dx; x = Math.max(R, Math.min(400 - R, x)); }
+      if (y < topY + R) break;
+      ctx.globalAlpha = 0.75 * (1 - len / 700);
+      ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, view.w, view.h);
+    // death line
+    ctx.strokeStyle = 'rgba(248,113,113,0.35)'; ctx.setLineDash([6, 8]); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, deathY()); ctx.lineTo(400, deathY()); ctx.stroke(); ctx.setLineDash([]);
+    grid.forEach((row, r) => row.forEach((v, c) => { if (v != null) { const p = pos(r, c); bubble(p.x, p.y, v); } }));
+    popping.forEach((p) => { if (p.t < 0) bubble(p.x, p.y, p.ci); else bubble(p.x, p.y, p.ci, R * (1 + p.t * 2), 1 - p.t / 0.25); });
+    falling.forEach((f) => bubble(f.x, f.y, f.ci, R, 0.9));
+    if (!over && Arcade.playing && !shot) drawAim();
+    // shooter base
+    const s = shooter();
+    ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.beginPath(); ctx.arc(s.x, s.y, R * 1.9, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 2; ctx.stroke();
+    if (!shot) bubble(s.x, s.y, current, R * 1.05);
+    if (shot) bubble(shot.x, shot.y, shot.ci);
+    bubble(s.x + 70, s.y + 14, next, R * 0.75);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '600 11px Outfit, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('NEXT', s.x + 70, s.y + 42);
+    // miss meter
+    for (let i = 0; i < MISS_LIMIT; i++) {
+      ctx.fillStyle = i < misses ? '#f87171' : 'rgba(255,255,255,0.15)';
+      ctx.beginPath(); ctx.arc(s.x - 100 + i * 12, s.y + 14, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillText('NEW ROW', s.x - 76, s.y + 42);
+  }
+
+  function loop(t) {
+    const dt = Math.min(0.033, (t - (lastT || t)) / 1000); lastT = t;
+    if (grid) { update(dt); draw(); }
+    requestAnimationFrame(loop);
+  }
+
+  function setAim(e) {
+    const p = view.point(e), s = shooter();
+    if (Math.hypot(p.x - s.x - 70, p.y - s.y - 14) < R * 1.4) return false;
+    let a = Math.atan2(p.y - s.y, p.x - s.x);
+    if (a > 0) a = p.x < s.x ? -Math.PI + 0.12 : -0.12;
+    aim = Math.max(-Math.PI + 0.12, Math.min(-0.12, a));
+    return true;
+  }
+  canvas.addEventListener('pointerdown', (e) => {
+    if (!Arcade.playing) return;
+    const p = view.point(e), s = shooter();
+    if (Math.hypot(p.x - s.x - 70, p.y - s.y - 14) < R * 1.4) { if (!shot) { [current, next] = [next, current]; Arcade.sfx('swap'); } return; }
+    aiming = true; canvas.setPointerCapture(e.pointerId); setAim(e);
+  });
+  canvas.addEventListener('pointermove', (e) => { if (aiming || e.pointerType === 'mouse') setAim(e); });
+  canvas.addEventListener('pointerup', (e) => { if (aiming) { aiming = false; setAim(e); fire(); } });
+  window.addEventListener('keydown', (e) => {
+    if (!Arcade.playing) return;
+    if (e.key === 'ArrowLeft') aim = Math.max(-Math.PI + 0.12, aim - 0.05);
+    if (e.key === 'ArrowRight') aim = Math.min(-0.12, aim + 0.05);
+    if (e.code === 'Space') { e.preventDefault(); fire(); }
+  });
+
+  Arcade.init({
+    id: 'bubble-pop',
+    subtitle: 'Aim, bounce and pop groups of 3 or more.',
+    howTo: ['<b>Drag</b> to aim, release to shoot. Bounce off the walls!', 'Connect <b>3+ bubbles</b> of the same colour to pop them.', 'Bubbles cut off from the top <b>fall</b> for big points.', 'Every 5 misses a new row drops. Don’t let them reach the line.', 'Tap the <b>next</b> bubble to swap it.'],
+    onStart() { reset(1); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: 400, minH: 620, maxH: 820 });
+  ctx = view.ctx;
+  reset(1);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

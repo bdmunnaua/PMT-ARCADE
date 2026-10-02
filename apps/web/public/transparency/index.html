@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>PMT Transparency</title>
+  <meta name="description" content="Live figures for PMT Arcade: the taka reserve behind sell-backs, PMT given out, the rewards pool, the ledger check and every published PMT wallet with its on-chain balance." />
+  <link rel="canonical" href="https://pmtarcade.com/transparency/" />
+  <link rel="icon" type="image/png" href="/token/pmt-logo-32.png" />
+  <meta property="og:title" content="PMT Transparency" />
+  <meta property="og:description" content="Live, checkable figures for PMT Arcade and the PMT token." />
+  <meta property="og:image" content="https://pmtarcade.com/token/pmt-logo-512.png" />
+  <link rel="stylesheet" href="/token/token.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/"><img src="/token/pmt-logo-256.png" alt="" />PMT Arcade</a>
+    <nav class="links">
+      <a href="/">Play</a>
+      <a href="/token/">PMT token</a>
+      <a href="/transparency/" aria-current="page">Transparency</a>
+      <a href="/whitepaper/">Whitepaper</a>
+    </nav>
+  </header>
+
+  <h1>Transparency</h1>
+  <p class="lead">Live figures straight from the platform's ledger and from BNB Smart Chain. Totals only — no player can be identified.</p>
+  <p class="note" id="updated">Loading…</p>
+  <p class="msg err" id="error" role="alert"></p>
+
+  <h2>Is every PMT accounted for?</h2>
+  <div class="grid">
+    <div class="card stat"><div class="k">Ledger balance check</div><div class="v" id="ledger">…</div><div class="note">Every PMT movement is double-entry, so all balances must add up to exactly 0.</div></div>
+    <div class="card stat"><div class="k">Last full integrity check</div><div class="v" id="integrity">…</div><div class="note">An admin runs the full ledger check; the result is recorded and cannot be edited.</div></div>
+  </div>
+
+  <h2>Taka reserve</h2>
+  <p class="note">Every taka paid in for PMT stays in a reserve for players who sell back. A sell-back is only accepted if the reserve can pay it.</p>
+  <div class="grid">
+    <div class="card stat"><div class="k">Reserve</div><div class="v" id="reserve">…</div></div>
+    <div class="card stat"><div class="k">Owed if every player sold back today</div><div class="v" id="liability">…</div></div>
+    <div class="card stat"><div class="k">Coverage</div><div class="v" id="coverage">…</div></div>
+    <div class="card stat"><div class="k">Current in-app rates</div><div class="v" id="rates">…</div></div>
+  </div>
+
+  <h2>PMT inside the platform</h2>
+  <div class="grid">
+    <div class="card stat"><div class="k">Players</div><div class="v" id="players">…</div></div>
+    <div class="card stat"><div class="k">PMT given out to the platform</div><div class="v" id="issued">…</div></div>
+    <div class="card stat"><div class="k">Held by players (bought / won)</div><div class="v" id="sellable">…</div></div>
+    <div class="card stat"><div class="k">Held by players (bonus)</div><div class="v" id="bonus">…</div></div>
+    <div class="card stat"><div class="k">Rewards pool left</div><div class="v" id="pool">…</div></div>
+    <div class="card stat"><div class="k">Fees earned</div><div class="v" id="fees">…</div></div>
+    <div class="card stat"><div class="k">Withdrawn to BNB Chain</div><div class="v" id="withdrawn">…</div></div>
+    <div class="card stat"><div class="k">Deposited from BNB Chain</div><div class="v" id="deposited">…</div></div>
+  </div>
+
+  <h2>Published PMT wallets</h2>
+  <p class="note">The project's own PMT wallets, with live balances read from BNB Smart Chain. Click an address to check it on BscScan. Total supply: <strong>10,000,000,000 PMT</strong>, fixed.</p>
+  <div class="card table-scroll">
+    <table>
+      <thead><tr><th>Wallet</th><th>Address</th><th class="n">Balance (PMT)</th><th class="n">Planned</th></tr></thead>
+      <tbody id="wallets"><tr><td colspan="4" class="note">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card warnbox">
+    <p class="note" style="margin:0">PMT is a game token, not an investment. These figures show how the platform works today; they are not a promise about any future price.</p>
+  </div>
+
+  <footer class="foot">
+    <a href="/token/">Token page</a> · <a href="/whitepaper/">Whitepaper</a> · <a href="/">PMT Arcade</a>
+  </footer>
+</div>
+<script src="/transparency/transparency.js"></script>
+</body>
+</html>

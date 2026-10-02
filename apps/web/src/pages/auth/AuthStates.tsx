@@ -1,0 +1,154 @@
+/**
+ * Session states shown instead of the app: the public landing page with sign-in (signed out),
+ * blocked accounts, connection errors and missing configuration.
+ */
+import { useState, type FormEvent, type ReactNode } from 'react';
+import { Coins, Gamepad2, ShieldBan, ShieldCheck, Swords, UserRound, Wrench } from 'lucide-react';
+import { useAuth } from '../../auth/AuthProvider';
+import { devAuthEnabled, devSignIn } from '../../auth/identity';
+import { SignInCard } from '../../auth/SignInCard';
+import { FreeGamesGrid, useArcadeConfig } from '../../components/Arcade';
+import { ThemeToggle } from '../../components/Common';
+import { Button, ErrorState, Input, Notice } from '../../components/ui';
+import { firebaseConfigured } from '../../lib/firebase';
+import { useApi, useDocumentTitle } from '../../lib/hooks';
+import { Logo } from '../../layouts/Logo';
+
+export function AuthShell({ children }: { children: ReactNode }) {
+  const { config } = useAuth();
+  return (
+    <div className="flex min-h-screen flex-col">
+      <div className="flex items-center justify-between p-4">
+        <Logo name={config?.platformName} compact />
+        <ThemeToggle />
+      </div>
+      <div className="flex flex-1 items-center justify-center px-4 pb-12">
+        <div className="w-full max-w-sm">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function StateIcon({ children, tone }: { children: ReactNode; tone: 'brand' | 'rose' | 'amber' }) {
+  const tones = {
+    brand: 'bg-brand-50 text-brand-600 dark:bg-brand-500/10',
+    rose: 'bg-rose-50 text-rose-500 dark:bg-rose-500/10',
+    amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/10',
+  };
+  return <div className={`mx-auto mb-4 grid size-14 place-items-center rounded-2xl ${tones[tone]}`}>{children}</div>;
+}
+
+/** The public landing page: sign in, or play the free games for fun right away. */
+export function SignedOutPage() {
+  useDocumentTitle('Play free games, earn PMT');
+  const { config } = useAuth();
+  const arcade = useArcadeConfig();
+  const popular = useApi<{ plays: Record<string, number> }>('/api/arcade/popular');
+  return (
+    <div className="min-h-screen">
+      <header className="flex items-center justify-between px-4 py-3 sm:px-8">
+        <Logo name={config?.platformName} compact />
+        <ThemeToggle />
+      </header>
+      <section className="hero-gradient mx-4 grid gap-8 overflow-hidden rounded-3xl p-6 text-white sm:mx-8 sm:p-10 lg:grid-cols-[1fr_380px] lg:items-center">
+        <div>
+          <h1 className="text-3xl leading-tight font-black sm:text-5xl">Play free games. Earn PMT. Challenge real players.</h1>
+          <p className="mt-4 max-w-xl text-white/75">16 free arcade games pay bonus PMT for your scores. Play Ludo, Call Bridge, 29, Carrom and Chess against other players — the server decides every result.</p>
+          <ul className="mt-6 grid gap-3 text-sm text-white/85 sm:grid-cols-3">
+            <li className="flex items-center gap-2">
+              <Gamepad2 className="size-5 text-amber-300" /> Free games, daily check-in
+            </li>
+            <li className="flex items-center gap-2">
+              <Swords className="size-5 text-amber-300" /> Fair 1% match fee
+            </li>
+            <li className="flex items-center gap-2">
+              <ShieldCheck className="size-5 text-amber-300" /> Every PMT recorded
+            </li>
+          </ul>
+        </div>
+        <div className="text-ink-900 dark:text-ink-100">
+          {firebaseConfigured && <SignInCard />}
+          {devAuthEnabled && <DevIdentityPanel />}
+        </div>
+      </section>
+      <section className="px-4 py-8 sm:px-8">
+        <h2 className="mb-1 flex items-center gap-2 text-xl font-bold">
+          <Coins className="size-5 text-amber-500" /> Free games
+        </h2>
+        <p className="mb-4 text-sm text-ink-500">Play right now for fun — sign in to earn PMT for your scores.</p>
+        {arcade.data && <FreeGamesGrid games={arcade.data.games} plays={popular.data?.plays} linkFor={(g) => ({ href: `/games/${g.id}/index.html` })} />}
+      </section>
+      <footer className="px-4 pb-8 text-center text-xs text-ink-400 sm:px-8">
+        <nav className="mb-2 flex justify-center gap-4 text-sm">
+          <a href="/token/" className="hover:text-brand-600">PMT token</a>
+          <a href="/transparency/" className="hover:text-brand-600">Transparency</a>
+          <a href="/whitepaper/" className="hover:text-brand-600">Whitepaper</a>
+        </nav>
+        PMT is the platform&apos;s game token, not an investment. Play responsibly.
+      </footer>
+    </div>
+  );
+}
+
+/** Local development only (tree-shaken from production builds): pick a test player for this tab. */
+function DevIdentityPanel() {
+  const [name, setName] = useState('');
+  const valid = /^[a-z0-9_]{3,20}$/.test(name);
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (valid) devSignIn(name);
+  };
+  return (
+    <form onSubmit={submit} className="mt-4 space-y-3 rounded-2xl border border-dashed border-amber-400 bg-white p-4 dark:bg-ink-900">
+      <Notice tone="warning">Development identity — not a login. Each browser tab can act as a different test player.</Notice>
+      <Input label="Test player name" value={name} onChange={(e) => setName(e.target.value.toLowerCase())} placeholder="alice" error={name && !valid ? '3–20 characters: a–z, 0–9, _' : undefined} />
+      <Button type="submit" variant="outline" className="w-full" disabled={!valid} icon={<UserRound className="size-4" />}>
+        Continue as test player
+      </Button>
+    </form>
+  );
+}
+
+export function BlockedPage({ message }: { message: string | null }) {
+  const { signOut } = useAuth();
+  return (
+    <AuthShell>
+      <div className="text-center">
+        <StateIcon tone="rose">
+          <ShieldBan className="size-6" />
+        </StateIcon>
+        <h1 className="text-xl font-bold">Account unavailable</h1>
+        <p className="mt-2 text-sm text-ink-500">{message ?? 'This account cannot be used.'}</p>
+        <Button variant="outline" className="mt-6" onClick={() => void signOut()}>
+          Sign out
+        </Button>
+      </div>
+    </AuthShell>
+  );
+}
+
+export function SessionErrorPage({ message }: { message: string | null }) {
+  const { retry } = useAuth();
+  return (
+    <AuthShell>
+      <ErrorState error={message ?? 'Could not reach the server.'} onRetry={retry} />
+    </AuthShell>
+  );
+}
+
+export function SetupRequiredPage() {
+  return (
+    <AuthShell>
+      <StateIcon tone="amber">
+        <Wrench className="size-6" />
+      </StateIcon>
+      <h1 className="text-center text-xl font-bold">External setup required</h1>
+      <p className="mt-2 text-sm text-ink-500 dark:text-ink-400">
+        No sign-in source is configured. Add <code className="font-mono">FIREBASE_API_KEY</code>, <code className="font-mono">FIREBASE_AUTH_DOMAIN</code> and{' '}
+        <code className="font-mono">FIREBASE_PROJECT_ID</code> (the host project&apos;s Firebase project) to the <code className="font-mono">.env</code> file in the repository root, or set{' '}
+        <code className="font-mono">VITE_DEV_AUTH=true</code> for local development, then restart the dev server.
+      </p>
+      <p className="mt-3 text-sm text-ink-500 dark:text-ink-400">See docs/INTEGRATION.md.</p>
+    </AuthShell>
+  );
+}

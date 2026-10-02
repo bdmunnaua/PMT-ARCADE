@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Sky Hop: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Sky Hop: free one-tap flying game online. Tap to flap through the pipes, beat your best and win medals. No download, play and earn PMT.">
+<link rel="canonical" href="https://pmtarcade.com/games/sky-hop/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Sky Hop: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Sky Hop: free one-tap flying game online. Tap to flap through the pipes, beat your best and win medals. No download, play and earn PMT.">
+<meta property="og:url" content="https://pmtarcade.com/games/sky-hop/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sky Hop: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Sky Hop: free one-tap flying game online. Tap to flap through the pipes, beat your best and win medals. No download, play and earn PMT.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Sky Hop", "url": "https://pmtarcade.com/games/sky-hop/", "description": "Sky Hop: free one-tap flying game online. Tap to flap through the pipes, beat your best and win medals. No download, play and earn PMT.", "genre": "Arcade", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Sky Hop", "item": "https://pmtarcade.com/games/sky-hop/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: linear-gradient(180deg, #0c4a6e 0%, #0e7490 45%, #67e8f9 100%); }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const W = 400, PW = 66, GROUND = 70, BX = 120, R = 15;
+  const canvas = document.getElementById('c');
+  let view, ctx, H = 700;
+  let bird, pipes, clouds, hills, parts, score, t, waiting, dead, groundX, lastT, flashT, best;
+
+  function reset() {
+    bird = { y: H * 0.42, vy: 0, rot: 0, flapT: 0 };
+    pipes = []; parts = []; score = 0; t = 0; waiting = true; dead = false; groundX = 0; flashT = 0;
+    Arcade.setStat('pipes', 'Pipes', '0');
+  }
+  function initScenery() {
+    clouds = Array.from({ length: 6 }, () => ({ x: Math.random() * W, y: 40 + Math.random() * H * 0.4, s: 0.6 + Math.random() * 0.8 }));
+    hills = Array.from({ length: 5 }, (_, i) => ({ x: i * 110, h: 60 + Math.random() * 60 }));
+  }
+  const speed = () => Math.min(215, 150 + score * 2.2);
+  const gap = () => Math.max(132, 178 - score * 1.4);
+
+  function addPipe(x) {
+    const g = gap(), top = 70, bottom = H - GROUND - 70 - g;
+    const prev = pipes.length ? pipes[pipes.length - 1].gy : (H - GROUND) / 2 - g / 2;
+    // keep each gap reachable from the last one
+    const gy = Math.max(top, Math.min(bottom, prev + (Math.random() - 0.5) * 260));
+    pipes.push({ x, gy, g, passed: false });
+  }
+
+  function flap() {
+    if (!Arcade.playing || dead) return;
+    if (waiting) { waiting = false; addPipe(W + 40); }
+    bird.vy = -410; bird.flapT = 0.18;
+    Arcade.sfx('swap');
+    for (let i = 0; i < 5; i++) parts.push({ x: BX - 10, y: bird.y + 6, vx: -60 - Math.random() * 80, vy: 40 + Math.random() * 60, life: 0.35, c: 'rgba(255,255,255,0.8)' });
+  }
+  function die() {
+    if (dead) return;
+    dead = true; flashT = 0.25;
+    Arcade.sfx('hit'); Arcade.vibrate(80);
+    for (let i = 0; i < 24; i++) { const a = Math.random() * 6.28, s = 80 + Math.random() * 220; parts.push({ x: BX, y: bird.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.7, c: i % 2 ? '#fde047' : '#fb923c' }); }
+    const medal = score >= 40 ? '🥇 Gold' : score >= 20 ? '🥈 Silver' : score >= 10 ? '🥉 Bronze' : '—';
+    setTimeout(() => Arcade.gameOver(score, { title: 'Ouch!', stats: [['Pipes', score], ['Medal', medal]], meta: { pipes: score } }), 900);
+  }
+
+  function update(dt) {
+    clouds.forEach((c) => { c.x -= 12 * c.s * dt; if (c.x < -80) { c.x = W + 60; c.y = 40 + Math.random() * H * 0.4; } });
+    parts = parts.filter((p) => { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 400 * dt; return p.life > 0; });
+    flashT = Math.max(0, flashT - dt);
+    if (!Arcade.playing && !dead) return;
+    t += dt;
+    if (waiting) { bird.y = H * 0.42 + Math.sin(t * 4) * 8; groundX = (groundX + 120 * dt) % 40; return; }
+    bird.vy = Math.min(620, bird.vy + 1450 * dt);
+    bird.y += bird.vy * dt;
+    bird.flapT = Math.max(0, bird.flapT - dt);
+    bird.rot += ((bird.vy < 0 ? -0.45 : Math.min(1.3, bird.vy / 500)) - bird.rot) * Math.min(1, dt * 10);
+    if (bird.y < R) { bird.y = R; bird.vy = 0; }
+    if (bird.y > H - GROUND - R) { bird.y = H - GROUND - R; die(); return; }
+    if (dead) return;
+    const sp = speed();
+    groundX = (groundX + sp * dt) % 40;
+    hills.forEach((h) => { h.x -= sp * 0.25 * dt; if (h.x < -120) h.x += 550; });
+    pipes.forEach((p) => (p.x -= sp * dt));
+    if (pipes.length && pipes[pipes.length - 1].x < W - 215) addPipe(W + 30);
+    pipes = pipes.filter((p) => p.x > -PW - 10);
+    for (const p of pipes) {
+      if (!p.passed && p.x + PW < BX - R) {
+        p.passed = true; score++; Arcade.setScore(score); Arcade.setStat('pipes', 'Pipes', String(score)); Arcade.sfx('coin');
+        if (score % 10 === 0) { Arcade.sfx('level'); const s = view.toStage(W / 2, H * 0.25); Arcade.floatText(s.x, s.y, `${score} PIPES!`, '#fde047'); }
+      }
+      // circle vs the two pipe rectangles
+      const inX = BX + R * 0.8 > p.x && BX - R * 0.8 < p.x + PW;
+      if (inX && (bird.y - R * 0.8 < p.gy || bird.y + R * 0.8 > p.gy + p.g)) { die(); return; }
+    }
+  }
+
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+  function drawPipe(x, y, h, flip) {
+    const g = ctx.createLinearGradient(x, 0, x + PW, 0);
+    g.addColorStop(0, '#16a34a'); g.addColorStop(0.35, '#4ade80'); g.addColorStop(1, '#15803d');
+    ctx.fillStyle = g; ctx.fillRect(x + 4, y, PW - 8, h);
+    const capY = flip ? y + h - 26 : y;
+    rr(x, capY, PW, 26, 6); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(x + 12, y, 6, h);
+  }
+  function drawBird() {
+    ctx.save(); ctx.translate(BX, bird.y); ctx.rotate(bird.rot);
+    ctx.shadowColor = 'rgba(0,0,0,0.25)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 4;
+    const g = ctx.createRadialGradient(-5, -6, 2, 0, 0, R + 2); g.addColorStop(0, '#fef9c3'); g.addColorStop(0.5, '#facc15'); g.addColorStop(1, '#ea580c');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, R + 3, R, 0, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0;
+    // wing
+    const wy = bird.flapT > 0 ? -8 : Math.sin(t * 18) * 3;
+    ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.ellipse(-5, 3 + wy * 0.5, 9, 6, -0.4 + wy * 0.05, 0, 6.28); ctx.fill();
+    // eye + beak
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(7, -5, 6, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.arc(9, -5, 2.8, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.moveTo(14, 0); ctx.lineTo(25, 3); ctx.lineTo(14, 7); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // sun + clouds
+    ctx.fillStyle = 'rgba(254,249,195,0.55)'; ctx.beginPath(); ctx.arc(320, 110, 46, 0, 6.28); ctx.fill();
+    clouds.forEach((c) => { ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.ellipse(c.x, c.y, 34 * c.s, 14 * c.s, 0, 0, 6.28); ctx.ellipse(c.x + 20 * c.s, c.y - 8 * c.s, 22 * c.s, 14 * c.s, 0, 0, 6.28); ctx.fill(); });
+    // hills
+    ctx.fillStyle = 'rgba(21,128,61,0.55)';
+    hills.forEach((h) => { ctx.beginPath(); ctx.ellipse(h.x, H - GROUND, 90, h.h, 0, Math.PI, 0); ctx.fill(); });
+    pipes.forEach((p) => { drawPipe(p.x, 0, p.gy, true); drawPipe(p.x, p.gy + p.g, H - GROUND - p.gy - p.g, false); });
+    // ground
+    ctx.fillStyle = '#a16207'; ctx.fillRect(0, H - GROUND, W, GROUND);
+    ctx.fillStyle = '#65a30d'; ctx.fillRect(0, H - GROUND, W, 16);
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    for (let x = -groundX; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, H - GROUND + 16); ctx.lineTo(x + 20, H - GROUND + 16); ctx.lineTo(x + 8, H); ctx.lineTo(x - 12, H); ctx.closePath(); ctx.fill(); }
+    parts.forEach((p) => { ctx.globalAlpha = Math.max(0, p.life * 2); ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, 6.28); ctx.fill(); });
+    ctx.globalAlpha = 1;
+    drawBird();
+    // big score
+    if (!waiting) { ctx.font = '800 64px Outfit, sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.strokeText(score, W / 2, 110); ctx.fillStyle = '#fff'; ctx.fillText(score, W / 2, 110); }
+    if (waiting && Arcade.playing) { ctx.font = '700 22px Outfit, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('Tap to fly', W / 2, H * 0.42 + 70); }
+    if (flashT > 0) { ctx.fillStyle = `rgba(255,255,255,${flashT * 2.5})`; ctx.fillRect(0, 0, W, H); }
+  }
+  function loop(ts) {
+    const dt = Math.min(0.033, (ts - (lastT || ts)) / 1000); lastT = ts;
+    if (bird) { update(dt); draw(); }
+    requestAnimationFrame(loop);
+  }
+
+  document.getElementById('stage').addEventListener('pointerdown', (e) => { if (!e.target.closest('.ag-overlay')) flap(); });
+  window.addEventListener('keydown', (e) => { if ((e.code === 'Space' || e.key === 'ArrowUp') && Arcade.playing) { e.preventDefault(); flap(); } });
+
+  Arcade.init({
+    id: 'sky-hop',
+    subtitle: 'Tap to flap. Fly through the gaps. How far can you go?',
+    howTo: ['<b>Tap</b> anywhere (or press Space) to flap upward.', 'Fly through the gaps between the pipes.', 'Every pipe you pass is <b>+1</b>. It gets faster as you go.', 'Medals at 10, 20 and 40 pipes.'],
+    onStart() { reset(); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: W, minH: 620, maxH: 860, pad: 0, onResize: (v) => { H = v.h; if (bird && waiting) bird.y = H * 0.42; } });
+  ctx = view.ctx; H = view.h;
+  initScenery(); reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

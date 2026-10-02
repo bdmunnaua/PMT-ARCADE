@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>PMT Whitepaper</title>
+  <meta name="description" content="The PMT Arcade whitepaper: how the PMT token works, how players earn and compete with it, the taka reserve, fees, token allocation, roadmap and risks." />
+  <link rel="canonical" href="https://pmtarcade.com/whitepaper/" />
+  <link rel="icon" type="image/png" href="/token/pmt-logo-32.png" />
+  <meta property="og:title" content="PMT Whitepaper" />
+  <meta property="og:description" content="How the PMT token and PMT Arcade work: earning, competing, the taka reserve, fees, allocation and roadmap." />
+  <meta property="og:image" content="https://pmtarcade.com/token/pmt-logo-512.png" />
+  <meta property="og:url" content="https://pmtarcade.com/whitepaper/" />
+  <link rel="stylesheet" href="/token/token.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/"><img src="/token/pmt-logo-256.png" alt="" />PMT Arcade</a>
+    <nav class="links">
+      <a href="/">Play</a>
+      <a href="/token/">PMT token</a>
+      <a href="/transparency/">Transparency</a>
+      <a href="/whitepaper/" aria-current="page">Whitepaper</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <img src="/token/pmt-logo-512.png" alt="PMT logo" width="112" height="112" />
+    <div>
+      <h1>PMT Whitepaper</h1>
+      <p class="lead">PMT Arcade and the PMT token · Version 1.0 · October 2026</p>
+      <div class="row noprint" style="margin-top:12px">
+        <a class="btn small" href="/whitepaper/PMT-Whitepaper.pdf" download>Download PDF</a>
+        <button class="btn ghost small" data-action="print">Print</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="card">
+    <strong>Contents</strong>
+    <ol class="toc">
+      <li><a href="#summary">Summary</a></li>
+      <li><a href="#platform">The platform</a></li>
+      <li><a href="#balances">How PMT balances work</a></li>
+      <li><a href="#earning">Earning PMT for free</a></li>
+      <li><a href="#competing">Competing with PMT</a></li>
+      <li><a href="#rates">Buying, selling and the taka reserve</a></li>
+      <li><a href="#fees">Fees</a></li>
+      <li><a href="#token">The token contract</a></li>
+      <li><a href="#allocation">Token allocation</a></li>
+      <li><a href="#liquidity">Liquidity policy</a></li>
+      <li><a href="#transparency">Transparency</a></li>
+      <li><a href="#fairplay">Fair play and security</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="#risks">Risks and legal notice</a></li>
+    </ol>
+  </div>
+
+  <h2 id="summary">1. Summary</h2>
+  <p>PMT Arcade (pmtarcade.com) is a games platform from Bangladesh. Players earn PMT by playing free games, use PMT to compete against each other in skill games such as Ludo, Chess, Carrom, Call Bridge and 29, send PMT to friends, and — when it opens — withdraw PMT to their own wallet on BNB Smart Chain.</p>
+  <p>PMT is a standard BEP-20 token with a fixed supply of 10,000,000,000. Its contract has no owner, no mint function and no tax. The goal is simple: a fun platform where many people own a little PMT, earned or won through play, rather than a few people owning most of it.</p>
+  <p>The platform earns from advertising on free games and from small fees. Players compete against each other, not against the house, so the platform does not need to win games to pay its costs.</p>
+
+  <h2 id="platform">2. The platform</h2>
+  <div class="grid">
+    <div class="card"><h3>Free games</h3><p class="note">16 quick games (Neon Rush, Merge 2048, Tower Stack, Snake Arena and more). Free to play, no deposit. Good scores earn bonus PMT, up to a daily limit.</p></div>
+    <div class="card"><h3>Competitive games</h3><p class="note">Ludo, Chess, Carrom, Call Bridge and 29, played live against other players. Both sides put in the same stake; the winner takes the pot minus a small fee.</p></div>
+    <div class="card"><h3>One wallet</h3><p class="note">One PMT balance for everything: free games, matches, sending PMT to friends and, later, withdrawing to BNB Smart Chain.</p></div>
+  </div>
+  <p>Players sign in with Google or email. Every account gets a player number, and every PMT movement is recorded in a double-entry ledger that cannot be edited afterwards.</p>
+
+  <h2 id="balances">3. How PMT balances work</h2>
+  <p>Inside the platform, a player's PMT is recorded by the platform's ledger (an “in-app balance”). Only withdrawals and deposits touch the blockchain. This keeps games fast and free of network fees.</p>
+  <div class="table-scroll"><table>
+    <tr><th>Part of the balance</th><th>Comes from</th><th>Can be used for</th></tr>
+    <tr><td><strong>Available</strong></td><td>PMT bought or won in matches</td><td>Matches, sending to friends, selling back for taka, withdrawing</td></tr>
+    <tr><td><strong>Bonus</strong></td><td>Free games, check-ins, invites, deposits from a crypto wallet</td><td>Matches and withdrawing. It cannot be sold for taka or sent to another player. Winnings from a match played with bonus PMT stay bonus.</td></tr>
+  </table></div>
+  <p class="note">Why bonus PMT exists: free PMT must not turn into taka. Otherwise people could farm free rewards with many accounts and drain the money of real players.</p>
+
+  <h2 id="earning">4. Earning PMT for free</h2>
+  <ul>
+    <li><strong>Free games:</strong> PMT based on the score, checked by the server (time played, maximum score speed). Up to 1,000 PMT per day.</li>
+    <li><strong>Daily check-in:</strong> a streak that grows from 10 to 60 PMT per day.</li>
+    <li><strong>Invites:</strong> 300 PMT for you and 100 PMT for your friend once the friend has earned 500 PMT from games.</li>
+    <li><strong>Welcome bonus:</strong> 50 PMT for a new account.</li>
+  </ul>
+  <p>All free PMT is paid from a <strong>rewards pool</strong> of a fixed size (see <a href="#allocation">allocation</a>). When the pool is empty, rewards pause; the platform cannot quietly print more.</p>
+
+  <h2 id="competing">5. Competing with PMT</h2>
+  <p>In a match, each player's stake is locked by the server. The server runs the game rules and decides the winner; the browser is never trusted with the result. The winner receives both stakes minus a 1% platform fee. Draws and cancelled matches return the stakes. Disputes are reviewed by an admin.</p>
+  <p>Because players play against each other, the platform takes no side in the result.</p>
+
+  <h2 id="rates">6. Buying, selling and the taka reserve</h2>
+  <p>At launch, players will be able to buy PMT with bKash at <strong>1,000 PMT for ৳1</strong> (from ৳100), and sell won or bought PMT back at <strong>1,100 PMT for ৳1</strong>. The difference covers payment costs. Buying and selling are <strong>closed until the legal review is finished</strong>.</p>
+  <h3>The taka reserve</h3>
+  <p>Every taka paid in for PMT goes into a reserve that belongs to players who may sell back. A sell-back is only accepted if the reserve can pay it; the system checks this in the same step as the sale. The owner can only take out income above 100% of what players could sell back. This means sell-backs are paid from the reserve, never from promises.</p>
+  <h3>When the rate can change</h3>
+  <p>The in-app rate can only be changed by an admin, and the system refuses any change unless the reserve covers at least 50% of everything players could sell back at the new rate. Changes are normally at least 30 days apart. <strong>There is no price target, and the rate may never change.</strong></p>
+
+  <h2 id="fees">7. Fees</h2>
+  <div class="table-scroll"><table>
+    <tr><th>Action</th><th class="n">Fee</th></tr>
+    <tr><td>Winning a match</td><td class="n">1% of the pot</td></tr>
+    <tr><td>Sending PMT to another player (minimum 1,000 PMT)</td><td class="n">1%</td></tr>
+    <tr><td>Withdrawing to a BNB Smart Chain wallet (minimum 100,000 PMT)</td><td class="n">5,000 PMT</td></tr>
+    <tr><td>Free games, check-in, invites</td><td class="n">Free</td></tr>
+  </table></div>
+  <p class="note">The withdrawal fee covers the BNB network cost. Fees may change; the current values are always shown before you confirm.</p>
+
+  <h2 id="token">8. The token contract</h2>
+  <div class="table-scroll"><table>
+    <tr><td>Name / symbol</td><td>PMT / PMT</td></tr>
+    <tr><td>Network</td><td>BNB Smart Chain (BEP-20, chain ID 56)</td></tr>
+    <tr><td>Contract</td><td><code>0xc576c15Bf0E06AF1a65d15B8219A90f1e07f025F</code></td></tr>
+    <tr><td>Total supply</td><td>10,000,000,000 PMT, fixed</td></tr>
+    <tr><td>Decimals</td><td>18</td></tr>
+    <tr><td>Code</td><td>OpenZeppelin ERC-20, verified on BscScan (exact match)</td></tr>
+    <tr><td>Owner / admin functions</td><td>None — no mint, pause, blacklist, tax or upgrade</td></tr>
+  </table></div>
+
+  <h2 id="allocation">9. Token allocation</h2>
+  <p>All PMT not yet given out is held by the wallet that created the contract. Each share below will be moved into its own public wallet, and the addresses are listed with live balances on the <a href="/transparency/">transparency page</a>, so anyone can follow them on BscScan.</p>
+  <div class="bar" aria-hidden="true">
+    <span style="width:20%;background:#8b5cf6"></span><span style="width:10%;background:#22d3ee"></span><span style="width:10%;background:#34d399"></span><span style="width:15%;background:#f5b82e"></span><span style="width:15%;background:#f472b6"></span><span style="width:30%;background:#64748b"></span>
+  </div>
+  <div class="table-scroll"><table>
+    <tr><th>Share</th><th class="n">%</th><th class="n">PMT</th><th>Purpose</th></tr>
+    <tr><td><span class="dot" style="background:#8b5cf6"></span>Player sale</td><td class="n">20%</td><td class="n">2,000,000,000</td><td>Sold to players inside the platform, backed by the taka reserve</td></tr>
+    <tr><td><span class="dot" style="background:#22d3ee"></span>Rewards pool</td><td class="n">10%</td><td class="n">1,000,000,000</td><td>Free games, check-ins, invites and old-arcade balances</td></tr>
+    <tr><td><span class="dot" style="background:#34d399"></span>Tournaments &amp; community</td><td class="n">10%</td><td class="n">1,000,000,000</td><td>Tournament prizes and community events</td></tr>
+    <tr><td><span class="dot" style="background:#f5b82e"></span>Future liquidity</td><td class="n">15%</td><td class="n">1,500,000,000</td><td>Only if PMT is listed on a decentralised exchange later, with the liquidity locked</td></tr>
+    <tr><td><span class="dot" style="background:#f472b6"></span>Team &amp; operations</td><td class="n">15%</td><td class="n">1,500,000,000</td><td>Running and building the platform; not sold before any exchange listing</td></tr>
+    <tr><td><span class="dot" style="background:#64748b"></span>Reserve</td><td class="n">30%</td><td class="n">3,000,000,000</td><td>Held back; used only after a public announcement</td></tr>
+  </table></div>
+  <p class="note">No PMT is ever burned or sent to a dead wallet; unused PMT simply stays in its public wallet.</p>
+
+  <h2 id="liquidity">10. Liquidity policy</h2>
+  <p>PMT can only trade on an exchange such as PancakeSwap once someone adds a liquidity pool (PMT paired with BNB). In such a pool every sale lowers the price for the next seller, so a pool funded only with buyers' own money cannot let everyone sell at a profit. PMT Arcade therefore follows these rules if it ever opens a pool:</p>
+  <ul>
+    <li><strong>Only money that is not owed to players.</strong> The pool is funded with reserve income above 100% of sell-backs plus advertising and fee income. Taka that backs players' sell-backs is never used.</li>
+    <li><strong>Locked liquidity.</strong> The pool's LP tokens are locked for at least 12 months with a public locker, and the lock is linked on the transparency page.</li>
+    <li><strong>No cheaper start.</strong> The pool never opens at a lower price than players paid in the app.</li>
+    <li><strong>Team share untouched.</strong> The team share stays in its published wallet, or is locked, for at least 12 months after a listing.</li>
+    <li><strong>Only when it is safe.</strong> A listing happens only after a legal review and when the pool would be deep enough that ordinary selling cannot crash the price.</li>
+    <li><strong>Rules, not promises.</strong> Any listing is announced with these rules — never with a price target.</li>
+  </ul>
+
+  <h2 id="transparency">11. Transparency</h2>
+  <p>The <a href="/transparency/">transparency page</a> shows live figures from the platform's ledger and from BNB Smart Chain, with totals only and no personal data:</p>
+  <ul>
+    <li>whether every PMT is accounted for (all ledger balances add up to zero) and the result of the last full integrity check;</li>
+    <li>the taka reserve, what players could sell back, and the coverage;</li>
+    <li>PMT given out, held by players, left in the rewards pool, and earned as fees;</li>
+    <li>every published project wallet with its live on-chain balance.</li>
+  </ul>
+
+  <h2 id="fairplay">12. Fair play and security</h2>
+  <ul>
+    <li>The server decides every game result, reward, rate, fee and balance. Nothing the browser says is trusted.</li>
+    <li>Free-game scores are checked for impossible speed and length; suspicious runs pay nothing and are flagged.</li>
+    <li>Every PMT movement is a balanced double-entry record that cannot be edited. A built-in integrity check verifies that all balances add up.</li>
+    <li>Each payment, withdrawal and deposit can only be processed once.</li>
+    <li>Crypto withdrawals are paid from a separate payout wallet holding only a small amount, never from the main supply wallet.</li>
+    <li>PMT Arcade will never ask for your bKash PIN, OTP or wallet secret phrase.</li>
+  </ul>
+
+  <h2 id="roadmap">13. Roadmap</h2>
+  <p class="note">Steps happen in this order when they are ready. There are no fixed dates.</p>
+  <ol>
+    <li><strong>Launch</strong> (done): one platform at pmtarcade.com with free games, rewards, the PMT wallet and transfers between players.</li>
+    <li><strong>Competitive games and bKash</strong>: open after the legal review.</li>
+    <li><strong>Crypto withdrawals and deposits</strong>: once the separate payout wallet is set up.</li>
+    <li><strong>Public allocation wallets</strong>: each share above moved to its own address, published on the transparency page.</li>
+    <li><strong>Tournaments</strong>: scheduled events with prize pools from the tournament share.</li>
+    <li><strong>Exchange listing</strong>: only under the liquidity policy above.</li>
+  </ol>
+
+  <h2 id="risks">14. Risks and legal notice</h2>
+  <div class="card warnbox">
+    <ul>
+      <li><strong>Not an investment.</strong> PMT is a game token. This document is not an offer to sell securities or a promise of profit. Nobody promises that PMT will have, keep or increase any price.</li>
+      <li><strong>No market today.</strong> PMT is not listed on any exchange. The in-app rates apply only inside PMT Arcade, and only while buying and selling are open.</li>
+      <li><strong>Laws can limit features.</strong> Laws on digital tokens and online games differ by country, including Bangladesh. Features such as buying, selling, competitive games or withdrawals may be closed or changed to follow the law.</li>
+      <li><strong>Technical risk.</strong> Blockchain transactions cannot be undone. Sending PMT to a wrong address or network loses it.</li>
+      <li><strong>Play responsibly.</strong> Only stake what you can afford to lose. Players under 18 must not take part in competitive games.</li>
+    </ul>
+  </div>
+
+  <footer class="foot">
+    PMT Arcade · <a href="https://pmtarcade.com">pmtarcade.com</a> · <a href="/token/">Token page</a> · <a href="/transparency/">Transparency</a> · Contract <span class="mono">0xc576c15Bf0E06AF1a65d15B8219A90f1e07f025F</span>
+  </footer>
+</div>
+<script src="/token/token.js"></script>
+</body>
+</html>

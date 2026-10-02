@@ -1,0 +1,41 @@
+{
+  "name": "token-arena-platform",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.3",
+    "concurrently": "^10.0.5",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3"
+  },
+  "description": "Multiplayer internal-token gaming platform foundation (Cloudflare Workers + D1 + Durable Objects, React, Firebase Auth).",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,magenta \"npm run dev -w @arena/api\" \"npm run dev -w @arena/web\"",
+    "dev:api": "npm run dev -w @arena/api",
+    "dev:web": "npm run dev -w @arena/web",
+    "db:migrate:local": "npm run db:migrate:local -w @arena/api",
+    "db:migrate:remote": "npm run db:migrate:remote -w @arena/api",
+    "db:seed:local": "node scripts/seed-dev.mjs",
+    "admin:create": "node scripts/create-super-admin.mjs",
+    "arcade:import": "node scripts/import-arcade-legacy.mjs",
+    "lint": "eslint .",
+    "typecheck": "tsc -p packages/shared/tsconfig.json && tsc -p packages/games/tsconfig.json && tsc -p apps/api/tsconfig.json && tsc -p apps/web/tsconfig.json && tsc -p tests/tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "npm run build -w @arena/web",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "deploy": "npm run build && npm run deploy -w @arena/api"
+  }
+}

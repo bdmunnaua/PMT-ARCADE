@@ -1,0 +1,31 @@
+{
+  "name": "@arena/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@arena/games": "^1.0.0",
+    "@arena/shared": "*",
+    "chess.js": "^1.4.0",
+    "clsx": "^2.1.1",
+    "firebase": "^12.19.0",
+    "lucide-react": "^1.49.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router": "^8.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.2"
+  },
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --port 5173",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

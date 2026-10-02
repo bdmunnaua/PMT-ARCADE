@@ -1,0 +1,26 @@
+# Security headers (Cloudflare Workers static assets).
+# App pages: strict Content-Security-Policy; the app may show its own free games in a frame.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-8w1rp3odLYfiOVU7Rgj6RE9NkgAEvw2PnRtM3EHyaeo=' https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: https://*.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+
+# Free arcade games: shown inside the app (same site only). They run inline game code and
+# Google AdSense H5 game ads, so the app's strict policy is removed for them (as on the old site).
+/games/*
+  ! X-Frame-Options
+  ! Content-Security-Policy
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self'
+
+# Built app files have content hashes in their names, so they can be cached forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/admin
+  X-Robots-Tag: noindex, nofollow
+/admin/*
+  X-Robots-Tag: noindex, nofollow

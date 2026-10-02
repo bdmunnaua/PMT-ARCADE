@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Rhythm Tiles: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Rhythm Tiles: free piano tiles music game online. Tap the black tiles to play Ode to Joy, Für Elise and more. Earn PMT for every tile.">
+<link rel="canonical" href="https://pmtarcade.com/games/rhythm-tiles/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Rhythm Tiles: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Rhythm Tiles: free piano tiles music game online. Tap the black tiles to play Ode to Joy, Für Elise and more. Earn PMT for every tile.">
+<meta property="og:url" content="https://pmtarcade.com/games/rhythm-tiles/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rhythm Tiles: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Rhythm Tiles: free piano tiles music game online. Tap the black tiles to play Ode to Joy, Für Elise and more. Earn PMT for every tile.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Rhythm Tiles", "url": "https://pmtarcade.com/games/rhythm-tiles/", "description": "Rhythm Tiles: free piano tiles music game online. Tap the black tiles to play Ode to Joy, Für Elise and more. Earn PMT for every tile.", "genre": "Music", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Rhythm Tiles", "item": "https://pmtarcade.com/games/rhythm-tiles/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); }
+  .songs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .songs button { padding: 10px 6px; border-radius: 12px; border: 1px solid var(--line-strong); background: rgba(255,255,255,.04); cursor: pointer; font-weight: 700; font-size: .88rem; }
+  .songs button.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 22%, transparent); }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const W = 400, LANES = 4, LW = W / LANES;
+  // Public-domain melodies (note names); each tap plays the next note
+  const SONGS = {
+    'Ode to Joy': 'E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 E4 D4 D4 E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4 C4 C4 D4 D4 E4 C4 D4 E4 F4 E4 C4 D4 E4 F4 E4 D4 C4 D4 G3 E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4 C4 C4',
+    'Für Elise': 'E5 D#5 E5 D#5 E5 B4 D5 C5 A4 C4 E4 A4 B4 E4 G#4 B4 C5 E4 E5 D#5 E5 D#5 E5 B4 D5 C5 A4 C4 E4 A4 B4 E4 C5 B4 A4',
+    'Twinkle Star': 'C4 C4 G4 G4 A4 A4 G4 F4 F4 E4 E4 D4 D4 C4 G4 G4 F4 F4 E4 E4 D4 G4 G4 F4 F4 E4 E4 D4 C4 C4 G4 G4 A4 A4 G4 F4 F4 E4 E4 D4 D4 C4',
+    'Jingle Bells': 'E4 E4 E4 E4 E4 E4 E4 G4 C4 D4 E4 F4 F4 F4 F4 F4 E4 E4 E4 E4 D4 D4 E4 D4 G4 E4 E4 E4 E4 E4 E4 E4 G4 C4 D4 E4 F4 F4 F4 F4 F4 E4 E4 E4 G4 G4 F4 D4 C4',
+  };
+  const NOTE = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
+  const freq = (n) => { const m = n.match(/^([A-G]#?)(\d)$/); return 440 * Math.pow(2, (NOTE[m[1]] + (+m[2] + 1) * 12 - 69) / 12); };
+
+  const canvas = document.getElementById('c');
+  let view, ctx, H = 700, TH = 175;
+  let song = Arcade.store.get('tiles.song', 'Ode to Joy'), notes, noteI;
+  let rows, off, speed, started, alive, tapped, lastT, flash, miss, ripples;
+
+  /* --- simple piano voice --- */
+  let ac;
+  function play(f) {
+    if (Arcade.store.get('arcade.muted', false)) return;
+    const A = window.AudioContext || window.webkitAudioContext; if (!A) return;
+    ac = ac || new A(); if (ac.state === 'suspended') ac.resume();
+    const t0 = ac.currentTime, out = ac.createGain();
+    out.gain.setValueAtTime(0.0001, t0); out.gain.exponentialRampToValueAtTime(0.32, t0 + 0.008); out.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.2);
+    out.connect(ac.destination);
+    [[1, 1], [2, 0.35], [3, 0.12], [4, 0.06]].forEach(([h, v]) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.value = f * h; g.gain.value = v; o.connect(g).connect(out); o.start(t0); o.stop(t0 + 1.25); });
+  }
+
+  function addRow() { const prev = rows.length ? rows[rows.length - 1] : null; let lane; do { lane = (Math.random() * LANES) | 0; } while (prev && lane === prev.lane && Math.random() < 0.6); rows.push({ lane, k: (prev ? prev.k : 0) + 1, tapped: false }); }
+  function reset() {
+    notes = SONGS[song].split(/\s+/); noteI = 0;
+    TH = H / 4; rows = []; for (let i = 0; i < 8; i++) addRow();
+    off = 0; speed = 2.4; started = false; alive = true; tapped = 0; flash = null; miss = null; ripples = [];
+    Arcade.setStat('tps', 'Speed', '2.4');
+  }
+  // world: row k occupies screen y = H - (k + 1) * TH + off (first row starts one tile above the bottom)
+  const rowY = (r) => H - (r.k + 1) * TH + off;
+
+  function fail(lane, y, why) {
+    alive = false; miss = { lane, y, t: 0 }; Arcade.sfx('lose'); Arcade.vibrate(120);
+    setTimeout(() => Arcade.gameOver(tapped, { title: why, stats: [['Tiles', tapped], ['Song', song]], meta: { tapped, song } }), 1100);
+  }
+  function tap(e) {
+    if (!Arcade.playing || !alive) return;
+    const pt = view.point(e), lane = Math.min(LANES - 1, Math.max(0, Math.floor(pt.x / LW)));
+    const next = rows.find((r) => !r.tapped);
+    if (!next) return;
+    const y = rowY(next);
+    if (lane === next.lane && pt.y >= y - TH * 0.6 && pt.y <= y + TH + 10) {
+      next.tapped = true; tapped++; started = true;
+      play(freq(notes[noteI % notes.length])); noteI++;
+      Arcade.setScore(tapped); Arcade.vibrate(6);
+      ripples.push({ x: (lane + 0.5) * LW, y: pt.y, t: 0 });
+      speed = Math.min(8.5, 2.4 + tapped * 0.045);
+      Arcade.setStat('tps', 'Speed', speed.toFixed(1));
+      if (tapped % 50 === 0) { Arcade.sfx('level'); const s = view.toStage(W / 2, H * 0.3); Arcade.floatText(s.x, s.y, `${tapped} TILES!`, '#fde68a'); }
+      return;
+    }
+    // tapped a white tile in the active row (or below it) = mistake
+    if (pt.y > y - 4) fail(lane, pt.y, 'Wrong tile!');
+  }
+
+  function update(dt) {
+    ripples = ripples.filter((r) => (r.t += dt) < 0.4);
+    if (miss) miss.t += dt;
+    if (!Arcade.playing || !alive || !started) return;
+    off += speed * TH * dt;
+    while (rows.length < 10 || rowY(rows[rows.length - 1]) > -TH) addRow();
+    const next = rows.find((r) => !r.tapped);
+    if (next && rowY(next) > H) { off -= TH * 0.6; fail(next.lane, H - TH * 0.5, 'Missed a tile!'); }
+    rows = rows.filter((r) => rowY(r) < H + TH);
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+    for (let i = 1; i < LANES; i++) { ctx.beginPath(); ctx.moveTo(i * LW, 0); ctx.lineTo(i * LW, H); ctx.stroke(); }
+    const next = rows.find((r) => !r.tapped);
+    rows.forEach((r) => {
+      const y = rowY(r); if (y > H || y + TH < 0) return;
+      const x = r.lane * LW;
+      if (r.tapped) { ctx.fillStyle = 'rgba(148,163,184,0.35)'; ctx.fillRect(x + 1, y + 1, LW - 2, TH - 2); return; }
+      const g = ctx.createLinearGradient(0, y, 0, y + TH); g.addColorStop(0, '#1e293b'); g.addColorStop(1, '#020617');
+      ctx.fillStyle = g; ctx.fillRect(x + 1, y + 1, LW - 2, TH - 2);
+      if (r === next && !started) { ctx.fillStyle = '#fff'; ctx.font = '800 22px Outfit'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('START', x + LW / 2, y + TH / 2); }
+    });
+    ripples.forEach((r) => { const k = r.t / 0.4; ctx.strokeStyle = `rgba(56,189,248,${1 - k})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(r.x, r.y, 10 + k * 70, 0, 6.29); ctx.stroke(); });
+    if (miss) { const on = Math.floor(miss.t * 8) % 2 === 0; if (on) { ctx.fillStyle = 'rgba(239,68,68,0.85)'; const y = Math.max(0, Math.min(H - TH, miss.y - TH / 2)); ctx.fillRect(miss.lane * LW + 1, y, LW - 2, TH); } }
+    ctx.fillStyle = 'rgba(15,23,42,0.75)'; ctx.font = '800 42px Outfit'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    if (started) { ctx.save(); ctx.fillStyle = '#ef4444'; ctx.fillText(tapped, W / 2, 64); ctx.restore(); }
+  }
+  function loop(ts) {
+    const dt = Math.min(0.033, (ts - (lastT || ts)) / 1000); lastT = ts;
+    if (rows) { update(dt); draw(); }
+    requestAnimationFrame(loop);
+  }
+
+  canvas.addEventListener('pointerdown', tap);
+  window.addEventListener('keydown', (e) => { // keys D F J K = lanes 1-4
+    const lane = { d: 0, f: 1, j: 2, k: 3 }[e.key.toLowerCase()];
+    if (lane == null || !Arcade.playing) return;
+    const next = rows.find((r) => !r.tapped); const r = canvas.getBoundingClientRect();
+    const y = next ? Math.min(H - 5, rowY(next) + TH / 2) : H - 5;
+    tap({ clientX: r.left + ((lane + 0.5) * LW / W) * r.width, clientY: r.top + (y / H) * r.height });
+  });
+
+  Arcade.init({
+    id: 'rhythm-tiles',
+    subtitle: 'Tap the black tiles in order and play the song.',
+    howTo: ['<b>Tap only the black tiles</b>, from the bottom up. Each tap plays the next note.', 'Tap the first tile to start. The tiles speed up as you go.', 'Tapping a white tile or missing a black one ends the game.', 'On a keyboard use <b>D F J K</b>.'],
+    startExtra: () => `<div class="songs">${Object.keys(SONGS).map((s) => `<button data-song="${s}" class="${s === song ? 'on' : ''}">🎵 ${s}</button>`).join('')}</div>`,
+    onStartScreen(o) { o.querySelectorAll('[data-song]').forEach((b) => b.addEventListener('click', () => { song = b.dataset.song; Arcade.store.set('tiles.song', song); o.querySelectorAll('[data-song]').forEach((x) => x.classList.toggle('on', x === b)); play(freq(SONGS[song].split(' ')[0])); })); },
+    onStart() { reset(); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: W, minH: 620, maxH: 860, pad: 0, onResize: (v) => { H = v.h; if (rows && !started) reset(); } });
+  ctx = view.ctx; H = view.h;
+  reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

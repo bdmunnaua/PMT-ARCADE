@@ -1,0 +1,8 @@
+# Local secrets for `wrangler dev`. Copy to apps/api/.dev.vars (git-ignored) and fill in.
+# Generate random values with:  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+REALTIME_TICKET_SECRET=replace-with-64-random-hex-characters
+INTERNAL_API_SECRET=replace-with-64-random-hex-characters
+
+# Local development only: accept dev.<name> test identities (see .env.example VITE_DEV_AUTH).
+# Ignored unless ENVIRONMENT=development.
+DEV_AUTH=false

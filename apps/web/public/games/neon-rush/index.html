@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Neon Rush: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Neon Rush: free synthwave space runner game online. Fly a neon jet, dodge drones and laser gates, collect coins and power-ups. Play in your browser and earn PMT.">
+<link rel="canonical" href="https://pmtarcade.com/games/neon-rush/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Neon Rush: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Neon Rush: free synthwave space runner game online. Fly a neon jet, dodge drones and laser gates, collect coins and power-ups. Play in your browser and earn PMT.">
+<meta property="og:url" content="https://pmtarcade.com/games/neon-rush/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Neon Rush: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Neon Rush: free synthwave space runner game online. Fly a neon jet, dodge drones and laser gates, collect coins and power-ups. Play in your browser and earn PMT.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Neon Rush", "url": "https://pmtarcade.com/games/neon-rush/", "description": "Neon Rush: free synthwave space runner game online. Fly a neon jet, dodge drones and laser gates, collect coins and power-ups. Play in your browser and earn PMT.", "genre": "Arcade", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Neon Rush", "item": "https://pmtarcade.com/games/neon-rush/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: linear-gradient(180deg, #05010f 0%, #140532 55%, #2a0845 100%); }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  let view, ctx, W = 400, Hh = 700;
+  let ply, obs, coins, pows, parts, stars, gridOff, speed, dist, got, t, spawnT, coinT, powT, shield, magnetT, alive, lastT, shake, dragFrom;
+
+  function reset() {
+    ply = { x: 200, y: Hh - 130, r: 14, tx: 200, ty: Hh - 130, tilt: 0 };
+    obs = []; coins = []; pows = []; parts = []; gridOff = 0; speed = 230; dist = 0; got = 0; t = 0;
+    spawnT = 0.8; coinT = 0.4; powT = 9; shield = false; magnetT = 0; alive = true; shake = 0;
+    Arcade.setStat('coins', 'Coins', '0');
+  }
+  function initStars() { stars = Array.from({ length: 70 }, () => ({ x: Math.random() * W, y: Math.random() * Hh, z: Math.random() * 0.8 + 0.2 })); }
+
+  /* ---------- spawning ---------- */
+  function spawnObstacle() {
+    const lvl = Math.min(1, t / 90), roll = Math.random();
+    if (t > 20 && roll < 0.12 + lvl * 0.1) { // laser gate with a gap
+      const gap = 120 - lvl * 25, gx = 30 + Math.random() * (W - 60 - gap);
+      obs.push({ type: 'gate', y: -20, gx, gap, h: 12 });
+      return;
+    }
+    if (t > 8 && roll < 0.45) { // drone that weaves side to side
+      obs.push({ type: 'drone', x: 40 + Math.random() * (W - 80), y: -30, r: 16, ph: Math.random() * 6, amp: 50 + Math.random() * 60, x0: 0 });
+      obs[obs.length - 1].x0 = obs[obs.length - 1].x;
+      return;
+    }
+    const r = 14 + Math.random() * 16, n = 7 + ((Math.random() * 4) | 0);
+    obs.push({ type: 'rock', x: r + Math.random() * (W - 2 * r), y: -r - 10, r, rot: 0, vr: (Math.random() - 0.5) * 3, vx: (Math.random() - 0.5) * 40,
+      shape: Array.from({ length: n }, (_, i) => ({ a: (i / n) * Math.PI * 2, d: 0.75 + Math.random() * 0.3 })) });
+  }
+  function spawnCoins() {
+    const pattern = Math.random(), x0 = 40 + Math.random() * (W - 80);
+    if (pattern < 0.4) for (let i = 0; i < 5; i++) coins.push({ x: x0, y: -20 - i * 34, ph: i * 0.4 });
+    else if (pattern < 0.75) for (let i = 0; i < 6; i++) coins.push({ x: Math.max(20, Math.min(W - 20, x0 + Math.sin(i * 0.8) * 60)), y: -20 - i * 34, ph: i * 0.4 });
+    else coins.push({ x: x0, y: -20, ph: 0 });
+  }
+
+  /* ---------- update ---------- */
+  function hit(hx, hy) {
+    if (shield) {
+      shield = false; shake = 0.25; Arcade.sfx('hit'); Arcade.vibrate(40); boom(hx, hy, '#22d3ee', 18);
+      return false;
+    }
+    alive = false; shake = 0.5; boom(ply.x, ply.y, '#f472b6', 50); boom(ply.x, ply.y, '#fde68a', 30);
+    Arcade.sfx('hit'); Arcade.vibrate(120);
+    setTimeout(() => Arcade.gameOver(Arcade.score, { title: 'Crashed!', stats: [['Distance', Math.floor(dist) + ' m'], ['Coins', got]], meta: { dist: Math.floor(dist), coins: got } }), 1100);
+    return true;
+  }
+  function boom(x, y, col, n) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, s = 60 + Math.random() * 260; parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.4 + Math.random() * 0.5, col, sz: 2 + Math.random() * 3 }); } }
+
+  function update(dt) {
+    const playing = Arcade.playing && alive;
+    stars.forEach((s) => { s.y += (playing ? speed : 60) * s.z * 0.4 * dt; if (s.y > Hh) { s.y = -2; s.x = Math.random() * W; } });
+    gridOff = (gridOff + (playing ? speed : 60) * dt) % 40;
+    parts = parts.filter((p) => { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.96; p.vy *= 0.96; return p.life > 0; });
+    shake = Math.max(0, shake - dt);
+    if (!playing) return;
+
+    t += dt; speed = Math.min(540, 230 + t * 4.2);
+    dist += speed * dt / 10;
+    Arcade.setScore(Math.floor(dist) + got * 25);
+
+    // move toward target with a little easing
+    const px = ply.x;
+    ply.x += (ply.tx - ply.x) * Math.min(1, dt * 16); ply.y += (ply.ty - ply.y) * Math.min(1, dt * 16);
+    ply.x = Math.max(16, Math.min(W - 16, ply.x)); ply.y = Math.max(Hh * 0.35, Math.min(Hh - 40, ply.y));
+    ply.tilt += ((ply.x - px) / Math.max(dt, 0.001) / 900 - ply.tilt) * Math.min(1, dt * 10);
+    // engine trail
+    parts.push({ x: ply.x + (Math.random() - 0.5) * 6, y: ply.y + 18, vx: (Math.random() - 0.5) * 20, vy: 120 + Math.random() * 80, life: 0.3, col: shield ? '#22d3ee' : '#f472b6', sz: 2.5 });
+
+    if ((spawnT -= dt) <= 0) { spawnObstacle(); spawnT = Math.max(0.32, 1.0 - t * 0.008) * (0.7 + Math.random() * 0.6); }
+    if ((coinT -= dt) <= 0) { spawnCoins(); coinT = 1.6 + Math.random() * 1.2; }
+    if ((powT -= dt) <= 0) { pows.push({ x: 40 + Math.random() * (W - 80), y: -20, k: Math.random() < 0.5 ? 'shield' : 'magnet' }); powT = 12 + Math.random() * 8; }
+    magnetT = Math.max(0, magnetT - dt);
+
+    for (const o of obs) {
+      o.y += (speed + (o.type === 'rock' ? 60 : 30)) * dt;
+      if (o.type === 'rock') { o.rot += o.vr * dt; o.x += o.vx * dt; if (o.x < o.r || o.x > W - o.r) o.vx *= -1; }
+      if (o.type === 'drone') { o.ph += dt * 2.2; o.x = Math.max(o.r, Math.min(W - o.r, o.x0 + Math.sin(o.ph) * o.amp)); }
+      if (o.dead) continue;
+      if (o.type === 'gate') {
+        if (Math.abs(o.y - ply.y) < o.h / 2 + 10 && (ply.x - 10 < o.gx || ply.x + 10 > o.gx + o.gap)) { o.dead = true; if (hit(ply.x, o.y)) return; }
+      } else if (Math.hypot(o.x - ply.x, o.y - ply.y) < o.r * 0.85 + ply.r * 0.8) { o.dead = true; boom(o.x, o.y, '#a78bfa', 16); if (hit(o.x, o.y)) return; }
+    }
+    obs = obs.filter((o) => o.y < Hh + 60 && !o.dead);
+    for (const c of coins) {
+      c.y += speed * dt; c.ph += dt * 5;
+      if (magnetT > 0 && Math.hypot(c.x - ply.x, c.y - ply.y) < 170) { c.x += (ply.x - c.x) * dt * 8; c.y += (ply.y - c.y) * dt * 8; }
+      if (Math.hypot(c.x - ply.x, c.y - ply.y) < 24) { c.got = true; got++; Arcade.sfx('coin'); boom(c.x, c.y, '#fde68a', 6); Arcade.setStat('coins', 'Coins', String(got)); }
+    }
+    coins = coins.filter((c) => !c.got && c.y < Hh + 30);
+    for (const p of pows) {
+      p.y += speed * 0.8 * dt;
+      if (Math.hypot(p.x - ply.x, p.y - ply.y) < 28) {
+        p.got = true; Arcade.sfx('level'); Arcade.vibrate(20);
+        if (p.k === 'shield') shield = true; else magnetT = 9;
+        const s = view.toStage(ply.x, ply.y - 40); Arcade.floatText(s.x, s.y, p.k === 'shield' ? 'SHIELD' : 'MAGNET', p.k === 'shield' ? '#22d3ee' : '#fbbf24');
+      }
+    }
+    pows = pows.filter((p) => !p.got && p.y < Hh + 30);
+  }
+
+  /* ---------- draw ---------- */
+  function glow(col, blur) { ctx.shadowColor = col; ctx.shadowBlur = blur; }
+  function drawGrid() {
+    const hz = Hh * 0.55;
+    ctx.save(); ctx.globalAlpha = 0.5;
+    const g = ctx.createLinearGradient(0, hz, 0, Hh); g.addColorStop(0, 'rgba(236,72,153,0)'); g.addColorStop(1, 'rgba(236,72,153,0.55)');
+    ctx.strokeStyle = g; ctx.lineWidth = 1.2;
+    for (let i = 0; i < 14; i++) { const k = ((i * 40 + gridOff) % 560) / 560, y = hz + (Hh - hz) * k * k; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    for (let i = -8; i <= 8; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * 12, hz); ctx.lineTo(W / 2 + i * 90, Hh); ctx.stroke(); }
+    ctx.restore();
+    // sun
+    const sg = ctx.createLinearGradient(0, hz - 110, 0, hz); sg.addColorStop(0, 'rgba(253,224,71,0.35)'); sg.addColorStop(1, 'rgba(236,72,153,0.25)');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(W / 2, hz, 110, Math.PI, 0); ctx.fill();
+  }
+  function drawJet() {
+    ctx.save(); ctx.translate(ply.x, ply.y); ctx.rotate(Math.max(-0.35, Math.min(0.35, ply.tilt)));
+    glow('#22d3ee', 18);
+    ctx.fillStyle = '#0b1026'; ctx.strokeStyle = '#67e8f9'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -24); ctx.lineTo(5, -10); ctx.lineTo(20, 6); ctx.lineTo(20, 11); ctx.lineTo(6, 8); ctx.lineTo(8, 18); ctx.lineTo(0, 15);
+    ctx.lineTo(-8, 18); ctx.lineTo(-6, 8); ctx.lineTo(-20, 11); ctx.lineTo(-20, 6); ctx.lineTo(-5, -10); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#f472b6'; glow('#f472b6', 12); ctx.beginPath(); ctx.ellipse(0, -8, 2.6, 6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore(); ctx.shadowBlur = 0;
+    if (shield) { ctx.strokeStyle = `rgba(34,211,238,${0.5 + Math.sin(t * 8) * 0.25})`; ctx.lineWidth = 2.5; glow('#22d3ee', 16); ctx.beginPath(); ctx.arc(ply.x, ply.y, 30, 0, 6.28); ctx.stroke(); ctx.shadowBlur = 0; }
+    if (magnetT > 0) { ctx.strokeStyle = `rgba(251,191,36,${0.18 + 0.1 * Math.sin(t * 6)})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(ply.x, ply.y, 60 + (t * 80) % 110, 0, 6.28); ctx.stroke(); }
+  }
+  function draw() {
+    ctx.save();
+    ctx.clearRect(0, 0, W, Hh);
+    if (shake > 0) ctx.translate((Math.random() - 0.5) * shake * 30, (Math.random() - 0.5) * shake * 30);
+    stars.forEach((s) => { ctx.fillStyle = `rgba(255,255,255,${s.z * 0.8})`; ctx.fillRect(s.x, s.y, s.z * 2, s.z * 2 + (Arcade.playing ? s.z * 5 : 0)); });
+    drawGrid();
+    for (const c of coins) {
+      const w = Math.abs(Math.cos(c.ph)) * 11 + 2;
+      glow('#fbbf24', 14); const g = ctx.createLinearGradient(c.x - w, 0, c.x + w, 0); g.addColorStop(0, '#f59e0b'); g.addColorStop(0.5, '#fef3c7'); g.addColorStop(1, '#f59e0b');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(c.x, c.y, w, 12, 0, 0, 6.28); ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    for (const p of pows) {
+      const col = p.k === 'shield' ? '#22d3ee' : '#fbbf24';
+      glow(col, 20); ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 15, 0, 6.28); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.fillStyle = col; ctx.font = '700 15px Outfit'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.k === 'shield' ? '⛨' : 'U', p.x, p.y + 1);
+    }
+    for (const o of obs) {
+      if (o.type === 'rock') {
+        ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.rot); glow('#a78bfa', 14);
+        ctx.fillStyle = '#1e1b4b'; ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 2; ctx.beginPath();
+        o.shape.forEach((p, i) => { const x = Math.cos(p.a) * o.r * p.d, y = Math.sin(p.a) * o.r * p.d; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+        ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+      } else if (o.type === 'drone') {
+        glow('#f87171', 16); ctx.fillStyle = '#2a0a12'; ctx.strokeStyle = '#f87171'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(o.x, o.y - o.r); ctx.lineTo(o.x + o.r, o.y); ctx.lineTo(o.x, o.y + o.r); ctx.lineTo(o.x - o.r, o.y); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#fca5a5'; ctx.beginPath(); ctx.arc(o.x, o.y, 4 + Math.sin(o.ph * 3) * 1.5, 0, 6.28); ctx.fill();
+      } else {
+        glow('#f43f5e', 20); ctx.fillStyle = '#fb7185';
+        ctx.fillRect(0, o.y - o.h / 2, o.gx, o.h); ctx.fillRect(o.gx + o.gap, o.y - o.h / 2, W - o.gx - o.gap, o.h);
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, o.y - 1.5, o.gx, 3); ctx.fillRect(o.gx + o.gap, o.y - 1.5, W - o.gx - o.gap, 3);
+      }
+      ctx.shadowBlur = 0;
+    }
+    parts.forEach((p) => { ctx.globalAlpha = Math.min(1, p.life * 2); ctx.fillStyle = p.col; ctx.fillRect(p.x - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz); });
+    ctx.globalAlpha = 1;
+    if (alive) drawJet();
+    ctx.restore();
+  }
+  function loop(ts) {
+    const dt = Math.min(0.033, (ts - (lastT || ts)) / 1000); lastT = ts;
+    if (ply) { update(dt); draw(); }
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- input: relative drag so your finger never hides the jet ---------- */
+  canvas.addEventListener('pointerdown', (e) => { if (!Arcade.playing) return; canvas.setPointerCapture(e.pointerId); const p = view.point(e); dragFrom = { x: p.x, y: p.y, px: ply.tx, py: ply.ty }; });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!dragFrom || !Arcade.playing) return;
+    const p = view.point(e);
+    ply.tx = dragFrom.px + (p.x - dragFrom.x) * 1.25; ply.ty = dragFrom.py + (p.y - dragFrom.y) * 1.25;
+    ply.tx = Math.max(16, Math.min(W - 16, ply.tx)); ply.ty = Math.max(Hh * 0.35, Math.min(Hh - 40, ply.ty));
+  });
+  const endDrag = () => (dragFrom = null);
+  canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+  const keys = {};
+  window.addEventListener('keydown', (e) => (keys[e.key] = true));
+  window.addEventListener('keyup', (e) => (keys[e.key] = false));
+  setInterval(() => {
+    if (!ply || !Arcade.playing) return;
+    const s = 9;
+    if (keys.ArrowLeft || keys.a) ply.tx = Math.max(16, ply.tx - s);
+    if (keys.ArrowRight || keys.d) ply.tx = Math.min(W - 16, ply.tx + s);
+    if (keys.ArrowUp || keys.w) ply.ty = Math.max(Hh * 0.35, ply.ty - s);
+    if (keys.ArrowDown || keys.s) ply.ty = Math.min(Hh - 40, ply.ty + s);
+  }, 16);
+
+  Arcade.init({
+    id: 'neon-rush',
+    subtitle: 'Fly through the neon city. Dodge everything, grab the coins.',
+    howTo: ['<b>Drag anywhere</b> to fly (or arrow keys). The jet follows your finger movement.', 'Dodge rocks, <b>red drones</b> and <b>laser gates</b>. Fly through the gap!', 'Coins are worth 25 points each. Distance adds up too.', 'Grab ⛨ <b>shield</b> (blocks one hit) and U <b>magnet</b> power-ups.'],
+    onStart() { reset(); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: 400, minH: 640, maxH: 860, pad: 0, onResize: (v) => { Hh = v.h; if (ply && !Arcade.playing) { ply.y = ply.ty = Hh - 130; } } });
+  ctx = view.ctx; Hh = view.h;
+  initStars(); reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

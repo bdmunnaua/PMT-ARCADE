@@ -1,0 +1,10 @@
+# Old pmtarcade.com addresses and icon paths
+/about /whitepaper/ 301
+/about.html /whitepaper/ 301
+/admin.html /admin 301
+/404.html / 301
+/favicon.ico /token/pmt-logo-32.png 301
+/assets/icon-192.png /arcade-assets/icon-192.png 301
+/assets/icon-512.png /arcade-assets/icon-512.png 301
+/assets/icon.svg /arcade-assets/icon.svg 301
+/assets/og-image.png /arcade-assets/og-image.png 301

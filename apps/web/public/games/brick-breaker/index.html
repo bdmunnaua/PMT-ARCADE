@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Brick Breaker: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Brick Breaker: free breakout game online with power-ups, multi-ball and endless levels. Bounce the ball, smash every brick and earn PMT.">
+<link rel="canonical" href="https://pmtarcade.com/games/brick-breaker/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Brick Breaker: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Brick Breaker: free breakout game online with power-ups, multi-ball and endless levels. Bounce the ball, smash every brick and earn PMT.">
+<meta property="og:url" content="https://pmtarcade.com/games/brick-breaker/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Brick Breaker: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Brick Breaker: free breakout game online with power-ups, multi-ball and endless levels. Bounce the ball, smash every brick and earn PMT.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Brick Breaker", "url": "https://pmtarcade.com/games/brick-breaker/", "description": "Brick Breaker: free breakout game online with power-ups, multi-ball and endless levels. Bounce the ball, smash every brick and earn PMT.", "genre": "Arcade", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Brick Breaker", "item": "https://pmtarcade.com/games/brick-breaker/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: radial-gradient(120% 90% at 50% 0%, #073b3a 0%, #062424 50%, #031312 100%); }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const COLS = 9, M = 12, GAP = 4, BW = (400 - M * 2 - GAP * (COLS - 1)) / COLS, BH = 17, TOP = 56, BR = 7;
+  const HP_COLORS = { 1: ['#86efac', '#16a34a'], 2: ['#67e8f9', '#0891b2'], 3: ['#c4b5fd', '#7c3aed'], 9: ['#e5e7eb', '#6b7280'] };
+  const POWERS = { wide: { c: '#60a5fa', t: '↔' }, multi: { c: '#f472b6', t: '✦' }, slow: { c: '#fbbf24', t: '⏱' }, life: { c: '#f87171', t: '♥' } };
+  const canvas = document.getElementById('c');
+  let view, ctx;
+  let bricks, balls, paddle, drops, parts, lives, level, lastT, stuck, wideT, slowT, targetX, broken;
+
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+  const baseSpeed = () => Math.min(560, 330 + level * 22);
+
+  function buildLevel() {
+    bricks = [];
+    const rows = Math.min(4 + level, 10);
+    const seed = level * 9301 + 49297; let s = seed;
+    const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+    const style = level % 4;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < Math.ceil(COLS / 2); c++) {
+      let on = true;
+      if (style === 1) on = (r + c) % 2 === 0 || r === 0;
+      if (style === 2) on = c <= r % Math.ceil(COLS / 2) + 1;
+      if (style === 3) on = rnd() > 0.25;
+      if (!on) continue;
+      let hp = 1 + (rnd() < Math.min(0.6, level * 0.08) ? 1 : 0) + (rnd() < Math.min(0.4, (level - 2) * 0.06) ? 1 : 0);
+      if (level >= 4 && r === rows - 1 && rnd() < 0.15) hp = 9; // steel: can't break
+      for (const cc of new Set([c, COLS - 1 - c])) bricks.push({ x: M + cc * (BW + GAP), y: TOP + r * (BH + GAP), hp, max: hp, flash: 0 });
+    }
+  }
+  function resetBall() {
+    stuck = true;
+    balls = [{ x: paddle.x, y: paddle.y - BR - 1, vx: 0, vy: 0 }];
+  }
+  function reset() {
+    level = 1; lives = 3; drops = []; parts = []; wideT = 0; slowT = 0; broken = 0;
+    paddle = { x: 200, y: view.h - 46, w: 84, h: 14 }; targetX = 200;
+    buildLevel(); resetBall(); stats();
+  }
+  function stats() { Arcade.setStat('lv', 'Level', String(level)); Arcade.setStat('lives', 'Lives', '♥'.repeat(Math.max(0, lives)) || '—'); }
+
+  function launch() {
+    if (!stuck || !Arcade.playing) return;
+    stuck = false;
+    const a = -Math.PI / 2 + (Math.random() - 0.5) * 0.6;
+    balls[0].vx = Math.cos(a) * baseSpeed(); balls[0].vy = Math.sin(a) * baseSpeed();
+    Arcade.sfx('bounce');
+  }
+
+  function hitBrick(b, ball) {
+    b.flash = 0.12;
+    if (b.hp === 9) { Arcade.sfx('bounce'); return; }
+    b.hp--;
+    Arcade.addScore(10);
+    if (b.hp <= 0) {
+      broken++;
+      const col = HP_COLORS[b.max][0];
+      for (let i = 0; i < 10; i++) parts.push({ x: b.x + BW / 2, y: b.y + BH / 2, vx: (Math.random() - 0.5) * 300, vy: (Math.random() - 0.5) * 300, life: 0.5, col });
+      Arcade.sfx('pop', (broken % 8)); Arcade.vibrate(6);
+      if (Math.random() < 0.12) { const keys = Object.keys(POWERS), k = keys[(Math.random() * keys.length) | 0]; drops.push({ x: b.x + BW / 2, y: b.y + BH / 2, k }); }
+    } else Arcade.sfx('bounce');
+  }
+
+  function collideBall(ball) {
+    if (ball.x < BR) { ball.x = BR; ball.vx = Math.abs(ball.vx); Arcade.sfx('bounce'); }
+    if (ball.x > 400 - BR) { ball.x = 400 - BR; ball.vx = -Math.abs(ball.vx); Arcade.sfx('bounce'); }
+    if (ball.y < BR) { ball.y = BR; ball.vy = Math.abs(ball.vy); Arcade.sfx('bounce'); }
+    // paddle
+    const p = paddle;
+    if (ball.vy > 0 && ball.y + BR >= p.y - p.h / 2 && ball.y - BR <= p.y + p.h / 2 && ball.x >= p.x - p.w / 2 - BR && ball.x <= p.x + p.w / 2 + BR) {
+      const rel = Math.max(-1, Math.min(1, (ball.x - p.x) / (p.w / 2)));
+      const a = -Math.PI / 2 + rel * 1.05, sp = Math.hypot(ball.vx, ball.vy);
+      ball.vx = Math.cos(a) * sp; ball.vy = Math.sin(a) * sp; ball.y = p.y - p.h / 2 - BR;
+      Arcade.sfx('bounce');
+    }
+    // bricks
+    for (const b of bricks) {
+      if (b.hp <= 0) continue;
+      const cx = Math.max(b.x, Math.min(ball.x, b.x + BW)), cy = Math.max(b.y, Math.min(ball.y, b.y + BH));
+      const dx = ball.x - cx, dy = ball.y - cy;
+      if (dx * dx + dy * dy <= BR * BR) {
+        const ox = (BW / 2 + BR) - Math.abs(ball.x - (b.x + BW / 2)), oy = (BH / 2 + BR) - Math.abs(ball.y - (b.y + BH / 2));
+        if (ox < oy) { ball.vx = Math.sign(ball.x - (b.x + BW / 2)) * Math.abs(ball.vx); ball.x += Math.sign(ball.vx) * ox; }
+        else { ball.vy = Math.sign(ball.y - (b.y + BH / 2)) * Math.abs(ball.vy); ball.y += Math.sign(ball.vy) * oy; }
+        hitBrick(b, ball);
+        break;
+      }
+    }
+  }
+
+  function applyPower(k) {
+    Arcade.sfx('coin'); Arcade.addScore(50);
+    if (k === 'wide') wideT = 12;
+    if (k === 'slow') slowT = 8;
+    if (k === 'life') { lives = Math.min(5, lives + 1); stats(); }
+    if (k === 'multi' && !stuck) {
+      const add = [];
+      balls.slice(0, 3).forEach((b) => { for (const s of [-0.35, 0.35]) { const a = Math.atan2(b.vy, b.vx) + s, sp = Math.hypot(b.vx, b.vy); add.push({ x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp }); } });
+      balls.push(...add);
+    }
+    const p = view.toStage(paddle.x, paddle.y - 20); Arcade.floatText(p.x, p.y, { wide: 'WIDE', multi: 'MULTI-BALL', slow: 'SLOW', life: '+1 LIFE' }[k], POWERS[k].c);
+  }
+
+  function update(dt) {
+    if (!Arcade.playing) return;
+    wideT = Math.max(0, wideT - dt); slowT = Math.max(0, slowT - dt);
+    paddle.w += ((wideT > 0 ? 130 : 84) - paddle.w) * Math.min(1, dt * 10);
+    paddle.x += (targetX - paddle.x) * Math.min(1, dt * 22);
+    paddle.x = Math.max(paddle.w / 2, Math.min(400 - paddle.w / 2, paddle.x));
+    if (stuck) { balls[0].x = paddle.x; balls[0].y = paddle.y - paddle.h / 2 - BR; }
+    else {
+      const k = slowT > 0 ? 0.65 : 1;
+      for (const ball of balls) {
+        const steps = Math.ceil((Math.hypot(ball.vx, ball.vy) * dt * k) / (BR * 0.6));
+        for (let i = 0; i < steps; i++) { ball.x += (ball.vx * dt * k) / steps; ball.y += (ball.vy * dt * k) / steps; collideBall(ball); }
+        // keep angles from getting too flat
+        const sp = Math.hypot(ball.vx, ball.vy);
+        if (Math.abs(ball.vy) < sp * 0.25) { ball.vy = Math.sign(ball.vy || -1) * sp * 0.25; ball.vx = Math.sign(ball.vx) * Math.sqrt(sp * sp - ball.vy * ball.vy); }
+      }
+      balls = balls.filter((b) => b.y < view.h + 20);
+      if (!balls.length) {
+        lives--; stats(); Arcade.sfx('hit'); Arcade.vibrate(80);
+        if (lives <= 0) { Arcade.gameOver(Arcade.score, { title: 'Out of lives', stats: [['Level', level], ['Bricks', broken]], meta: { level, broken } }); return; }
+        wideT = 0; slowT = 0; resetBall();
+      }
+    }
+    drops.forEach((d) => (d.y += 150 * dt));
+    drops = drops.filter((d) => {
+      if (Math.abs(d.y - paddle.y) < 14 && Math.abs(d.x - paddle.x) < paddle.w / 2 + 10) { applyPower(d.k); return false; }
+      return d.y < view.h + 20;
+    });
+    bricks.forEach((b) => (b.flash = Math.max(0, b.flash - dt)));
+    if (!bricks.some((b) => b.hp > 0 && b.hp !== 9)) {
+      Arcade.addScore(200 * level); Arcade.sfx('level'); Arcade.confetti();
+      const m = view.toStage(200, view.h / 2); Arcade.floatText(m.x, m.y, `LEVEL ${level} CLEAR  +${200 * level}`, '#6ee7b7');
+      level++; buildLevel(); resetBall(); drops = []; stats();
+    }
+  }
+  function draw(dt) {
+    ctx.clearRect(0, 0, view.w, view.h);
+    for (const b of bricks) {
+      if (b.hp <= 0) continue;
+      const col = HP_COLORS[b.hp === 9 ? 9 : b.hp];
+      const g = ctx.createLinearGradient(0, b.y, 0, b.y + BH); g.addColorStop(0, b.flash ? '#fff' : col[0]); g.addColorStop(1, col[1]);
+      ctx.fillStyle = g; rr(b.x, b.y, BW, BH, 5); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.3)'; rr(b.x + 3, b.y + 2, BW - 6, 3, 2); ctx.fill();
+      if (b.max > 1 && b.hp !== 9 && b.hp < b.max) { ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(b.x + BW * 0.3, b.y + 2); ctx.lineTo(b.x + BW * 0.45, b.y + BH * 0.6); ctx.lineTo(b.x + BW * 0.4, b.y + BH - 2); ctx.stroke(); }
+    }
+    parts = parts.filter((p) => { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; ctx.globalAlpha = Math.max(0, p.life / 0.5); ctx.fillStyle = p.col; ctx.fillRect(p.x - 2, p.y - 2, 4, 4); ctx.globalAlpha = 1; return p.life > 0; });
+    drops.forEach((d) => {
+      const P = POWERS[d.k]; ctx.fillStyle = P.c; ctx.shadowColor = P.c; ctx.shadowBlur = 12;
+      rr(d.x - 14, d.y - 9, 28, 18, 9); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.fillStyle = '#0b1020'; ctx.font = '700 13px Outfit, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(P.t, d.x, d.y + 1);
+    });
+    // paddle
+    const p = paddle, g = ctx.createLinearGradient(0, p.y - p.h / 2, 0, p.y + p.h / 2);
+    g.addColorStop(0, '#e0f2fe'); g.addColorStop(1, wideT > 0 ? '#3b82f6' : '#14b8a6');
+    ctx.shadowColor = wideT > 0 ? '#3b82f6' : '#14b8a6'; ctx.shadowBlur = 18;
+    ctx.fillStyle = g; rr(p.x - p.w / 2, p.y - p.h / 2, p.w, p.h, p.h / 2); ctx.fill(); ctx.shadowBlur = 0;
+    // balls
+    for (const b of balls) {
+      ctx.shadowColor = slowT > 0 ? '#fbbf24' : '#fff'; ctx.shadowBlur = 14;
+      const bg = ctx.createRadialGradient(b.x - 2, b.y - 2, 1, b.x, b.y, BR); bg.addColorStop(0, '#fff'); bg.addColorStop(1, slowT > 0 ? '#fbbf24' : '#a5f3fc');
+      ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(b.x, b.y, BR, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+    }
+    if (stuck && Arcade.playing) { ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '600 14px Outfit, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Tap to launch', 200, p.y - 40); }
+  }
+  function loop(t) {
+    const dt = Math.min(0.033, (t - (lastT || t)) / 1000); lastT = t;
+    if (paddle) { update(dt); draw(dt); }
+    requestAnimationFrame(loop);
+  }
+
+  canvas.addEventListener('pointerdown', (e) => { if (!Arcade.playing) return; canvas.setPointerCapture(e.pointerId); targetX = view.point(e).x; launch(); });
+  canvas.addEventListener('pointermove', (e) => { if (e.buttons || e.pointerType === 'mouse') targetX = view.point(e).x; });
+  const keys = {};
+  window.addEventListener('keydown', (e) => { keys[e.key] = true; if (e.code === 'Space') { e.preventDefault(); launch(); } });
+  window.addEventListener('keyup', (e) => (keys[e.key] = false));
+  setInterval(() => { if (!paddle) return; if (keys.ArrowLeft || keys.a) targetX = paddle.x - 30; if (keys.ArrowRight || keys.d) targetX = paddle.x + 30; }, 16);
+
+  Arcade.init({
+    id: 'brick-breaker',
+    subtitle: 'Bounce the ball, break every brick, catch power-ups.',
+    howTo: ['<b>Drag</b> (or arrow keys / mouse) to move the paddle.', 'Where the ball hits the paddle sets its <b>angle</b>.', 'Catch power-ups: ↔ wide, ✦ multi-ball, ⏱ slow, ♥ life.', 'Grey steel bricks can’t be broken. You have 3 lives.'],
+    onStart() { reset(); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: 400, minH: 600, maxH: 820, onResize: (v) => { if (paddle) paddle.y = v.h - 46; } });
+  ctx = view.ctx;
+  reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

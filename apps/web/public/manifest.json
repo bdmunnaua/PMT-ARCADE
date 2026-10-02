@@ -1,0 +1,39 @@
+{
+  "name": "PMT Arcade",
+  "short_name": "PMT Arcade",
+  "description": "Free arcade games that pay PMT, plus Ludo, Chess, Carrom, Call Bridge and 29 against real players.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
+  "orientation": "portrait",
+  "background_color": "#080a16",
+  "theme_color": "#080a16",
+  "icons": [
+    {
+      "src": "/arcade-assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/arcade-assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/arcade-assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": [
+    "games",
+    "entertainment"
+  ]
+}

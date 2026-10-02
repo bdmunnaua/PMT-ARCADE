@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Knife Throw: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Knife Throw: free knife hit game online. Tap to throw knives into the spinning log, hit apples, beat boss logs. No download, play and earn PMT.">
+<link rel="canonical" href="https://pmtarcade.com/games/knife-throw/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Knife Throw: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Knife Throw: free knife hit game online. Tap to throw knives into the spinning log, hit apples, beat boss logs. No download, play and earn PMT.">
+<meta property="og:url" content="https://pmtarcade.com/games/knife-throw/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Knife Throw: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Knife Throw: free knife hit game online. Tap to throw knives into the spinning log, hit apples, beat boss logs. No download, play and earn PMT.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Knife Throw", "url": "https://pmtarcade.com/games/knife-throw/", "description": "Knife Throw: free knife hit game online. Tap to throw knives into the spinning log, hit apples, beat boss logs. No download, play and earn PMT.", "genre": "Arcade", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Knife Throw", "item": "https://pmtarcade.com/games/knife-throw/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: radial-gradient(120% 80% at 50% 25%, #3b2a20 0%, #1c1310 55%, #0d0907 100%); }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const W = 400, LR = 78, KL = 70, HIT = 0.16;
+  const canvas = document.getElementById('c');
+  let view, ctx, H = 700;
+  let level, rot, spin, spinT, stuck, apples, left, flying, falling, chips, shake, lastT, alive, breaking, boss, applesHit, thrown;
+
+  const logY = () => H * 0.34;
+  const throwY = () => H - 110;
+
+  function setupLevel(lv) {
+    level = lv; boss = lv % 5 === 0;
+    rot = 0; spinT = 0; flying = null; falling = []; breaking = null;
+    left = Math.min(11, 5 + Math.floor(lv / 2)) + (boss ? 2 : 0);
+    stuck = [];
+    const pre = boss ? 3 : Math.min(3, Math.floor((lv - 1) / 2));
+    for (let i = 0; i < pre; i++) stuck.push({ a: (i / pre) * Math.PI * 2 + Math.random() * 0.4, pre: true });
+    apples = [];
+    if (Math.random() < 0.7) apples.push({ a: Math.random() * Math.PI * 2 });
+    if (lv > 3 && Math.random() < 0.4) apples.push({ a: Math.random() * Math.PI * 2 });
+    apples = apples.filter((ap) => !stuck.some((k) => angDiff(k.a, ap.a) < 0.4));
+    Arcade.setStat('lv', boss ? 'Boss' : 'Stage', String(lv));
+  }
+  function reset() { setupLevel(1); chips = []; shake = 0; alive = true; applesHit = 0; thrown = 0; }
+  const angDiff = (a, b) => { let d = Math.abs(((a - b) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2)); return Math.min(d, Math.PI * 2 - d); };
+
+  // Rotation patterns get trickier with each stage
+  function spinSpeed(t) {
+    const base = 1.6 + Math.min(2.2, level * 0.12) + (boss ? 0.8 : 0);
+    const p = level % 4;
+    if (p === 1) return base;
+    if (p === 2) return base * (0.6 + 0.6 * Math.sin(t * 1.7));
+    if (p === 3) return Math.sin(t * 0.9) > -0.2 ? base * 1.15 : -base * 0.8;
+    return base * (Math.floor(t / 1.6) % 2 ? -1.1 : 1);
+  }
+
+  function throwKnife() {
+    if (!Arcade.playing || !alive || flying || breaking || left <= 0) return;
+    left--; thrown++;
+    flying = { y: throwY(), v: 2300 };
+    Arcade.sfx('whoosh');
+  }
+
+  function land() {
+    const rel = Math.PI / 2 - rot; // the knife hits the bottom of the log
+    if (stuck.some((k) => angDiff(k.a, rel) < HIT)) {
+      alive = false; shake = 0.35; Arcade.sfx('hit'); Arcade.vibrate(90);
+      falling.push({ x: 200, y: logY() + LR + 10, vx: (Math.random() - 0.5) * 300, vy: -300, r: 0, vr: 14 });
+      setTimeout(() => Arcade.gameOver(Arcade.score, { title: 'Clang!', stats: [['Stage', level], ['Knives', thrown], ['Apples', applesHit]], meta: { level, thrown } }), 900);
+      return;
+    }
+    stuck.push({ a: rel, wob: 0.15 });
+    Arcade.addScore(1); Arcade.sfx('place'); Arcade.vibrate(10);
+    shake = 0.08;
+    for (let i = 0; i < 5; i++) chips.push({ x: 200 + (Math.random() - 0.5) * 16, y: logY() + LR, vx: (Math.random() - 0.5) * 220, vy: Math.random() * 120 + 40, life: 0.5, c: '#d6a36b' });
+    const ai = apples.findIndex((ap) => angDiff(ap.a, rel) < 0.22);
+    if (ai >= 0) {
+      apples.splice(ai, 1); applesHit++; Arcade.addScore(5); Arcade.sfx('coin');
+      const s = view.toStage(200, logY() + LR); Arcade.floatText(s.x, s.y + 20, '+5 🍎', '#fca5a5');
+      for (let i = 0; i < 10; i++) chips.push({ x: 200, y: logY() + LR, vx: (Math.random() - 0.5) * 300, vy: (Math.random() - 0.5) * 300, life: 0.6, c: '#ef4444' });
+    }
+    if (left === 0) {
+      breaking = { t: 0, pieces: Array.from({ length: 7 }, (_, i) => ({ a: (i / 7) * Math.PI * 2, d: 0, v: 260 + Math.random() * 160, r: 0, vr: (Math.random() - 0.5) * 10 })) };
+      const bonus = boss ? 30 : 10;
+      Arcade.addScore(bonus); Arcade.sfx('level'); Arcade.vibrate(40);
+      const s = view.toStage(200, logY()); Arcade.floatText(s.x, s.y, `${boss ? 'BOSS DOWN' : 'STAGE CLEAR'}  +${bonus}`, '#fde68a');
+      setTimeout(() => { if (alive) setupLevel(level + 1); }, 1100);
+    }
+  }
+
+  function update(dt) {
+    shake = Math.max(0, shake - dt);
+    chips = chips.filter((p) => { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 600 * dt; return p.life > 0; });
+    falling = falling.filter((k) => { k.x += k.vx * dt; k.y += k.vy * dt; k.vy += 1400 * dt; k.r += k.vr * dt; return k.y < H + 100; });
+    if (!Arcade.playing && alive) return;
+    if (breaking) { breaking.t += dt; breaking.pieces.forEach((p) => { p.d += p.v * dt; p.v -= 0; p.r += p.vr * dt; }); return; }
+    spinT += dt;
+    rot += spinSpeed(spinT) * dt;
+    stuck.forEach((k) => (k.wob = Math.max(0, (k.wob || 0) - dt)));
+    if (flying) {
+      flying.y -= flying.v * dt;
+      if (flying.y - KL / 2 <= logY() + LR) { flying = null; land(); }
+    }
+  }
+
+  function drawKnife(x, y, ang, alpha = 1) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.globalAlpha = alpha;
+    // blade (pointing up, -y)
+    const g = ctx.createLinearGradient(-6, 0, 6, 0); g.addColorStop(0, '#cbd5e1'); g.addColorStop(0.5, '#ffffff'); g.addColorStop(1, '#94a3b8');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -KL / 2); ctx.lineTo(6, -KL / 2 + 14); ctx.lineTo(6, 4); ctx.lineTo(-6, 4); ctx.lineTo(-6, -KL / 2 + 14); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#475569'; ctx.fillRect(-9, 4, 18, 5);
+    const hg = ctx.createLinearGradient(-5, 0, 5, 0); hg.addColorStop(0, '#7c2d12'); hg.addColorStop(0.5, '#c2410c'); hg.addColorStop(1, '#7c2d12');
+    ctx.fillStyle = hg; ctx.beginPath(); ctx.roundRect(-5, 9, 10, KL / 2 - 9, 4); ctx.fill();
+    ctx.restore();
+  }
+  function drawLog(cx, cy) {
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
+    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
+    const g = ctx.createRadialGradient(0, 0, 10, 0, 0, LR);
+    g.addColorStop(0, boss ? '#fca5a5' : '#f5d0a1'); g.addColorStop(0.7, boss ? '#b91c1c' : '#c08446'); g.addColorStop(1, boss ? '#7f1d1d' : '#8a5a2b');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, LR, 0, 6.29); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(80,40,10,0.35)'; ctx.lineWidth = 2;
+    for (let r = 18; r < LR; r += 16) { ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.29); ctx.stroke(); }
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-LR * 0.3, -LR * 0.2); ctx.lineTo(LR * 0.2, LR * 0.1); ctx.stroke();
+    if (boss) { ctx.fillStyle = '#fff'; ctx.font = '800 22px Outfit'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('BOSS', 0, 0); }
+    apples.forEach((ap) => {
+      ctx.save(); ctx.rotate(ap.a); ctx.translate(LR + 14, 0);
+      const ag = ctx.createRadialGradient(-4, -4, 2, 0, 0, 15); ag.addColorStop(0, '#fecaca'); ag.addColorStop(0.5, '#ef4444'); ag.addColorStop(1, '#991b1b');
+      ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(0, 0, 14, 0, 6.29); ctx.fill();
+      ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.ellipse(10, -6, 6, 3, 0.6, 0, 6.29); ctx.fill();
+      ctx.restore();
+    });
+    ctx.restore();
+    // knives stuck in the log (drawn in world space so they point inward)
+    stuck.forEach((k) => {
+      const a = k.a + rot, wob = Math.sin((k.wob || 0) * 60) * k.wob * 0.5;
+      const x = cx + Math.cos(a) * (LR + KL / 2 - 12), y = cy + Math.sin(a) * (LR + KL / 2 - 12);
+      drawKnife(x, y, a - Math.PI / 2 + wob);
+    });
+  }
+  function draw() {
+    ctx.save(); ctx.clearRect(0, 0, W, H);
+    if (shake) ctx.translate((Math.random() - 0.5) * shake * 40, (Math.random() - 0.5) * shake * 40);
+    const cx = 200, cy = logY();
+    if (breaking) {
+      breaking.pieces.forEach((p) => {
+        const x = cx + Math.cos(p.a) * p.d, y = cy + Math.sin(p.a) * p.d + breaking.t * breaking.t * 500;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(p.r); ctx.globalAlpha = Math.max(0, 1 - breaking.t);
+        ctx.fillStyle = '#c08446'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, LR * 0.6, -0.45, 0.45); ctx.closePath(); ctx.fill(); ctx.restore();
+      });
+    } else drawLog(cx, cy);
+    chips.forEach((p) => { ctx.globalAlpha = Math.max(0, p.life * 2); ctx.fillStyle = p.c; ctx.fillRect(p.x - 2, p.y - 2, 4, 4); });
+    ctx.globalAlpha = 1;
+    falling.forEach((k) => drawKnife(k.x, k.y, k.r));
+    if (flying) drawKnife(200, flying.y, 0);
+    else if (alive && left > 0 && !breaking) drawKnife(200, throwY(), 0);
+    // remaining knives
+    for (let i = 0; i < left; i++) {
+      ctx.globalAlpha = i === left - 1 && !flying ? 0.35 : 0.9;
+      ctx.fillStyle = '#e2e8f0'; ctx.beginPath(); ctx.roundRect(22, H - 40 - i * 22, 7, 16, 2); ctx.fill();
+      ctx.fillStyle = '#c2410c'; ctx.fillRect(22, H - 30 - i * 22, 7, 6);
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+  function loop(ts) {
+    const dt = Math.min(0.033, (ts - (lastT || ts)) / 1000); lastT = ts;
+    if (stuck) { update(dt); draw(); }
+    requestAnimationFrame(loop);
+  }
+
+  document.getElementById('stage').addEventListener('pointerdown', (e) => { if (!e.target.closest('.ag-overlay')) throwKnife(); });
+  window.addEventListener('keydown', (e) => { if (e.code === 'Space' && Arcade.playing) { e.preventDefault(); throwKnife(); } });
+
+  Arcade.init({
+    id: 'knife-throw',
+    subtitle: 'Tap to throw. Don’t hit the other knives!',
+    howTo: ['<b>Tap</b> to throw a knife into the spinning log.', 'Hit another knife and it’s game over.', 'Throw all your knives to clear the stage. Hit 🍎 apples for +5.', 'Every 5th stage is a <b>boss</b> log that spins faster.'],
+    onStart() { reset(); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: W, minH: 620, maxH: 860, pad: 0, onResize: (v) => (H = v.h) });
+  ctx = view.ctx; H = view.h;
+  reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

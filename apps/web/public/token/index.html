@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>PMT Token</title>
+  <meta name="description" content="PMT is the BEP-20 token of PMT Arcade on BNB Smart Chain. Contract 0xc576c15Bf0E06AF1a65d15B8219A90f1e07f025F, fixed supply of 10,000,000,000, no mint, no tax." />
+  <link rel="canonical" href="https://pmtarcade.com/token/" />
+  <link rel="icon" type="image/png" href="/token/pmt-logo-32.png" />
+  <meta property="og:title" content="PMT Token" />
+  <meta property="og:description" content="The BEP-20 token of PMT Arcade: fixed supply, verified contract, no mint, no tax." />
+  <meta property="og:image" content="https://pmtarcade.com/token/pmt-logo-512.png" />
+  <meta property="og:url" content="https://pmtarcade.com/token/" />
+  <link rel="stylesheet" href="/token/token.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/"><img src="/token/pmt-logo-256.png" alt="" />PMT Arcade</a>
+    <nav class="links">
+      <a href="/">Play</a>
+      <a href="/token/" aria-current="page">PMT token</a>
+      <a href="/transparency/">Transparency</a>
+      <a href="/whitepaper/">Whitepaper</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <img src="/token/pmt-logo-512.png" alt="PMT logo" width="112" height="112" />
+    <div>
+      <h1>PMT token</h1>
+      <p class="lead">The token used across PMT Arcade: earn it in free games, compete with it against other players, send it to friends and withdraw it to your own wallet.</p>
+    </div>
+  </section>
+
+  <div class="card">
+    <div class="stat"><div class="k">Contract address (BNB Smart Chain, BEP-20)</div></div>
+    <div class="row" style="margin-top:6px">
+      <code id="addr">0xc576c15Bf0E06AF1a65d15B8219A90f1e07f025F</code>
+      <button class="btn ghost small noprint" data-action="copy" data-value="0xc576c15Bf0E06AF1a65d15B8219A90f1e07f025F">Copy</button>
+      <a class="btn ghost small noprint" href="https://bscscan.com/token/0xc576c15Bf0E06AF1a65d15B8219A90f1e07f025F" target="_blank" rel="noopener">BscScan</a>
+    </div>
+    <div class="row noprint" style="margin-top:14px">
+      <button class="btn" data-action="add-wallet" data-msg="wallet-msg">Add PMT to MetaMask</button>
+      <span class="note">Also works in Trust Wallet's browser.</span>
+    </div>
+    <p id="wallet-msg" class="msg" role="status"></p>
+    <p class="note">Only trust this address. Anyone can create a token called “PMT”; a different address is not ours.</p>
+  </div>
+
+  <div class="grid">
+    <div class="card stat"><div class="k">Name / symbol</div><div class="v">PMT / PMT</div></div>
+    <div class="card stat"><div class="k">Network</div><div class="v">BNB Smart Chain (chain ID 56)</div></div>
+    <div class="card stat"><div class="k">Total supply (fixed)</div><div class="v">10,000,000,000</div></div>
+    <div class="card stat"><div class="k">Decimals</div><div class="v">18</div></div>
+  </div>
+
+  <h2>What the contract can and cannot do</h2>
+  <div class="card">
+    <ul class="check">
+      <li><strong>Fixed supply.</strong> All 10,000,000,000 PMT were created once, when the contract was deployed. There is no mint function, so no one can ever create more.</li>
+      <li><strong>No owner and no admin keys.</strong> The contract has no owner, pause, blacklist or upgrade functions. Nobody can freeze or take PMT from a wallet.</li>
+      <li><strong>No tax.</strong> Transfers pay no buy, sell or transfer tax inside the contract.</li>
+      <li><strong>Standard, verified code.</strong> It is the standard OpenZeppelin ERC-20, and its source code is verified on BscScan (exact match, Solidity 0.8.34).</li>
+    </ul>
+    <p class="note">Check it yourself: <a href="https://bscscan.com/address/0xc576c15Bf0E06AF1a65d15B8219A90f1e07f025F#code" target="_blank" rel="noopener">contract source code on BscScan</a>.</p>
+  </div>
+
+  <h2>Where PMT is today</h2>
+  <div class="card">
+    <p>PMT is <strong>not listed on any exchange</strong> and has no market price. It is used inside PMT Arcade. Your PMT balance on the site is kept by the platform. When withdrawals are open, you can move PMT to your own wallet on BNB Smart Chain.</p>
+    <p>All PMT not yet given out is held in the wallet that created the contract: <a class="mono" href="https://bscscan.com/address/0xe328A50732109d129BCf9B302Cfe362949F77FB4" target="_blank" rel="noopener">0xe328A50732109d129BCf9B302Cfe362949F77FB4</a>. Shares will be moved to separate public wallets as described in the <a href="/whitepaper/#allocation">whitepaper</a>. All project wallets are listed with live balances on the <a href="/transparency/">transparency page</a>.</p>
+  </div>
+
+  <h2>Add PMT by hand</h2>
+  <div class="card">
+    <ol>
+      <li>In MetaMask, switch to <strong>BNB Smart Chain</strong>.</li>
+      <li>Tap <strong>Import tokens</strong> and paste the contract address above.</li>
+      <li>The symbol (PMT) and decimals (18) fill in automatically. Confirm.</li>
+    </ol>
+  </div>
+
+  <div class="card warnbox">
+    <strong>Please read.</strong>
+    <p class="note" style="margin:6px 0 0">PMT is a game token, not an investment. Nobody promises that it will ever have a price or that a price will rise. Never buy PMT from people who promise profit, and never share your wallet's secret phrase with anyone — PMT Arcade will never ask for it.</p>
+  </div>
+
+  <footer class="foot">
+    <a href="/whitepaper/">Read the whitepaper</a> · <a href="/transparency/">Transparency</a> · <a href="/">PMT Arcade</a> · Contract: <span class="mono">0xc576…025F</span>
+  </footer>
+</div>
+<script src="/token/token.js"></script>
+</body>
+</html>

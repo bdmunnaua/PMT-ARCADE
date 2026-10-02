@@ -1,0 +1,90 @@
+/* Shared game shell: top bar, stage, overlays. Loaded after ../../arcade-assets/theme.css */
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+body { background: var(--game-bg, var(--bg)); touch-action: none; user-select: none; -webkit-user-select: none; }
+
+.ag-app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+
+.ag-top {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+  padding: max(8px, env(safe-area-inset-top)) 10px 8px;
+  background: linear-gradient(180deg, rgba(8, 10, 22, 0.9), rgba(8, 10, 22, 0.55));
+  border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); z-index: 5;
+}
+.ag-title { font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-title .ag-emoji { font-size: 1.2rem; }
+.ag-spacer { flex: 1; }
+.ag-chip {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05;
+  min-width: 58px; padding: 5px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line);
+}
+.ag-chip b { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.ag-chip small { font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.ag-chip.accent { background: color-mix(in srgb, var(--accent, #8b5cf6) 22%, transparent); border-color: color-mix(in srgb, var(--accent, #8b5cf6) 55%, transparent); }
+.ag-chip.bump b { animation: bump 0.3s ease; }
+@keyframes bump { 40% { transform: scale(1.3); } }
+.ag-top .icon-btn { width: 38px; height: 38px; flex: 0 0 auto; }
+.ag-menu {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px 0 10px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1); border: 1px solid var(--line-strong); cursor: pointer; font-weight: 700; font-size: 0.9rem;
+}
+.ag-menu span { font-size: 1.05rem; }
+.ag-menu:hover { background: rgba(255, 255, 255, 0.16); }
+.ag-menu:active { transform: scale(0.95); }
+.ag-top { overflow: hidden; }
+@media (max-width: 480px) {
+  .ag-top { gap: 5px; padding-left: 8px; padding-right: 8px; }
+  .ag-title .ag-name { display: none; }
+  .ag-chip { min-width: 44px; padding: 4px 6px; }
+  .ag-chip b { font-size: 0.95rem; }
+  .ag-chip small { font-size: 0.55rem; }
+  .ag-top .icon-btn { width: 34px; height: 34px; font-size: 1rem; border-radius: 10px; }
+  .ag-menu { height: 34px; padding: 0 9px 0 7px; font-size: 0.8rem; gap: 4px; border-radius: 10px; }
+  .ag-title { display: none; }
+}
+@media (max-width: 370px) { .ag-menu b { display: none; } }
+
+.ag-stage { position: relative; flex: 1 1 auto; min-height: 0; display: grid; place-items: center; overflow: hidden; }
+.ag-stage canvas { display: block; touch-action: none; }
+
+/* Overlays */
+.ag-overlay {
+  position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: 16px;
+  background: rgba(6, 7, 18, 0.72); backdrop-filter: blur(6px); animation: fade 0.25s ease;
+}
+.ag-panel {
+  width: min(100%, 380px); max-height: 100%; overflow: auto; text-align: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)), var(--surface);
+  border: 1px solid var(--line-strong); border-radius: 26px; padding: 26px 22px 22px; box-shadow: var(--shadow);
+  animation: pop 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+.ag-art {
+  width: 92px; height: 92px; margin: -2px auto 14px; border-radius: 26px; display: grid; place-items: center; font-size: 3rem;
+  background: linear-gradient(135deg, var(--c1, #8b5cf6), var(--c2, #22d3ee)); box-shadow: 0 12px 30px color-mix(in srgb, var(--c1, #8b5cf6) 45%, transparent);
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float { 50% { transform: translateY(-6px) rotate(-3deg); } }
+.ag-h { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 4px; }
+.ag-sub { color: var(--muted); font-size: 0.92rem; margin-bottom: 16px; }
+.ag-how { text-align: left; display: grid; gap: 8px; margin: 0 0 18px; padding: 14px; background: rgba(255, 255, 255, 0.04); border-radius: 16px; border: 1px solid var(--line); font-size: 0.9rem; }
+.ag-how div { position: relative; padding-left: 16px; }
+.ag-how div::before { content: ''; position: absolute; left: 0; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent, var(--brand)); }
+.ag-actions { display: grid; gap: 10px; }
+html, body { height: 100dvh; }
+:fullscreen body, :-webkit-full-screen body { height: 100vh; }
+.ag-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ag-best { margin-top: 12px; font-size: 0.85rem; color: var(--muted); }
+.ag-score { font-size: 3.2rem; font-weight: 800; line-height: 1; margin: 6px 0 4px; font-variant-numeric: tabular-nums; background: linear-gradient(135deg, #fff, #c7d2fe); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ag-newbest { display: inline-block; margin-bottom: 10px; padding: 4px 12px; border-radius: 999px; background: var(--gold-grad); color: #2a1a00; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.06em; animation: pop 0.4s ease; }
+.ag-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin: 14px 0; }
+.ag-stats div { padding: 10px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); }
+.ag-stats b { display: block; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.ag-stats small { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ag-reward { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; margin-bottom: 16px; padding: 12px; border-radius: 16px; background: rgba(251, 191, 36, 0.08); border: 1px dashed rgba(251, 191, 36, 0.4); font-weight: 600; }
+.ag-reward .big { font-size: 1.4rem; font-weight: 800; color: #fde68a; }
+.ag-reward.dim { background: rgba(255, 255, 255, 0.04); border-color: var(--line-strong); color: var(--muted); font-weight: 500; font-size: 0.88rem; }
+
+/* Floating score text */
+.ag-float { position: absolute; z-index: 15; pointer-events: none; font-weight: 800; font-size: 1.1rem; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); animation: floatUp 0.9s ease-out forwards; white-space: nowrap; transform: translate(-50%, -50%); }
+@keyframes floatUp { to { opacity: 0; transform: translate(-50%, -150%) scale(1.15); } }
+
+.ag-confetti { position: absolute; inset: 0; pointer-events: none; z-index: 25; }

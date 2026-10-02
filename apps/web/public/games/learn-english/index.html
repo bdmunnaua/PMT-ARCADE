@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Learn English: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Learn English from Bangla free: বাংলা থেকে ইংরেজি শব্দ শিখুন খেলার মাধ্যমে। Fruits, animals, colours, numbers, daily phrases with pronunciation.">
+<link rel="canonical" href="https://pmtarcade.com/games/learn-english/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Learn English: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Learn English from Bangla free: বাংলা থেকে ইংরেজি শব্দ শিখুন খেলার মাধ্যমে। Fruits, animals, colours, numbers, daily phrases with pronunciation.">
+<meta property="og:url" content="https://pmtarcade.com/games/learn-english/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Learn English: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Learn English from Bangla free: বাংলা থেকে ইংরেজি শব্দ শিখুন খেলার মাধ্যমে। Fruits, animals, colours, numbers, daily phrases with pronunciation.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Learn English", "url": "https://pmtarcade.com/games/learn-english/", "description": "Learn English from Bangla free: বাংলা থেকে ইংরেজি শব্দ শিখুন খেলার মাধ্যমে। Fruits, animals, colours, numbers, daily phrases with pronunciation.", "genre": "Educational", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Learn English", "item": "https://pmtarcade.com/games/learn-english/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Hind+Siliguri:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: radial-gradient(120% 90% at 50% 0%, #134e4a 0%, #0f2f3a 50%, #0a1626 100%); }
+  .bn { font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif; }
+  .quiz { width: min(100%, 460px); padding: 14px 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .timer { height: 8px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .timer span { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #34d399, #22d3ee); border-radius: inherit; }
+  .meta { display: flex; justify-content: space-between; align-items: center; font-size: .85rem; color: var(--muted); }
+  .lives { letter-spacing: 2px; }
+  .card-q { position: relative; text-align: center; padding: 22px 16px 18px; border-radius: 24px; background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)); border: 1px solid var(--line-strong); animation: pop .3s ease; }
+  .card-q .pic { font-size: 3.6rem; line-height: 1.1; min-height: 4rem; }
+  .card-q .word { font-size: 2.1rem; font-weight: 700; margin-top: 6px; line-height: 1.25; }
+  .card-q .ask { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+  .say { position: absolute; top: 12px; right: 12px; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opt { padding: 16px 10px; min-height: 62px; border-radius: 16px; border: 1px solid var(--line-strong); background: var(--surface-2); font-weight: 700; font-size: 1.05rem; cursor: pointer; transition: transform .1s, background .2s, border-color .2s; line-height: 1.25; }
+  .opt:active { transform: scale(.97); }
+  .opt.right { background: rgba(52,211,153,.25); border-color: #34d399; }
+  .opt.wrong { background: rgba(248,113,113,.22); border-color: #f87171; animation: shakeX .35s; }
+  .opt.dim { opacity: .45; }
+  @keyframes shakeX { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .learned { text-align: center; font-size: .9rem; min-height: 1.4em; color: #a7f3d0; }
+  .topics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
+  .topics button { padding: 9px 4px; border-radius: 12px; border: 1px solid var(--line-strong); background: rgba(255,255,255,.04); cursor: pointer; font-size: .78rem; font-weight: 600; }
+  .topics button.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 24%, transparent); }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+  .modes button { padding: 9px; border-radius: 12px; border: 1px solid var(--line-strong); background: rgba(255,255,255,.04); cursor: pointer; font-weight: 700; font-size: .85rem; }
+  .modes button.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 24%, transparent); }
+  @media (max-height: 680px) {
+    .quiz { gap: 10px; padding-top: 8px; }
+    .card-q { padding: 14px 12px 12px; } .card-q .pic { font-size: 2.6rem; min-height: 3rem; } .card-q .word { font-size: 1.7rem; }
+    .opt { min-height: 52px; padding: 12px 8px; font-size: .98rem; }
+  }
+</style>
+</head>
+<body>
+<div id="stage"><div class="quiz" id="quiz"></div></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  // [Bangla, English, picture]
+  const WORDS = {
+    'ফল · Fruits': [['আপেল', 'Apple', '🍎'], ['কলা', 'Banana', '🍌'], ['আম', 'Mango', '🥭'], ['কমলা', 'Orange', '🍊'], ['আঙুর', 'Grapes', '🍇'], ['তরমুজ', 'Watermelon', '🍉'], ['আনারস', 'Pineapple', '🍍'], ['নারকেল', 'Coconut', '🥥'], ['লেবু', 'Lemon', '🍋'], ['স্ট্রবেরি', 'Strawberry', '🍓']],
+    'প্রাণী · Animals': [['কুকুর', 'Dog', '🐕'], ['বিড়াল', 'Cat', '🐈'], ['গরু', 'Cow', '🐄'], ['ঘোড়া', 'Horse', '🐎'], ['হাতি', 'Elephant', '🐘'], ['বাঘ', 'Tiger', '🐅'], ['সিংহ', 'Lion', '🦁'], ['বানর', 'Monkey', '🐒'], ['মাছ', 'Fish', '🐟'], ['পাখি', 'Bird', '🐦'], ['হাঁস', 'Duck', '🦆'], ['মুরগি', 'Hen', '🐔'], ['ছাগল', 'Goat', '🐐'], ['খরগোশ', 'Rabbit', '🐇'], ['সাপ', 'Snake', '🐍']],
+    'রং · Colours': [['লাল', 'Red', '🔴'], ['নীল', 'Blue', '🔵'], ['সবুজ', 'Green', '🟢'], ['হলুদ', 'Yellow', '🟡'], ['কালো', 'Black', '⚫'], ['সাদা', 'White', '⚪'], ['গোলাপি', 'Pink', '💗'], ['বেগুনি', 'Purple', '🟣'], ['বাদামি', 'Brown', '🟤']],
+    'সংখ্যা · Numbers': [['এক (১)', 'One', '1️⃣'], ['দুই (২)', 'Two', '2️⃣'], ['তিন (৩)', 'Three', '3️⃣'], ['চার (৪)', 'Four', '4️⃣'], ['পাঁচ (৫)', 'Five', '5️⃣'], ['ছয় (৬)', 'Six', '6️⃣'], ['সাত (৭)', 'Seven', '7️⃣'], ['আট (৮)', 'Eight', '8️⃣'], ['নয় (৯)', 'Nine', '9️⃣'], ['দশ (১০)', 'Ten', '🔟']],
+    'শরীর · Body': [['মাথা', 'Head', '🙂'], ['চোখ', 'Eye', '👁️'], ['কান', 'Ear', '👂'], ['নাক', 'Nose', '👃'], ['মুখ', 'Mouth', '👄'], ['হাত', 'Hand', '✋'], ['পা', 'Foot', '🦶'], ['দাঁত', 'Tooth', '🦷'], ['চুল', 'Hair', '💇'], ['আঙুল', 'Finger', '☝️']],
+    'পরিবার · Family': [['মা', 'Mother', '👩'], ['বাবা', 'Father', '👨'], ['ভাই', 'Brother', '👦'], ['বোন', 'Sister', '👧'], ['দাদা', 'Grandfather', '👴'], ['দাদি', 'Grandmother', '👵'], ['ছেলে', 'Son', '🧒'], ['মেয়ে', 'Daughter', '👧'], ['বন্ধু', 'Friend', '🤝'], ['শিশু', 'Baby', '👶']],
+    'খাবার · Food': [['ভাত', 'Rice', '🍚'], ['রুটি', 'Bread', '🍞'], ['ডিম', 'Egg', '🥚'], ['দুধ', 'Milk', '🥛'], ['পানি', 'Water', '💧'], ['চা', 'Tea', '🍵'], ['মাংস', 'Meat', '🍖'], ['লবণ', 'Salt', '🧂'], ['মিষ্টি', 'Sweets', '🍬'], ['মধু', 'Honey', '🍯']],
+    'জিনিস · Things': [['বই', 'Book', '📚'], ['কলম', 'Pen', '🖊️'], ['বাড়ি', 'House', '🏠'], ['দরজা', 'Door', '🚪'], ['চেয়ার', 'Chair', '🪑'], ['বিছানা', 'Bed', '🛏️'], ['ঘড়ি', 'Clock', '⏰'], ['গাড়ি', 'Car', '🚗'], ['নৌকা', 'Boat', '⛵'], ['সূর্য', 'Sun', '☀️'], ['চাঁদ', 'Moon', '🌙'], ['তারা', 'Star', '⭐'], ['গাছ', 'Tree', '🌳'], ['ফুল', 'Flower', '🌸'], ['বৃষ্টি', 'Rain', '🌧️']],
+    'কাজ · Actions': [['খাওয়া', 'Eat', '🍽️'], ['পান করা', 'Drink', '🥤'], ['ঘুমানো', 'Sleep', '😴'], ['হাঁটা', 'Walk', '🚶'], ['দৌড়ানো', 'Run', '🏃'], ['পড়া', 'Read', '📖'], ['লেখা', 'Write', '✍️'], ['খেলা', 'Play', '⚽'], ['গান গাওয়া', 'Sing', '🎤'], ['হাসা', 'Laugh', '😂']],
+    'বিশেষণ · Describing': [['বড়', 'Big', '🐘'], ['ছোট', 'Small', '🐜'], ['গরম', 'Hot', '🔥'], ['ঠান্ডা', 'Cold', '🥶'], ['ভালো', 'Good', '👍'], ['খারাপ', 'Bad', '👎'], ['সুন্দর', 'Beautiful', '🌺'], ['নতুন', 'New', '🆕'], ['দ্রুত', 'Fast', '⚡'], ['খুশি', 'Happy', '😊']],
+    'বাক্য · Phrases': [['ধন্যবাদ', 'Thank you', '🙏'], ['শুভ সকাল', 'Good morning', '🌅'], ['শুভ রাত্রি', 'Good night', '🌃'], ['আপনি কেমন আছেন?', 'How are you?', '🙂'], ['আমি ভালো আছি', 'I am fine', '😊'], ['দুঃখিত', 'Sorry', '😔'], ['স্বাগতম', 'Welcome', '👋'], ['আবার দেখা হবে', 'See you again', '👋'], ['হ্যাঁ', 'Yes', '✅'], ['না', 'No', '❌'], ['দয়া করে', 'Please', '🤲'], ['আমার নাম রহিম', 'My name is Rahim', '🧑']],
+  };
+  const TOPICS = Object.keys(WORDS);
+  const quiz = document.getElementById('quiz');
+  let topic = Arcade.store.get('learn.topic', 'all'), mode = Arcade.store.get('learn.mode', 'bn2en');
+  let pool, q, lives, streak, bestStreak, correct, asked, timer, tLeft, tMax, locked, recent;
+
+  /* English pronunciation with the phone's built-in voice */
+  function speak(text) {
+    if (!('speechSynthesis' in window) || Arcade.store.get('arcade.muted', false)) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.85;
+      const v = speechSynthesis.getVoices().find((x) => /^en(-|_)(US|GB)/i.test(x.lang)); if (v) u.voice = v;
+      speechSynthesis.speak(u);
+    } catch { /* no voice available */ }
+  }
+
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  function buildPool() { pool = (topic === 'all' ? TOPICS : [topic]).flatMap((t) => WORDS[t].map((w) => ({ bn: w[0], en: w[1], pic: w[2], t }))); }
+
+  function nextQ() {
+    locked = false;
+    let item, tries = 0;
+    do { item = pool[(Math.random() * pool.length) | 0]; } while (recent.includes(item.en) && tries++ < 30);
+    recent.push(item.en); if (recent.length > Math.min(8, pool.length - 4)) recent.shift();
+    // distractors from the same topic first, so the choice is a real test
+    const same = shuffle(WORDS[item.t].map((w) => ({ bn: w[0], en: w[1] })).filter((w) => w.en !== item.en));
+    const others = shuffle(pool.filter((w) => w.t !== item.t && w.en !== item.en));
+    const opts = shuffle([item, ...same.concat(others).slice(0, 3)]);
+    const flip = mode === 'en2bn' || (mode === 'mix' && Math.random() < 0.5);
+    q = { item, opts, flip };
+    tMax = Math.max(6, 11 - Math.floor(correct / 8)); tLeft = tMax;
+    render();
+    if (flip) speak(item.en);
+  }
+  function render() {
+    const { item, opts, flip } = q;
+    quiz.innerHTML = `
+      <div class="meta"><span class="lives">${'❤️'.repeat(lives)}${'🤍'.repeat(3 - lives)}</span><span>🔥 Streak <b>${streak}</b></span><span>✔ ${correct}</span></div>
+      <div class="timer"><span id="tbar"></span></div>
+      <div class="card-q">
+        <button class="icon-btn say" id="say" aria-label="Hear it">🔊</button>
+        <div class="pic">${item.pic}</div>
+        <div class="word ${flip ? '' : 'bn'}">${flip ? item.en : item.bn}</div>
+        <div class="ask ${flip ? 'bn' : ''}">${flip ? 'সঠিক বাংলা অর্থ বেছে নিন' : 'Choose the English word · ইংরেজি শব্দটি বেছে নিন'}</div>
+      </div>
+      <div class="opts">${opts.map((o, i) => `<button class="opt ${flip ? 'bn' : ''}" data-i="${i}">${flip ? o.bn : o.en}</button>`).join('')}</div>
+      <div class="learned bn" id="learned"></div>`;
+    document.getElementById('say').onclick = () => speak(item.en);
+    quiz.querySelectorAll('.opt').forEach((b) => (b.onclick = () => answer(+b.dataset.i, b)));
+  }
+  function answer(i, btn) {
+    if (locked || !Arcade.playing) return;
+    locked = true; asked++;
+    const ok = i >= 0 && q.opts[i].en === q.item.en;
+    const btns = [...quiz.querySelectorAll('.opt')];
+    btns.forEach((b) => { const o = q.opts[+b.dataset.i]; if (o.en === q.item.en) b.classList.add('right'); else if (b !== btn) b.classList.add('dim'); });
+    const learned = document.getElementById('learned');
+    learned.innerHTML = `${q.item.bn} = <b>${q.item.en}</b>`;
+    if (ok) {
+      correct++; streak++; bestStreak = Math.max(bestStreak, streak);
+      const gain = 10 + Math.min(10, streak - 1) + Math.ceil((tLeft / tMax) * 5);
+      Arcade.addScore(gain); Arcade.sfx('coin'); Arcade.vibrate(8);
+      if (streak > 0 && streak % 5 === 0) { Arcade.sfx('level'); const r = btn.getBoundingClientRect(), s = document.getElementById('stage').getBoundingClientRect(); Arcade.floatText(r.left - s.left + r.width / 2, r.top - s.top, `${streak} in a row! 🔥`, '#fde68a'); }
+      speak(q.item.en);
+      setTimeout(nextQ, 900);
+    } else {
+      if (btn) btn.classList.add('wrong');
+      streak = 0; lives--; Arcade.sfx('bad'); Arcade.vibrate(40);
+      speak(q.item.en);
+      if (lives <= 0) setTimeout(() => Arcade.gameOver(Arcade.score, { title: 'Great practice!', win: correct >= 10, stats: [['Correct', `${correct}/${asked}`], ['Best streak', bestStreak]], meta: { correct, asked } }), 1600);
+      else setTimeout(nextQ, 1800);
+    }
+  }
+  function tick() {
+    if (!Arcade.playing || locked || !q) return;
+    tLeft -= 0.1;
+    const bar = document.getElementById('tbar'); if (bar) { bar.style.width = Math.max(0, (tLeft / tMax) * 100) + '%'; if (tLeft < 3) bar.style.background = 'linear-gradient(90deg,#f87171,#fb923c)'; }
+    if (tLeft <= 0) answer(-1, null);
+  }
+
+  Arcade.init({
+    id: 'learn-english',
+    subtitle: 'বাংলা থেকে ইংরেজি শিখুন · Learn English words while you play',
+    howTo: ['<span class="bn">বাংলা শব্দ দেখে সঠিক ইংরেজি শব্দটি বেছে নিন।</span>', 'Tap <b>🔊</b> to hear how the English word sounds.', 'Answer fast for bonus points. Correct answers in a row give a <b>streak</b> bonus.', '3 wrong answers and the round ends. Pick a topic below.'],
+    startExtra: () => `
+      <div class="modes">${[['bn2en', 'বাংলা → English'], ['en2bn', 'English → বাংলা'], ['mix', 'Mixed · মিশ্র']].map(([m, l]) => `<button class="bn ${m === mode ? 'on' : ''}" data-mode="${m}">${l}</button>`).join('')}</div>
+      <div class="topics"><button class="bn ${topic === 'all' ? 'on' : ''}" data-topic="all">সব · All</button>${TOPICS.map((t) => `<button class="bn ${t === topic ? 'on' : ''}" data-topic="${t}">${t}</button>`).join('')}</div>`,
+    onStartScreen(o) {
+      o.querySelectorAll('[data-topic]').forEach((b) => b.addEventListener('click', () => { topic = b.dataset.topic; Arcade.store.set('learn.topic', topic); o.querySelectorAll('[data-topic]').forEach((x) => x.classList.toggle('on', x === b)); Arcade.sfx('click'); }));
+      o.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { mode = b.dataset.mode; Arcade.store.set('learn.mode', mode); o.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('on', x === b)); Arcade.sfx('click'); }));
+    },
+    onStart() {
+      if (!WORDS[topic] && topic !== 'all') topic = 'all';
+      buildPool(); lives = 3; streak = 0; bestStreak = 0; correct = 0; asked = 0; recent = [];
+      speak(''); // unlocks speech on iPhone (must start from a tap)
+      nextQ();
+    },
+  });
+  setInterval(tick, 100);
+  if ('speechSynthesis' in window) speechSynthesis.getVoices();
+})();
+</script>
+</body>
+</html>

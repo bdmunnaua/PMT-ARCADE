@@ -1,0 +1,17 @@
+{
+  "name": "PMT Arcade",
+  "timestamp": "2026-10-02T00:00:00.000Z",
+  "version": { "major": 1, "minor": 0, "patch": 0 },
+  "logoURI": "https://pmtarcade.com/token/pmt-logo-256.png",
+  "keywords": ["pmt", "pmtarcade", "games"],
+  "tokens": [
+    {
+      "chainId": 56,
+      "address": "0xc576c15Bf0E06AF1a65d15B8219A90f1e07f025F",
+      "name": "PMT",
+      "symbol": "PMT",
+      "decimals": 18,
+      "logoURI": "https://pmtarcade.com/token/pmt-logo-256.png"
+    }
+  ]
+}

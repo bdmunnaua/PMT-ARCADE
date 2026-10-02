@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Slide Puzzle: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Slide Puzzle: free 15-puzzle sliding tile game online in 3x3, 4x4 and 5x5. Solve in fewer moves for a higher score and earn PMT.">
+<link rel="canonical" href="https://pmtarcade.com/games/slide-puzzle/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Slide Puzzle: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Slide Puzzle: free 15-puzzle sliding tile game online in 3x3, 4x4 and 5x5. Solve in fewer moves for a higher score and earn PMT.">
+<meta property="og:url" content="https://pmtarcade.com/games/slide-puzzle/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Slide Puzzle: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Slide Puzzle: free 15-puzzle sliding tile game online in 3x3, 4x4 and 5x5. Solve in fewer moves for a higher score and earn PMT.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Slide Puzzle", "url": "https://pmtarcade.com/games/slide-puzzle/", "description": "Slide Puzzle: free 15-puzzle sliding tile game online in 3x3, 4x4 and 5x5. Solve in fewer moves for a higher score and earn PMT.", "genre": "Puzzle", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Slide Puzzle", "item": "https://pmtarcade.com/games/slide-puzzle/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: radial-gradient(120% 90% at 50% 0%, #0b4a44 0%, #072b2b 50%, #041515 100%); }
+  .wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .board { position: relative; width: var(--size); height: var(--size); border-radius: 22px; padding: 8px; background: rgba(0,0,0,.35); box-shadow: 0 20px 50px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); }
+  .tile {
+    position: absolute; top: 8px; left: 8px; width: calc(var(--cell) - 6px); height: calc(var(--cell) - 6px); margin: 3px;
+    border-radius: calc(var(--cell) * 0.16); display: grid; place-items: center; cursor: pointer;
+    font-weight: 800; font-size: calc(var(--cell) * 0.36); color: rgba(255,255,255,.95); text-shadow: 0 2px 6px rgba(0,0,0,.3);
+    box-shadow: inset 0 -5px 0 rgba(0,0,0,.18), inset 0 2px 0 rgba(255,255,255,.3), 0 4px 10px rgba(0,0,0,.25);
+    transition: transform 120ms ease, filter .2s; font-variant-numeric: tabular-nums;
+  }
+  .tile.home { filter: saturate(1.25) brightness(1.08); }
+  .tile.home::after { content: ''; position: absolute; right: 7px; bottom: 7px; width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.8); }
+  .solved .tile { transition: transform 120ms ease, border-radius .4s, margin .4s, width .4s, height .4s; margin: 0; width: var(--cell); height: var(--cell); border-radius: 0; box-shadow: none; }
+  .goal { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.6); font-size: .85rem; }
+  .goal .mini { display: grid; gap: 2px; width: 54px; height: 54px; }
+  .goal .mini span { border-radius: 2px; }
+  .sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .sizes button { padding: 12px 6px; border-radius: 14px; border: 1px solid var(--line-strong); background: rgba(255,255,255,.04); cursor: pointer; font-weight: 800; font-size: 1.1rem; }
+  .sizes button small { display: block; font-weight: 500; font-size: .72rem; color: var(--muted); }
+  .sizes button.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 22%, transparent); }
+</style>
+</head>
+<body>
+<div id="stage"><div class="wrap"><div class="board" id="board"></div><div class="goal"><div class="mini" id="mini"></div><span>Match this order: 1, 2, 3… with the gap at the end</span></div></div></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const BASE = { 3: 300, 4: 1000, 5: 2500 }, PAR = { 3: 32, 4: 100, 5: 230 }, SHUFFLE = { 3: 80, 4: 220, 5: 420 };
+  const boardEl = document.getElementById('board'), miniEl = document.getElementById('mini'), stage = document.getElementById('stage');
+  let n = Arcade.store.get('slide.size', 3), tiles, blank, moves, t0, timer, done;
+
+  const color = (i) => { const r = Math.floor(i / n), c = i % n; const h = 170 + (c / Math.max(1, n - 1)) * 110 - (r / Math.max(1, n - 1)) * 40; return `linear-gradient(145deg, hsl(${h} 70% 58%), hsl(${h + 12} 65% 44%))`; };
+
+  function size() {
+    const r = stage.getBoundingClientRect();
+    const s = Math.max(220, Math.min(r.width - 28, r.height - 110, 520));
+    boardEl.style.setProperty('--size', s + 'px');
+    boardEl.style.setProperty('--cell', (s - 16) / n + 'px');
+  }
+  function build() {
+    boardEl.innerHTML = ''; boardEl.classList.remove('solved');
+    tiles = [];
+    for (let i = 0; i < n * n - 1; i++) {
+      const d = document.createElement('div'); d.className = 'tile'; d.textContent = i + 1; d.style.background = color(i);
+      d.addEventListener('pointerdown', () => tap(i));
+      boardEl.appendChild(d); tiles.push({ id: i, pos: i, el: d });
+    }
+    blank = n * n - 1;
+    miniEl.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+    miniEl.innerHTML = Array.from({ length: n * n }, (_, i) => `<span style="background:${i < n * n - 1 ? color(i) : 'transparent'}"></span>`).join('');
+    size(); place();
+  }
+  function place() {
+    for (const t of tiles) {
+      const r = Math.floor(t.pos / n), c = t.pos % n;
+      t.el.style.transform = `translate(calc(${c} * var(--cell)), calc(${r} * var(--cell)))`;
+      t.el.classList.toggle('home', t.pos === t.id);
+    }
+  }
+  const at = (pos) => tiles.find((t) => t.pos === pos);
+  function shuffle() {
+    let prev = -1;
+    for (let k = 0; k < SHUFFLE[n]; k++) {
+      const br = Math.floor(blank / n), bc = blank % n, opts = [];
+      if (br > 0) opts.push(blank - n); if (br < n - 1) opts.push(blank + n); if (bc > 0) opts.push(blank - 1); if (bc < n - 1) opts.push(blank + 1);
+      const choices = opts.filter((o) => o !== prev), p = choices[(Math.random() * choices.length) | 0];
+      at(p).pos = blank; prev = blank; blank = p;
+    }
+    if (tiles.every((t) => t.pos === t.id)) shuffle();
+  }
+  function tap(id) {
+    if (!Arcade.playing || done) return;
+    const t = tiles[id], tr = Math.floor(t.pos / n), tc = t.pos % n, br = Math.floor(blank / n), bc = blank % n;
+    if (tr !== br && tc !== bc) { Arcade.sfx('bad'); return; }
+    // slide every tile between the tapped one and the gap
+    const step = tr === br ? (tc < bc ? -1 : 1) : (tr < br ? -n : n);
+    const target = t.pos;
+    let p = blank;
+    while (p !== target) { const nx = p + step; at(nx).pos = p; p = nx; }
+    blank = target;
+    moves++; Arcade.sfx('move'); Arcade.vibrate(6);
+    place(); Arcade.setStat('mv', 'Moves', String(moves));
+    if (tiles.every((x) => x.pos === x.id)) win();
+  }
+  function win() {
+    done = true; clearInterval(timer);
+    boardEl.classList.add('solved');
+    const secs = Math.round((Date.now() - t0) / 1000);
+    const score = Math.round(BASE[n] * Math.min(1.5, Math.max(0.35, PAR[n] / moves)));
+    setTimeout(() => Arcade.gameOver(score, { title: 'Solved!', win: true, stats: [['Size', `${n}×${n}`], ['Moves', moves], ['Time', fmtT(secs)]], meta: { size: n, moves, secs } }), 700);
+  }
+  const fmtT = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+  window.addEventListener('keydown', (e) => {
+    if (!Arcade.playing) return;
+    const br = Math.floor(blank / n), bc = blank % n;
+    const m = { ArrowUp: br < n - 1 ? blank + n : -1, ArrowDown: br > 0 ? blank - n : -1, ArrowLeft: bc < n - 1 ? blank + 1 : -1, ArrowRight: bc > 0 ? blank - 1 : -1 }[e.key];
+    if (m != null && m >= 0) { e.preventDefault(); tap(at(m).id); }
+  });
+
+  Arcade.init({
+    id: 'slide-puzzle',
+    subtitle: 'Slide the tiles back into order.',
+    howTo: ['<b>Tap</b> a tile in the same row or column as the gap to slide it.', 'Put the numbers in order, 1 in the top-left, with the gap last.', 'Tiles glow when they reach their home spot.', 'Fewer moves means a <b>higher score</b>. Bigger boards pay more.'],
+    startExtra: () => `<div class="sizes">${[[3, 'Easy'], [4, 'Normal'], [5, 'Hard']].map(([s, l]) => `<button data-size="${s}" class="${s === n ? 'on' : ''}">${s}×${s}<small>${l}</small></button>`).join('')}</div>`,
+    onStartScreen(o) {
+      o.querySelectorAll('[data-size]').forEach((b) => b.addEventListener('click', () => {
+        n = +b.dataset.size; Arcade.store.set('slide.size', n); Arcade.sfx('click');
+        o.querySelectorAll('[data-size]').forEach((x) => x.classList.toggle('on', x === b)); build();
+      }));
+    },
+    onStart() {
+      build(); shuffle(); place(); moves = 0; done = false; t0 = Date.now();
+      Arcade.setStat('mv', 'Moves', '0'); Arcade.setStat('tm', 'Time', '0:00');
+      clearInterval(timer); timer = setInterval(() => { if (Arcade.playing) Arcade.setStat('tm', 'Time', fmtT(Math.round((Date.now() - t0) / 1000))); }, 500);
+    },
+    onPause() { this._p = Date.now(); },
+    onResume() { t0 += Date.now() - (this._p || Date.now()); },
+  });
+  build();
+  new ResizeObserver(size).observe(stage);
+})();
+</script>
+</body>
+</html>

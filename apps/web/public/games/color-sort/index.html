@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Color Sort: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Color Sort: free water sort puzzle game online. Pour colours between tubes until each holds one colour. Endless levels, play free and earn PMT.">
+<link rel="canonical" href="https://pmtarcade.com/games/color-sort/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Color Sort: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Color Sort: free water sort puzzle game online. Pour colours between tubes until each holds one colour. Endless levels, play free and earn PMT.">
+<meta property="og:url" content="https://pmtarcade.com/games/color-sort/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Color Sort: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Color Sort: free water sort puzzle game online. Pour colours between tubes until each holds one colour. Endless levels, play free and earn PMT.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Color Sort", "url": "https://pmtarcade.com/games/color-sort/", "description": "Color Sort: free water sort puzzle game online. Pour colours between tubes until each holds one colour. Endless levels, play free and earn PMT.", "genre": "Puzzle", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Color Sort", "item": "https://pmtarcade.com/games/color-sort/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: radial-gradient(120% 90% at 50% 0%, #3b1d5e 0%, #1e1240 50%, #0e0a24 100%); }
+  .wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .lvl { position: absolute; inset: 0; z-index: 18; display: grid; place-items: center; background: rgba(6, 7, 18, .6); backdrop-filter: blur(4px); animation: fade .2s ease; }
+</style>
+</head>
+<body>
+<div id="stage"><div class="wrap"><canvas id="c"></canvas>
+  <div class="bar">
+    <button class="btn btn-sm" id="undo">↶ Undo <span id="undoN">5</span></button>
+    <button class="btn btn-sm" id="restart">↻ Restart level</button>
+    <button class="btn btn-sm btn-gold" id="finish">✓ Finish & save</button>
+  </div>
+</div></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const CAP = 4, W = 400;
+  const COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#facc15', '#a855f7', '#f97316', '#ec4899', '#14b8a6', '#84cc16', '#f8fafc', '#6366f1', '#a16207'];
+  const canvas = document.getElementById('c'), stage = document.getElementById('stage');
+  let view, ctx;
+  let tubes, start, sel, history, undos, level, levelStart, solvedLevels, anim, lastT, busy;
+
+  /* ---------- level generation (verified solvable) ---------- */
+  const top = (t) => t[t.length - 1];
+  const topRun = (t) => { let n = 0; for (let i = t.length - 1; i >= 0 && t[i] === top(t); i--) n++; return n; };
+  function canPour(a, b) { return a.length && b.length < CAP && (!b.length || top(b) === top(a)); }
+  function pour(ts, i, j) {
+    const a = ts[i], b = ts[j], n = Math.min(topRun(a), CAP - b.length);
+    for (let k = 0; k < n; k++) b.push(a.pop());
+    return n;
+  }
+  function solvable(ts) {
+    const seen = new Set(); let nodes = 0;
+    const key = (s) => s.map((t) => t.join(',')).sort().join('|');
+    const done = (s) => s.every((t) => !t.length || (t.length === CAP && t.every((c) => c === t[0])));
+    function dfs(s) {
+      if (done(s)) return true;
+      if (++nodes > 40000) return false;
+      const k = key(s); if (seen.has(k)) return false; seen.add(k);
+      for (let i = 0; i < s.length; i++) for (let j = 0; j < s.length; j++) {
+        if (i === j || !canPour(s[i], s[j])) continue;
+        if (!s[j].length && topRun(s[i]) === s[i].length) continue; // pointless move
+        const n = s.map((t) => t.slice()); pour(n, i, j);
+        if (dfs(n)) return true;
+      }
+      return false;
+    }
+    return dfs(ts.map((t) => t.slice()));
+  }
+  function generate(lv) {
+    const n = Math.min(COLORS.length, 3 + Math.ceil(lv / 2)), empty = lv >= 12 ? 1 + (lv % 3 === 0 ? 1 : 0) : 2;
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const balls = []; for (let c = 0; c < n; c++) for (let k = 0; k < CAP; k++) balls.push(c);
+      for (let i = balls.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [balls[i], balls[j]] = [balls[j], balls[i]]; }
+      const ts = []; for (let c = 0; c < n; c++) ts.push(balls.slice(c * CAP, c * CAP + CAP));
+      for (let e = 0; e < empty; e++) ts.push([]);
+      if (ts.some((t) => t.length === CAP && t.every((x) => x === t[0]))) continue; // no tube already solved
+      if (solvable(ts)) return ts;
+    }
+    const ts = []; for (let c = 0; c < n; c++) ts.push(Array(CAP).fill(c)); ts.push([], []); // fallback (never seen in tests)
+    return ts;
+  }
+
+  /* ---------- layout ---------- */
+  let L = {};
+  function layout() {
+    const n = tubes.length, perRow = n <= 6 ? n : Math.ceil(n / 2), rows = Math.ceil(n / perRow);
+    const tw = Math.min(54, (W - 20) / perRow - 12), bh = tw * 0.82, th = bh * CAP + 22;
+    L = { perRow, rows, tw, bh, th, gapX: (W - perRow * tw) / (perRow + 1), rowH: th + 40 };
+    view.h = Math.round(rows * L.rowH + 40);
+    view.fit();
+  }
+  function tubePos(i) {
+    const row = Math.floor(i / L.perRow), col = i % L.perRow;
+    const inRow = Math.min(L.perRow, tubes.length - row * L.perRow);
+    const gx = (W - inRow * L.tw) / (inRow + 1);
+    return { x: gx + col * (L.tw + gx), y: 30 + row * L.rowH };
+  }
+
+  /* ---------- game ---------- */
+  function loadLevel(lv, fresh = true) {
+    level = lv;
+    if (fresh) start = generate(lv);
+    tubes = start.map((t) => t.slice());
+    sel = null; history = []; undos = 5; anim = null; busy = false;
+    levelStart = Date.now();
+    layout(); ui();
+    Arcade.setStat('lv', 'Level', String(level));
+  }
+  function ui() {
+    document.getElementById('undoN').textContent = undos;
+    document.getElementById('undo').disabled = !undos || !history.length;
+    document.getElementById('finish').disabled = !solvedLevels;
+  }
+  const solved = () => tubes.every((t) => !t.length || (t.length === CAP && t.every((c) => c === t[0])));
+
+  function tap(i) {
+    if (!Arcade.playing || busy) return;
+    if (sel == null) { if (tubes[i].length) { sel = i; Arcade.sfx('click'); } return; }
+    if (sel === i) { sel = null; return; }
+    if (!canPour(tubes[sel], tubes[i])) { Arcade.sfx('bad'); Arcade.vibrate(15); sel = tubes[i].length ? i : null; return; }
+    history.push(tubes.map((t) => t.slice()));
+    const from = sel, color = top(tubes[from]);
+    const n = pour(tubes, from, i);
+    anim = { from, to: i, color, n, t: 0 };
+    sel = null;
+    Arcade.sfx('pop', n * 2);
+    if (tubes[i].length === CAP && tubes[i].every((c) => c === tubes[i][0])) { setTimeout(() => Arcade.sfx('clear'), 150); }
+    ui();
+    if (solved()) levelDone();
+  }
+
+  function levelDone() {
+    busy = true;
+    const secs = (Date.now() - levelStart) / 1000;
+    const gain = 50 + level * 10 + (undos === 5 ? 20 : 0);
+    solvedLevels++;
+    Arcade.addScore(gain);
+    setTimeout(() => {
+      Arcade.sfx('level'); Arcade.confetti(70);
+      const o = document.createElement('div'); o.className = 'lvl';
+      o.innerHTML = `<div class="ag-panel" style="--c1:#f472b6;--c2:#6366f1"><div class="ag-h">Level ${level} complete!</div>
+        <div class="ag-sub">+${gain} points${undos === 5 ? ' (incl. +20 no-undo bonus)' : ''} · ${Math.round(secs)}s</div>
+        <div class="ag-actions"><button class="btn btn-primary btn-lg" data-next>Next level ▶</button><button class="btn" data-fin>✓ Finish & save score</button></div></div>`;
+      stage.appendChild(o);
+      o.querySelector('[data-next]').onclick = () => { o.remove(); Arcade.sfx('click'); loadLevel(level + 1); };
+      o.querySelector('[data-fin]').onclick = () => { o.remove(); finish(); };
+    }, 450);
+  }
+  function finish() {
+    if (!solvedLevels) return;
+    busy = true;
+    document.querySelectorAll('.lvl').forEach((x) => x.remove());
+    Arcade.gameOver(Arcade.score, { title: 'Well sorted!', win: true, stats: [['Levels', solvedLevels], ['Reached', 'Level ' + level]], meta: { levels: solvedLevels } });
+  }
+
+  document.getElementById('undo').onclick = () => { if (!history.length || !undos || busy) return; tubes = history.pop(); undos--; sel = null; anim = null; Arcade.sfx('move'); ui(); };
+  document.getElementById('restart').onclick = () => { if (busy || !Arcade.playing) return; Arcade.sfx('click'); loadLevel(level, false); };
+  document.getElementById('finish').onclick = () => { if (Arcade.playing) finish(); };
+
+  canvas.addEventListener('pointerdown', (e) => {
+    const p = view.point(e);
+    for (let i = 0; i < tubes.length; i++) {
+      const q = tubePos(i);
+      if (p.x > q.x - 8 && p.x < q.x + L.tw + 8 && p.y > q.y - 20 && p.y < q.y + L.th + 10) { tap(i); return; }
+    }
+    sel = null;
+  });
+
+  /* ---------- draw ---------- */
+  function draw(dt) {
+    ctx.clearRect(0, 0, view.w, view.h);
+    if (anim) { anim.t += dt; if (anim.t > 0.3) anim = null; }
+    tubes.forEach((t, i) => {
+      const q = tubePos(i), lift = sel === i ? -16 : 0, x = q.x, y = q.y + lift;
+      const done = t.length === CAP && t.every((c) => c === t[0]);
+      // glass
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect(x, y, L.tw, L.th, [8, 8, L.tw / 2, L.tw / 2]);
+      ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fill();
+      ctx.lineWidth = 2.5; ctx.strokeStyle = done ? 'rgba(253,230,138,0.9)' : sel === i ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.35)'; ctx.stroke();
+      ctx.clip();
+      // liquid
+      t.forEach((c, k) => {
+        let h = L.bh, yy = y + L.th - (k + 1) * L.bh - 4;
+        if (anim && anim.to === i && k >= t.length - anim.n) { const p = Math.min(1, anim.t / 0.3); h *= p; yy += L.bh * (1 - p); }
+        const g = ctx.createLinearGradient(x, 0, x + L.tw, 0); g.addColorStop(0, COLORS[c]); g.addColorStop(0.45, '#ffffff55'); g.addColorStop(0.55, COLORS[c]); g.addColorStop(1, COLORS[c]);
+        ctx.fillStyle = COLORS[c]; ctx.fillRect(x, yy, L.tw, h + 1);
+        ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(x + L.tw * 0.18, yy, L.tw * 0.12, h);
+      });
+      ctx.restore();
+      if (done) { ctx.fillStyle = '#fde68a'; ctx.font = '700 14px Outfit'; ctx.textAlign = 'center'; ctx.fillText('★', x + L.tw / 2, y - 6); }
+    });
+    if (anim) { // pour arc
+      const a = tubePos(anim.from), b = tubePos(anim.to), k = Math.min(1, anim.t / 0.3);
+      const x = a.x + L.tw / 2 + (b.x - a.x) * k, y = a.y - 10 - Math.sin(k * Math.PI) * 40 + (b.y - a.y) * k;
+      ctx.fillStyle = COLORS[anim.color]; ctx.beginPath(); ctx.arc(x, y, 6, 0, 6.28); ctx.fill();
+    }
+  }
+  function loop(ts) {
+    const dt = Math.min(0.033, (ts - (lastT || ts)) / 1000); lastT = ts;
+    if (tubes) draw(dt);
+    requestAnimationFrame(loop);
+  }
+
+  Arcade.init({
+    id: 'color-sort',
+    subtitle: 'Sort the colours so every tube holds just one.',
+    howTo: ['<b>Tap</b> a tube, then tap another to pour.', 'You can pour onto the <b>same colour</b> or into an empty tube.', 'Fill every tube with one colour to clear the level. Each level gets harder.', 'Tap <b>Finish & save</b> any time after level 1 to keep your score.'],
+    onStart() { solvedLevels = 0; document.querySelectorAll('.lvl').forEach((x) => x.remove()); loadLevel(1); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: W, h: 400, reserveH: 64 });
+  ctx = view.ctx;
+  solvedLevels = 0; loadLevel(1);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

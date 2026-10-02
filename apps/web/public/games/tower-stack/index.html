@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Tower Stack: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Tower Stack: free one-tap stacking game online. Drop blocks at the perfect moment to build the tallest 3D tower and earn PMT.">
+<link rel="canonical" href="https://pmtarcade.com/games/tower-stack/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Tower Stack: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Tower Stack: free one-tap stacking game online. Drop blocks at the perfect moment to build the tallest 3D tower and earn PMT.">
+<meta property="og:url" content="https://pmtarcade.com/games/tower-stack/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tower Stack: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Tower Stack: free one-tap stacking game online. Drop blocks at the perfect moment to build the tallest 3D tower and earn PMT.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Tower Stack", "url": "https://pmtarcade.com/games/tower-stack/", "description": "Tower Stack: free one-tap stacking game online. Drop blocks at the perfect moment to build the tallest 3D tower and earn PMT.", "genre": "Arcade", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Tower Stack", "item": "https://pmtarcade.com/games/tower-stack/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: #120a24; }
+  #stage { transition: background 1s ease; }
+  .hint { position: absolute; bottom: 12%; left: 0; right: 0; text-align: center; color: rgba(255,255,255,.7); font-weight: 600; letter-spacing: .08em; pointer-events: none; animation: blink 1.4s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas><div class="hint hidden" id="hint">TAP TO DROP</div></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const H = 20, BASE = 150, RANGE = 190, PERFECT = 5, C = 0.866, S = 0.5;
+  const canvas = document.getElementById('c'), hint = document.getElementById('hint'), stageEl = document.getElementById('stage');
+  let view, ctx;
+  let stack, cur, debris, flashes, level, combo, perfects, cam, alive, lastT, hue0;
+
+  const P = (x, z, y) => ({ X: 200 + (x - z) * C, Y: view.h * 0.62 + (x + z) * S - y * H + cam });
+  function poly(pts, fill) { ctx.beginPath(); ctx.moveTo(pts[0].X, pts[0].Y); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].X, pts[i].Y); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); }
+  const hueAt = (lv) => (hue0 + lv * 7) % 360;
+  function drawBlock(b, yb, yt, alpha = 1) {
+    const x0 = b.cx - b.w / 2, x1 = b.cx + b.w / 2, z0 = b.cz - b.d / 2, z1 = b.cz + b.d / 2, h = hueAt(b.lv);
+    ctx.globalAlpha = alpha;
+    poly([P(x0, z1, yt), P(x1, z1, yt), P(x1, z1, yb), P(x0, z1, yb)], `hsl(${h} 62% 52%)`);
+    poly([P(x1, z0, yt), P(x1, z1, yt), P(x1, z1, yb), P(x1, z0, yb)], `hsl(${h} 58% 40%)`);
+    poly([P(x0, z0, yt), P(x1, z0, yt), P(x1, z1, yt), P(x0, z1, yt)], `hsl(${h} 75% 68%)`);
+    ctx.globalAlpha = 1;
+  }
+
+  function reset() {
+    hue0 = Math.random() * 360;
+    stack = [{ cx: 0, cz: 0, w: BASE, d: BASE, lv: 0 }];
+    debris = []; flashes = []; level = 0; combo = 0; perfects = 0; cam = 0; alive = true;
+    spawn();
+    setBg();
+  }
+  function speed() { return Math.min(360, 150 + level * 5); }
+  function spawn() {
+    const top = stack[stack.length - 1];
+    const axis = level % 2 === 0 ? 'x' : 'z';
+    cur = { ...top, lv: top.lv + 1, axis, pos: -RANGE, v: speed() };
+    if (axis === 'x') cur.cx = top.cx - RANGE; else cur.cz = top.cz - RANGE;
+  }
+  function setBg() {
+    const h = hueAt(level);
+    stageEl.style.background = `linear-gradient(180deg, hsl(${(h + 40) % 360} 55% 22%), hsl(${h} 50% 9%))`;
+  }
+
+  function drop() {
+    if (!Arcade.playing || !alive) return;
+    const top = stack[stack.length - 1], ax = cur.axis;
+    const key = ax === 'x' ? 'cx' : 'cz', size = ax === 'x' ? 'w' : 'd';
+    const delta = cur[key] - top[key];
+    const overlap = top[size] - Math.abs(delta);
+    if (overlap <= 0) {
+      debris.push({ ...cur, vy: 0, y: cur.lv, rot: 0 });
+      cur = null; alive = false; Arcade.sfx('hit'); Arcade.vibrate(60);
+      setTimeout(() => Arcade.gameOver(Arcade.score, { title: 'Tower fell!', stats: [['Height', level], ['Perfect', perfects]], meta: { height: level, perfects } }), 1000);
+      return;
+    }
+    const placed = { ...cur };
+    let gain = 1;
+    if (Math.abs(delta) <= PERFECT) {
+      placed[key] = top[key]; combo++; perfects++;
+      gain += Math.min(combo, 10);
+      if (combo >= 3) { // reward streaks: the block grows back a bit
+        const grow = Math.min(12, BASE - placed[size]);
+        placed[size] += grow;
+      }
+      flashes.push({ b: { ...placed }, t: 0 });
+      Arcade.sfx('combo', combo); Arcade.vibrate(15);
+      const p = view.toStage(P(placed.cx, placed.cz, placed.lv + 1).X, P(placed.cx, placed.cz, placed.lv + 1).Y);
+      Arcade.floatText(p.x, p.y - 20, combo > 1 ? `PERFECT ×${combo}` : 'PERFECT', '#fde68a');
+    } else {
+      combo = 0;
+      placed[size] = overlap; placed[key] = top[key] + delta / 2;
+      const cut = { ...cur, [size]: Math.abs(delta), [key]: placed[key] + Math.sign(delta) * (overlap / 2 + Math.abs(delta) / 2), vy: 0, y: cur.lv };
+      debris.push(cut);
+      Arcade.sfx('place');
+    }
+    delete placed.axis; delete placed.pos; delete placed.v;
+    stack.push(placed);
+    level++;
+    Arcade.addScore(gain);
+    Arcade.setStat('h', 'Height', String(level));
+    setBg();
+    spawn();
+  }
+
+  function update(dt) {
+    if (cur && alive && Arcade.playing) {
+      const key = cur.axis === 'x' ? 'cx' : 'cz', top = stack[stack.length - 1];
+      cur.pos += cur.v * dt;
+      if (cur.pos > RANGE) { cur.pos = RANGE; cur.v = -Math.abs(cur.v); }
+      if (cur.pos < -RANGE) { cur.pos = -RANGE; cur.v = Math.abs(cur.v); }
+      cur[key] = top[key] + cur.pos;
+    }
+    if (Arcade.state !== 'paused') {
+      debris.forEach((d) => { d.vy += 30 * dt; d.y -= d.vy * dt; });
+      debris = debris.filter((d) => d.y > level - 40);
+      flashes.forEach((f) => (f.t += dt));
+      flashes = flashes.filter((f) => f.t < 0.5);
+    }
+    const target = Math.max(0, level - 6) * H * 1 + (level > 6 ? 0 : 0);
+    cam += (target - cam) * Math.min(1, dt * 5);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, view.w, view.h);
+    const base = stack[0];
+    drawBlock(base, -30, 1);
+    for (let i = 1; i < stack.length; i++) {
+      const b = stack[i];
+      if (P(b.cx, b.cz, b.lv).Y < -50) continue;
+      drawBlock(b, b.lv, b.lv + 1);
+    }
+    debris.forEach((d) => drawBlock(d, d.y, d.y + 1, Math.max(0, 1 - (d.lv - d.y) / 25)));
+    if (cur) drawBlock(cur, cur.lv, cur.lv + 1);
+    flashes.forEach((f) => {
+      const b = f.b, k = f.t / 0.5, g = 1 + k * 0.5, y = b.lv + 1;
+      const x0 = b.cx - (b.w * g) / 2, x1 = b.cx + (b.w * g) / 2, z0 = b.cz - (b.d * g) / 2, z1 = b.cz + (b.d * g) / 2;
+      ctx.strokeStyle = `rgba(255,255,255,${1 - k})`; ctx.lineWidth = 3;
+      ctx.beginPath(); [P(x0, z0, y), P(x1, z0, y), P(x1, z1, y), P(x0, z1, y)].forEach((p, i) => (i ? ctx.lineTo(p.X, p.Y) : ctx.moveTo(p.X, p.Y))); ctx.closePath(); ctx.stroke();
+    });
+    // big height number
+    ctx.fillStyle = 'rgba(255,255,255,0.13)'; ctx.font = '800 96px Outfit, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(level, 200, 120);
+  }
+  function loop(t) {
+    const dt = Math.min(0.05, (t - (lastT || t)) / 1000); lastT = t;
+    if (stack) { update(dt); draw(); }
+    requestAnimationFrame(loop);
+  }
+
+  stageEl.addEventListener('pointerdown', (e) => { if (e.target.closest('.ag-overlay')) return; hint.classList.add('hidden'); drop(); });
+  window.addEventListener('keydown', (e) => { if (e.code === 'Space' && Arcade.playing) { e.preventDefault(); drop(); } });
+
+  Arcade.init({
+    id: 'tower-stack',
+    subtitle: 'Tap at the right moment to build the tallest tower.',
+    howTo: ['A block slides back and forth. <b>Tap</b> to drop it.', 'Anything hanging over the edge is <b>cut off</b>.', 'Land it exactly for a <b>PERFECT</b>. 3 in a row makes the block grow back.', 'Miss the tower completely and it’s over.'],
+    onStart() { reset(); hint.classList.remove('hidden'); Arcade.setStat('h', 'Height', '0'); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: 400, minH: 600, maxH: 900, pad: 0 });
+  ctx = view.ctx;
+  reset(); cur = null;
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

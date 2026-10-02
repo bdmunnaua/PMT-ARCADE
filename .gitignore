@@ -1,0 +1,22 @@
+# dependencies & builds
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Cloudflare local state & secrets
+.wrangler/
+.dev.vars
+apps/api/.dev.vars
+
+# environment files (secrets) — .env.example is committed
+.env
+.env.*
+!.env.example
+
+# seed output
+scripts/.seed/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

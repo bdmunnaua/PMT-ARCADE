@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Fruit Rush: Play Free Online, No Download | PMT Arcade</title>
+<!-- SEO -->
+<meta name="description" content="Fruit Rush: free match-3 fruit puzzle game online. Swap fruits, create bombs and rainbow combos, beat level goals. No download, play and earn PMT.">
+<link rel="canonical" href="https://pmtarcade.com/games/fruit-rush/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PMT Arcade">
+<meta property="og:title" content="Fruit Rush: Play Free Online, No Download | PMT Arcade">
+<meta property="og:description" content="Fruit Rush: free match-3 fruit puzzle game online. Swap fruits, create bombs and rainbow combos, beat level goals. No download, play and earn PMT.">
+<meta property="og:url" content="https://pmtarcade.com/games/fruit-rush/">
+<meta property="og:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Fruit Rush: Play Free Online, No Download | PMT Arcade">
+<meta name="twitter:description" content="Fruit Rush: free match-3 fruit puzzle game online. Swap fruits, create bombs and rainbow combos, beat level goals. No download, play and earn PMT.">
+<meta name="twitter:image" content="https://pmtarcade.com/arcade-assets/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Fruit Rush", "url": "https://pmtarcade.com/games/fruit-rush/", "description": "Fruit Rush: free match-3 fruit puzzle game online. Swap fruits, create bombs and rainbow combos, beat level goals. No download, play and earn PMT.", "genre": "Puzzle", "gamePlatform": ["Web browser", "Android", "iOS"], "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://pmtarcade.com/arcade-assets/og-image.png", "publisher": {"@type": "Organization", "name": "PMT Arcade", "url": "https://pmtarcade.com/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": "https://pmtarcade.com/"}, {"@type": "ListItem", "position": 2, "name": "Fruit Rush", "item": "https://pmtarcade.com/games/fruit-rush/"}]}</script>
+<!-- /SEO -->
+<link rel="icon" href="../../arcade-assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../arcade-assets/theme.css">
+<link rel="stylesheet" href="../sdk/sdk.css">
+<style>
+  body { --game-bg: radial-gradient(120% 90% at 50% 0%, #4a1030 0%, #2a0a22 50%, #150513 100%); }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<script src="../../config.js"></script>
+<script src="../sdk/sdk.js"></script>
+<script>
+(() => {
+  const N = 8, CS = 46, BX = (400 - N * CS) / 2, BY = 64;
+  const FRUITS = [
+    { e: '🍓', u: '1f353', c: ['#fb7185', '#be123c'] }, { e: '🍊', u: '1f34a', c: ['#fdba74', '#ea580c'] }, { e: '🍋', u: '1f34b', c: ['#fde047', '#ca8a04'] },
+    { e: '🍏', u: '1f34f', c: ['#86efac', '#15803d'] }, { e: '🍇', u: '1f347', c: ['#d8b4fe', '#7e22ce'] }, { e: '🍉', u: '1f349', c: ['#67e8f9', '#0e7490'] },
+  ];
+  // Fruit art: Twemoji (CC-BY 4.0) so it looks the same on every device; text emoji is the fallback.
+  const TWEMOJI = 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/';
+  const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  const canvas = document.getElementById('c');
+  let view, ctx;
+  let grid, busy, sel, drag, moves, level, levelBase, knives, knifeMode, fx, lastT, idleT, hint, settleWaiters, cleared, bestCombo;
+
+  /* ---------- sprites (tile + fruit pre-rendered once) ---------- */
+  function paintSprite(s, f, img) {
+    const x = s.getContext('2d');
+    x.clearRect(0, 0, 96, 96);
+    const g = x.createLinearGradient(0, 0, 0, 96); g.addColorStop(0, f.c[0]); g.addColorStop(1, f.c[1]);
+    x.fillStyle = g; x.beginPath(); x.roundRect(4, 4, 88, 88, 22); x.fill();
+    x.fillStyle = 'rgba(255,255,255,0.3)'; x.beginPath(); x.roundRect(14, 9, 68, 14, 7); x.fill();
+    x.fillStyle = 'rgba(0,0,0,0.18)'; x.beginPath(); x.roundRect(10, 80, 76, 8, 4); x.fill();
+    x.save(); x.shadowColor = 'rgba(0,0,0,0.35)'; x.shadowBlur = 6; x.shadowOffsetY = 3;
+    if (img) x.drawImage(img, 20, 19, 56, 56);
+    else { x.font = `58px ${EMOJI_FONT}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(f.e, 48, 53); }
+    x.restore();
+  }
+  const knifeImg = new Image(); knifeImg.crossOrigin = 'anonymous'; knifeImg.src = TWEMOJI + '1f52a.svg';
+  const sprites = FRUITS.map((f) => {
+    const s = document.createElement('canvas'); s.width = s.height = 96;
+    paintSprite(s, f, null);
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => paintSprite(s, f, img);
+    img.src = TWEMOJI + f.u + '.svg';
+    return s;
+  });
+
+  const newTile = (t, r, c, fromY) => ({ t, s: null, x: c, y: fromY == null ? r : fromY, vy: 0, scale: 1, alpha: 1 });
+  const typeAt = (r, c) => (grid[r] && grid[r][c] ? grid[r][c].t : -9);
+
+  function fill() {
+    grid = [];
+    for (let r = 0; r < N; r++) {
+      grid.push([]);
+      for (let c = 0; c < N; c++) {
+        let t; do { t = (Math.random() * FRUITS.length) | 0; } while ((c >= 2 && typeAt(r, c - 1) === t && typeAt(r, c - 2) === t) || (r >= 2 && typeAt(r - 1, c) === t && typeAt(r - 2, c) === t));
+        grid[r].push(newTile(t, r, c, r - N - 1));
+      }
+    }
+  }
+  function reset() {
+    fill(); busy = false; sel = null; drag = null; moves = 25; level = 1; levelBase = 0; knives = 3; knifeMode = false; fx = []; idleT = 0; hint = null; cleared = 0; bestCombo = 0;
+    stats();
+  }
+  const need = () => 700 + level * 350;
+  function stats() { Arcade.setStat('lv', 'Level', String(level)); Arcade.setStat('mv', 'Moves', String(moves)); }
+
+  /* ---------- matching ---------- */
+  function runs() {
+    const out = [];
+    for (let r = 0; r < N; r++) { let c = 0; while (c < N) { const t = typeAt(r, c); let e = c + 1; while (e < N && t >= 0 && typeAt(r, e) === t) e++; if (t >= 0 && e - c >= 3) out.push({ dir: 'h', cells: Array.from({ length: e - c }, (_, i) => [r, c + i]) }); c = e; } }
+    for (let c = 0; c < N; c++) { let r = 0; while (r < N) { const t = typeAt(r, c); let e = r + 1; while (e < N && t >= 0 && typeAt(e, c) === t) e++; if (t >= 0 && e - r >= 3) out.push({ dir: 'v', cells: Array.from({ length: e - r }, (_, i) => [r + i, c]) }); r = e; } }
+    return out;
+  }
+  function groups() { // merge runs that share a cell (L / T shapes)
+    const rs = runs(), gs = [];
+    for (const run of rs) {
+      const keys = new Set(run.cells.map(([r, c]) => r * N + c));
+      const g = gs.find((x) => [...keys].some((k) => x.keys.has(k)));
+      if (g) { keys.forEach((k) => g.keys.add(k)); g.runs.push(run); } else gs.push({ keys, runs: [run] });
+    }
+    return gs;
+  }
+  function hasMatchAfterSwap(a, b) {
+    const A = grid[a[0]][a[1]], B = grid[b[0]][b[1]];
+    if (A.s === 'rainbow' || B.s === 'rainbow') return true;
+    grid[a[0]][a[1]] = B; grid[b[0]][b[1]] = A;
+    const ok = runs().length > 0;
+    grid[a[0]][a[1]] = A; grid[b[0]][b[1]] = B;
+    return ok;
+  }
+  function findMove() {
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      if (c < N - 1 && hasMatchAfterSwap([r, c], [r, c + 1])) return [[r, c], [r, c + 1]];
+      if (r < N - 1 && hasMatchAfterSwap([r, c], [r + 1, c])) return [[r, c], [r + 1, c]];
+    }
+    return null;
+  }
+
+  /* ---------- animation helpers ---------- */
+  settleWaiters = [];
+  const settled = () => grid.every((row, r) => row.every((t, c) => !t || (t.x === c && t.y === r))) && !fx.some((f) => f.blocking);
+  const settle = () => new Promise((res) => settleWaiters.push(res));
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* ---------- core ---------- */
+  async function swap(a, b) {
+    busy = true; hint = null; idleT = 0;
+    const A = grid[a[0]][a[1]], B = grid[b[0]][b[1]];
+    grid[a[0]][a[1]] = B; grid[b[0]][b[1]] = A;
+    Arcade.sfx('swap');
+    await settle();
+    if (A.s === 'rainbow' || B.s === 'rainbow') {
+      moves--; stats();
+      const rb = A.s === 'rainbow' ? A : B, other = rb === A ? B : A;
+      const set = new Set([cellOf(rb)]);
+      const target = other.s === 'rainbow' ? -1 : other.t;
+      grid.forEach((row, r) => row.forEach((t, c) => { if (t && (target === -1 || t.t === target)) set.add(r * N + c); }));
+      await clearSet(set, 1, true);
+      await cascade(null);
+      return finishTurn();
+    }
+    if (!runs().length) {
+      grid[a[0]][a[1]] = A; grid[b[0]][b[1]] = B;
+      Arcade.sfx('bad'); Arcade.vibrate(20);
+      await settle(); busy = false; return;
+    }
+    moves--; stats();
+    await cascade([a, b]);
+    finishTurn();
+  }
+  const cellOf = (tile) => { for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (grid[r][c] === tile) return r * N + c; return -1; };
+
+  async function cascade(swapCells) {
+    let mult = 1;
+    while (true) {
+      const gs = groups();
+      if (!gs.length) break;
+      const set = new Set(), creates = [];
+      for (const g of gs) {
+        g.keys.forEach((k) => set.add(k));
+        const size = g.keys.size, straight5 = g.runs.some((r) => r.cells.length >= 5), cross = g.runs.length > 1;
+        let kind = null;
+        if (straight5) kind = 'rainbow'; else if (cross && size >= 5) kind = 'bomb'; else if (size === 4) kind = g.runs[0].dir === 'h' ? 'row' : 'col';
+        if (!kind) continue;
+        let pivot = null;
+        if (swapCells && mult === 1) for (const [r, c] of swapCells) if (g.keys.has(r * N + c)) pivot = r * N + c;
+        if (cross && pivot == null) { const [r1, r2] = g.runs; const k = r1.cells.map(([r, c]) => r * N + c).find((k) => r2.cells.some(([r, c]) => r * N + c === k)); pivot = k; }
+        if (pivot == null) { const cs = [...g.keys]; pivot = cs[(cs.length / 2) | 0]; }
+        creates.push({ k: pivot, kind, t: grid[(pivot / N) | 0][pivot % N].t });
+      }
+      creates.forEach((cr) => set.delete(cr.k));
+      await clearSet(set, mult, false, creates);
+      creates.forEach((cr) => { const t = grid[(cr.k / N) | 0][cr.k % N]; if (t) { t.s = cr.kind; if (cr.kind === 'rainbow') t.t = -1; t.scale = 1.4; } Arcade.addScore(30); });
+      if (creates.length) Arcade.sfx('level');
+      bestCombo = Math.max(bestCombo, mult);
+      mult++;
+      await gravity();
+    }
+  }
+
+  async function clearSet(set, mult, fromRainbow, creates = []) {
+    // expand by specials caught in the blast (chain reactions)
+    const queue = [...set], seen = new Set(set), protect = new Set(creates.map((c) => c.k));
+    while (queue.length) {
+      const k = queue.pop(), r = (k / N) | 0, c = k % N, t = grid[r][c];
+      if (!t || !t.s) continue;
+      const add = [];
+      if (t.s === 'row') for (let i = 0; i < N; i++) add.push(r * N + i);
+      if (t.s === 'col') for (let i = 0; i < N; i++) add.push(i * N + c);
+      if (t.s === 'bomb') for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const rr = r + dr, cc = c + dc; if (rr >= 0 && rr < N && cc >= 0 && cc < N) add.push(rr * N + cc); }
+      if (t.s === 'rainbow' && !fromRainbow) { const tt = (Math.random() * FRUITS.length) | 0; grid.forEach((row, rr) => row.forEach((x, cc) => { if (x && x.t === tt) add.push(rr * N + cc); })); }
+      if (t.s !== 'rainbow' || !fromRainbow) fx.push({ kind: t.s, r, c, t: 0 });
+      add.forEach((a) => { if (!seen.has(a) && !protect.has(a)) { seen.add(a); queue.push(a); } });
+    }
+    if (!seen.size) return;
+    const n = seen.size;
+    Arcade.sfx(mult > 1 ? 'combo' : 'pop', mult > 1 ? mult : 0); Arcade.vibrate(n > 5 ? 25 : 10);
+    let cx = 0, cy = 0;
+    seen.forEach((k) => {
+      const r = (k / N) | 0, c = k % N, t = grid[r][c];
+      if (!t) return; cx += c; cy += r;
+      fx.push({ kind: 'pop', x: c, y: r, t: 0, tile: t, blocking: true });
+      grid[r][c] = null;
+    });
+    const gain = n * 10 * mult;
+    cleared += n;
+    Arcade.addScore(gain);
+    const p = view.toStage(BX + (cx / n + 0.5) * CS, BY + (cy / n + 0.5) * CS);
+    Arcade.floatText(p.x, p.y, (mult > 1 ? `×${mult} ` : '') + '+' + gain, mult > 1 ? '#fde68a' : '#fff');
+    await settle();
+  }
+
+  async function gravity() {
+    for (let c = 0; c < N; c++) {
+      let w = N - 1;
+      for (let r = N - 1; r >= 0; r--) if (grid[r][c]) { if (w !== r) { grid[w][c] = grid[r][c]; grid[r][c] = null; } w--; }
+      let spawn = -1;
+      for (let r = w; r >= 0; r--) grid[r][c] = newTile((Math.random() * FRUITS.length) | 0, r, c, spawn--);
+    }
+    await settle();
+    Arcade.sfx('drop');
+  }
+
+  async function finishTurn() {
+    // level up?
+    if (Arcade.score - levelBase >= need()) {
+      levelBase += need(); level++;
+      const add = 10;
+      moves = Math.min(40, moves + add); stats();
+      Arcade.sfx('level'); Arcade.confetti(60);
+      const p = view.toStage(200, BY + N * CS / 2); Arcade.floatText(p.x, p.y, `LEVEL ${level}!  +${add} moves`, '#6ee7b7');
+    }
+    if (!findMove()) { // reshuffle
+      const p = view.toStage(200, BY + N * CS / 2); Arcade.floatText(p.x, p.y, 'Shuffle!', '#fff');
+      await sleep(400);
+      do { fill(); } while (!findMove());
+      await settle();
+    }
+    busy = false;
+    if (moves <= 0) Arcade.gameOver(Arcade.score, { title: 'Out of moves', stats: [['Level', level], ['Fruits', cleared], ['Best chain', '×' + bestCombo]], meta: { level, cleared } });
+  }
+
+  async function useKnife(r, c) {
+    if (!grid[r][c]) return;
+    busy = true; knives--; knifeMode = false;
+    Arcade.sfx('hit');
+    await clearSet(new Set([r * N + c]), 1, false);
+    await gravity();
+    await cascade(null);
+    finishTurn();
+  }
+
+  /* ---------- input ---------- */
+  function cellAt(p) { const c = Math.floor((p.x - BX) / CS), r = Math.floor((p.y - BY) / CS); return r >= 0 && r < N && c >= 0 && c < N ? [r, c] : null; }
+  const knifeBtn = () => ({ x: 200 - 70, y: BY + N * CS + 18, w: 140, h: 44 });
+  canvas.addEventListener('pointerdown', (e) => {
+    if (!Arcade.playing || busy) return;
+    const p = view.point(e), kb = knifeBtn();
+    if (p.x > kb.x && p.x < kb.x + kb.w && p.y > kb.y && p.y < kb.y + kb.h) { if (knives > 0) { knifeMode = !knifeMode; Arcade.sfx('click'); } return; }
+    const cell = cellAt(p); if (!cell) return;
+    idleT = 0; hint = null;
+    if (knifeMode) { useKnife(cell[0], cell[1]); return; }
+    if (sel && Math.abs(sel[0] - cell[0]) + Math.abs(sel[1] - cell[1]) === 1) { const s = sel; sel = null; swap(s, cell); return; }
+    sel = cell; drag = { cell, x: p.x, y: p.y }; Arcade.sfx('click');
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!drag || busy) return;
+    const p = view.point(e), dx = p.x - drag.x, dy = p.y - drag.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < CS * 0.4) return;
+    const [r, c] = drag.cell; drag = null;
+    const to = Math.abs(dx) > Math.abs(dy) ? [r, c + Math.sign(dx)] : [r + Math.sign(dy), c];
+    if (to[0] < 0 || to[0] >= N || to[1] < 0 || to[1] >= N) return;
+    sel = null; swap([r, c], to);
+  });
+  canvas.addEventListener('pointerup', () => (drag = null));
+
+  /* ---------- update / draw ---------- */
+  function update(dt) {
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const t = grid[r][c]; if (!t) continue;
+      if (t.x !== c) { const d = c - t.x, s = 9 * dt; t.x = Math.abs(d) <= s ? c : t.x + Math.sign(d) * s; }
+      if (t.y !== r) {
+        if (t.y < r) { t.vy = Math.min(22, t.vy + 60 * dt); t.y = Math.min(r, t.y + t.vy * dt); if (t.y === r) t.vy = 0; }
+        else { const s = 9 * dt; t.y = Math.max(r, t.y - s); }
+      }
+      t.scale += (1 - t.scale) * Math.min(1, dt * 8);
+    }
+    fx = fx.filter((f) => (f.t += dt) < (f.kind === 'pop' ? 0.22 : 0.4));
+    if (settleWaiters.length && settled()) { const w = settleWaiters; settleWaiters = []; w.forEach((f) => f()); }
+    if (Arcade.playing && !busy) { idleT += dt; if (idleT > 6 && !hint) hint = findMove(); }
+  }
+  function drawTile(t, px, py, s = 1, a = 1) {
+    const sz = CS * s, o = (CS - sz) / 2;
+    ctx.globalAlpha = a;
+    if (t.t >= 0) ctx.drawImage(sprites[t.t], px + o + 1, py + o + 1, sz - 2, sz - 2);
+    if (t.s === 'rainbow') {
+      const g = ctx.createConicGradient(performance.now() / 400, px + CS / 2, py + CS / 2);
+      ['#f43f5e', '#f59e0b', '#facc15', '#22c55e', '#3b82f6', '#a855f7', '#f43f5e'].forEach((c, i) => g.addColorStop(i / 6, c));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px + CS / 2, py + CS / 2, sz * 0.44, 0, 6.28); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px + CS / 2, py + CS / 2, sz * 0.16, 0, 6.28); ctx.fill();
+    } else if (t.s === 'row' || t.s === 'col') {
+      ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 3; ctx.shadowColor = '#fff'; ctx.shadowBlur = 8;
+      for (const d of [-0.18, 0.18]) { ctx.beginPath(); if (t.s === 'row') { ctx.moveTo(px + o + 6, py + CS / 2 + d * sz); ctx.lineTo(px + CS - o - 6, py + CS / 2 + d * sz); } else { ctx.moveTo(px + CS / 2 + d * sz, py + o + 6); ctx.lineTo(px + CS / 2 + d * sz, py + CS - o - 6); } ctx.stroke(); }
+      ctx.shadowBlur = 0;
+    } else if (t.s === 'bomb') {
+      const k = 0.5 + 0.5 * Math.sin(performance.now() / 150);
+      ctx.strokeStyle = `rgba(255,255,255,${0.5 + k * 0.5})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(px + o + 3, py + o + 3, sz - 6, sz - 6, 12); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function draw() {
+    ctx.clearRect(0, 0, view.w, view.h);
+    // level progress
+    const prog = Math.min(1, (Arcade.score - levelBase) / need());
+    ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.beginPath(); ctx.roundRect(BX, 18, N * CS, 14, 7); ctx.fill();
+    const g = ctx.createLinearGradient(BX, 0, BX + N * CS, 0); g.addColorStop(0, '#fb7185'); g.addColorStop(1, '#fbbf24');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(BX, 18, Math.max(14, N * CS * prog), 14, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = '600 12px Outfit'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(`Level ${level} goal: ${Math.max(0, Arcade.score - levelBase).toLocaleString()} / ${need().toLocaleString()}`, 200, 50);
+    // board
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.roundRect(BX - 6, BY - 6, N * CS + 12, N * CS + 12, 18); ctx.fill();
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) { ctx.fillStyle = (r + c) % 2 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.09)'; ctx.fillRect(BX + c * CS, BY + r * CS, CS, CS); }
+    ctx.save(); ctx.beginPath(); ctx.rect(BX - 6, BY - 2, N * CS + 12, N * CS + 8); ctx.clip();
+    const pulse = 1 + Math.sin(performance.now() / 160) * 0.06;
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const t = grid[r][c]; if (!t) continue;
+      const isSel = sel && sel[0] === r && sel[1] === c, isHint = hint && hint.some(([a, b]) => a === r && b === c);
+      if (isSel) { ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.roundRect(BX + t.x * CS, BY + t.y * CS, CS, CS, 12); ctx.fill(); }
+      drawTile(t, BX + t.x * CS, BY + t.y * CS, t.scale * (isSel || isHint ? pulse : 1));
+    }
+    for (const f of fx) {
+      if (f.kind === 'pop') { const k = f.t / 0.22; drawTile(f.tile, BX + f.x * CS, BY + f.y * CS, 1 + k * 0.4, 1 - k); }
+      else {
+        const k = f.t / 0.4; ctx.fillStyle = `rgba(255,255,255,${0.7 * (1 - k)})`;
+        if (f.kind === 'row') ctx.fillRect(BX, BY + f.r * CS + CS * 0.3, N * CS, CS * 0.4);
+        if (f.kind === 'col') ctx.fillRect(BX + f.c * CS + CS * 0.3, BY, CS * 0.4, N * CS);
+        if (f.kind === 'bomb') { ctx.beginPath(); ctx.arc(BX + (f.c + 0.5) * CS, BY + (f.r + 0.5) * CS, CS * (0.5 + k * 1.6), 0, 6.28); ctx.fill(); }
+      }
+    }
+    ctx.restore();
+    // knife button
+    const kb = knifeBtn();
+    ctx.fillStyle = knifeMode ? '#fbbf24' : knives ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)';
+    ctx.strokeStyle = knifeMode ? '#fde68a' : 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(kb.x, kb.y, kb.w, kb.h, 22); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = knifeMode ? '#2a1a00' : knives ? '#fff' : 'rgba(255,255,255,0.35)'; ctx.font = `600 16px Outfit, ${EMOJI_FONT}`; ctx.textBaseline = 'middle';
+    const label = knifeMode ? 'Tap a fruit to cut' : `Knife × ${knives}`, tw = ctx.measureText(label).width;
+    if (knifeImg.complete && knifeImg.naturalWidth) { ctx.globalAlpha = knives || knifeMode ? 1 : 0.4; ctx.drawImage(knifeImg, 200 - tw / 2 - 16, kb.y + kb.h / 2 - 11, 22, 22); ctx.globalAlpha = 1; ctx.fillText(label, 200 + 12, kb.y + kb.h / 2 + 1); }
+    else ctx.fillText(label, 200, kb.y + kb.h / 2 + 1);
+  }
+  function loop(ts) {
+    const dt = Math.min(0.033, (ts - (lastT || ts)) / 1000); lastT = ts;
+    if (grid) { update(dt); draw(); }
+    requestAnimationFrame(loop);
+  }
+
+  Arcade.init({
+    id: 'fruit-rush',
+    subtitle: 'Swap fruits, make matches, reach each level goal.',
+    howTo: ['<b>Swipe</b> a fruit (or tap two) to swap neighbours and make lines of 3+.', 'Match 4 makes a <b>line blaster</b>, an L/T shape makes a <b>bomb</b>, 5 in a row makes a <b>rainbow</b>.', 'Reach the level goal for <b>+10 moves</b>. Swaps that don’t match are free.', 'Use the 🔪 <b>knife</b> (3 per game) to cut any fruit without using a move.'],
+    onStart() { reset(); },
+  });
+  view = Arcade.fitCanvas(canvas, { w: 400, h: BY + N * CS + 80 });
+  ctx = view.ctx;
+  reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
