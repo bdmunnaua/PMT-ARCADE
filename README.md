@@ -208,6 +208,12 @@ Slots 7–10 are free for new games.
 * Server rules: `packages/games/src/<game>/` (rules.ts + module.ts) · browser UI: `apps/web/src/games/<game>/`
 * **Aviator needs a funded house bankroll**: Admin → Finance → Admin treasury → issue tokens, then Admin → Finance → House bankroll → *Treasury → bankroll*. Until then every Aviator bet is refused.
 * Add a game: [docs/ADDING_A_GAME.md](docs/ADDING_A_GAME.md) · contracts: [docs/GAME_INTEGRATION.md](docs/GAME_INTEGRATION.md). Wallet, escrow and settlement code never changes.
+* **Free games** (16, static pages in `apps/web/public/games/`): the server judges each score (`apps/api/src/arcade/rules.ts`) and pays bonus PMT from the rewards pool.
+* **Weekly tournament** (`apps/api/src/services/tournaments.ts`, page `/tournament`): one featured free game per Bangladesh week (Monday → Monday, rotation in `TOURNAMENT_GAMES`). Every finished game counts automatically; the best score per player ranks. The 10-minute cron pays the prizes once, 3 hours after the week ends, as bonus PMT from the rewards pool (one ledger transaction; if the pool is too small it retries on the next run). On/off and the prize list: Admin → Settings; last week's winners: Admin → Finance → Rewards pool.
+
+## Languages
+
+The player app and the free games are in **English and Bangla** (switch: “বাংলা / EN” in the header; remembered per browser, Bangla by default for Bangla-language phones). Text is written in English inside `t('…')` (`apps/web/src/lib/i18n.tsx`); the Bangla is in `apps/web/src/lib/i18n-bn.ts`, keyed by the English text — a missing entry simply shows English. The free games' screens use the same setting, with their Bangla in `apps/web/public/games/sdk/sdk.js` (`BN`). The admin panel stays in English.
 
 ## 11. Troubleshooting
 

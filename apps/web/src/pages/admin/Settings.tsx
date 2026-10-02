@@ -38,8 +38,12 @@ export default function SettingsPage() {
   const s = useApi<AdminSettingsDto>('/api/admin/settings');
   const [draft, setDraft] = useState<PlatformSettings | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [prizesText, setPrizesText] = useState('');
   useEffect(() => {
-    if (s.data) setDraft(s.data.settings);
+    if (s.data) {
+      setDraft(s.data.settings);
+      setPrizesText(s.data.settings.tournament_prizes_tokens.join(', '));
+    }
   }, [s.data]);
   if (s.loading && !s.data) return <PageLoader />;
   if (s.error || !s.data || !draft) return <ErrorState error={s.error} onRetry={s.reload} />;
@@ -74,6 +78,18 @@ export default function SettingsPage() {
             <Checkbox label="Free-game rewards enabled" hint="Free games keep working when off, but pay nothing" checked={draft.arcade_enabled} onChange={(v) => canEdit && set('arcade_enabled', v)} />
             <Checkbox label="Crypto withdrawals open" hint="Needs the payout hot wallet (PAYOUT_PRIVATE_KEY)" checked={draft.onchain_withdrawals_enabled} onChange={(v) => canEdit && set('onchain_withdrawals_enabled', v)} />
             <Checkbox label="Crypto deposits open" hint="Credited as bonus PMT before the public launch" checked={draft.onchain_deposits_enabled} onChange={(v) => canEdit && set('onchain_deposits_enabled', v)} />
+            <Checkbox label="Weekly free-game tournament" hint="Prizes are bonus PMT from the rewards pool, paid automatically after each week" checked={draft.tournament_enabled} onChange={(v) => canEdit && set('tournament_enabled', v)} />
+            <Input
+              label="Tournament prizes (PMT, 1st, 2nd, …)"
+              hint={`Up to 20 places · ${draft.tournament_prizes_tokens.reduce((a, b) => a + b, 0).toLocaleString()} PMT per week`}
+              value={prizesText}
+              onChange={(e) => {
+                setPrizesText(e.target.value);
+                const list = e.target.value.split(/[,\s]+/).filter(Boolean).map(Number);
+                if (list.length <= 20 && list.every((n) => Number.isSafeInteger(n) && n >= 0)) set('tournament_prizes_tokens', list);
+              }}
+              disabled={!canEdit}
+            />
             <Checkbox label="Player-to-player transfers enabled" checked={draft.transfers_enabled} onChange={(v) => canEdit && set('transfers_enabled', v)} />
             <Checkbox
               label="Reserve guard (recommended: on)"

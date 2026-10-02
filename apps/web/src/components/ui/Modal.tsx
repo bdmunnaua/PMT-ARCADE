@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { ApiError } from '../../lib/api';
 import { Button } from './Button';
 import { Textarea } from './Field';
+import { t } from '../../lib/i18n';
 
 export function Modal({ open, onClose, title, children, footer, size = 'md' }: { open: boolean; onClose: () => void; title: ReactNode; children: ReactNode; footer?: ReactNode; size?: 'sm' | 'md' | 'lg' }) {
   const titleId = useId();
@@ -52,7 +53,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: {
           <h2 id={titleId} className="text-base font-semibold">
             {title}
           </h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800" aria-label="Close">
+          <button onClick={onClose} className="rounded-lg p-1.5 text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800" aria-label={t("Close")}>
             <X className="size-4" />
           </button>
         </div>
@@ -90,7 +91,7 @@ export function ConfirmDialog({ open, onClose, title, message, confirmLabel, ton
   }, [open]);
   const run = async () => {
     if (reasonLabel && reason.trim().length < 3) {
-      setError('Please give a reason (at least 3 characters).');
+      setError(t("Please give a reason (at least 3 characters)."));
       return;
     }
     setBusy(true);
@@ -99,7 +100,7 @@ export function ConfirmDialog({ open, onClose, title, message, confirmLabel, ton
       await onConfirm(reason.trim());
       onClose();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Something went wrong.');
+      setError(e instanceof ApiError ? e.message : t("Something went wrong."));
     } finally {
       setBusy(false);
     }
@@ -113,7 +114,7 @@ export function ConfirmDialog({ open, onClose, title, message, confirmLabel, ton
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={busy}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button variant={tone} onClick={run} loading={busy}>
             {confirmLabel}

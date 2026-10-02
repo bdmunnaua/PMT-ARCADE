@@ -52,6 +52,10 @@ export const settingsSchema = z.object({
   arcade_referral_bonus_tokens: z.int().min(0).max(1_000_000_000),
   arcade_referral_welcome_tokens: z.int().min(0).max(1_000_000_000),
   arcade_referral_unlock_tokens: z.int().min(0).max(1_000_000_000),
+  /** weekly free-game tournament (prizes are bonus PMT from the rewards pool) */
+  tournament_enabled: z.boolean(),
+  /** prize per place in whole PMT: [1st, 2nd, …] — at most 20 places */
+  tournament_prizes_tokens: z.array(z.int().min(0).max(100_000_000)).max(20),
   /** PMT on BNB Chain: withdraw to a player's own wallet (admin approves each payout) */
   onchain_withdrawals_enabled: z.boolean(),
   /** PMT on BNB Chain: deposit back (credited as bonus before the public launch) */
@@ -101,6 +105,8 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   arcade_referral_bonus_tokens: 300,
   arcade_referral_welcome_tokens: 100,
   arcade_referral_unlock_tokens: 500,
+  tournament_enabled: true,
+  tournament_prizes_tokens: [20_000, 10_000, 5_000, 3_000, 2_000, 1_000, 1_000, 1_000, 1_000, 1_000],
   onchain_withdrawals_enabled: false,
   onchain_deposits_enabled: false,
   onchain_min_withdraw_tokens: 100_000,

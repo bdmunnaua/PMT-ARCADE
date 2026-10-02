@@ -16,6 +16,7 @@ import {
 import { Eye, EyeOff } from 'lucide-react';
 import { Button, Input } from '../components/ui';
 import { firebaseAuth } from '../lib/firebase';
+import { t } from '../lib/i18n';
 
 function authError(e: unknown): string {
   const code = (e as { code?: string })?.code ?? '';
@@ -30,7 +31,7 @@ function authError(e: unknown): string {
     'auth/popup-closed-by-user': 'The Google window was closed.',
     'auth/network-request-failed': 'Network error. Check your connection.',
   };
-  return map[code] ?? 'Sign-in failed. Please try again.';
+  return t(map[code] ?? 'Sign-in failed. Please try again.');
 }
 
 export function SignInCard() {
@@ -75,10 +76,10 @@ export function SignInCard() {
 
   const reset = async () => {
     setError(null);
-    if (!email.trim()) return setError('Type your email first, then press "Forgot password".');
+    if (!email.trim()) return setError(t("Type your email first, then press \"Forgot password\"."));
     try {
       await sendPasswordResetEmail(firebaseAuth(), email.trim());
-      setInfo('Password reset email sent — check your inbox.');
+      setInfo(t("Password reset email sent — check your inbox."));
     } catch (err) {
       setError(authError(err));
     }
@@ -89,7 +90,7 @@ export function SignInCard() {
       <div className="grid grid-cols-2 rounded-xl bg-ink-100 p-1 text-sm font-semibold dark:bg-ink-800">
         {(['in', 'up'] as const).map((m) => (
           <button key={m} type="button" onClick={() => setMode(m)} className={mode === m ? 'rounded-lg bg-white py-2 shadow dark:bg-ink-700' : 'py-2 text-ink-500'}>
-            {m === 'in' ? 'Sign in' : 'Create account'}
+            {m === 'in' ? t("Sign in") : t("Create account")}
           </button>
         ))}
       </div>
@@ -100,27 +101,27 @@ export function SignInCard() {
           <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
           <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
         </svg>
-        Continue with Google
+        {t("Continue with Google")}
       </Button>
       <div className="flex items-center gap-3 text-xs text-ink-400">
-        <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" /> or with email <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" />
+        <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" /> {t("or with email")} <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" />
       </div>
       <form onSubmit={submit} className="space-y-3">
-        <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+        <Input label={t("Email")} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
         <div className="relative">
-          <Input label="Password" type={show ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} minLength={6} required className="pr-11" />
-          <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-2.5 bottom-2 rounded-lg p-1 text-ink-400 hover:text-ink-700" aria-label={show ? 'Hide password' : 'Show password'}>
+          <Input label={t("Password")} type={show ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} minLength={6} required className="pr-11" />
+          <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-2.5 bottom-2 rounded-lg p-1 text-ink-400 hover:text-ink-700" aria-label={show ? t("Hide password") : t("Show password")}>
             {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>
         </div>
         {error && <p className="text-sm text-rose-600">{error}</p>}
         {info && <p className="text-sm text-emerald-600">{info}</p>}
         <Button type="submit" className="w-full" loading={busy}>
-          {mode === 'in' ? 'Sign in' : 'Create account'}
+          {mode === 'in' ? t("Sign in") : t("Create account")}
         </Button>
         {mode === 'in' && (
           <button type="button" onClick={() => void reset()} className="w-full text-center text-sm text-brand-600 hover:underline">
-            Forgot password?
+            {t("Forgot password?")}
           </button>
         )}
       </form>

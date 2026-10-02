@@ -8,6 +8,7 @@ import { timeAgo } from '../lib/format';
 import { usePaged } from '../lib/hooks';
 import { useRealtime } from '../lib/realtime';
 import { Button, Card, CardHeader, EmptyState, ErrorState, Pagination, SkeletonRows } from './ui';
+import { t } from '../lib/i18n';
 
 /** Shared by the player and admin notification pages (they read different audiences). */
 export function NotificationList({ audience }: { audience: 'player' | 'admin' }) {
@@ -24,11 +25,11 @@ export function NotificationList({ audience }: { audience: 'player' | 'admin' })
   return (
     <Card>
       <CardHeader
-        title="Notifications"
+        title={t("Notifications")}
         icon={<Bell className="size-4" />}
         actions={
           <Button variant="ghost" size="sm" icon={<CheckCheck className="size-4" />} onClick={() => post(`${base}/read`, { all: true }).then(list.reload)}>
-            Mark all read
+            {t("Mark all read")}
           </Button>
         }
       />
@@ -37,7 +38,7 @@ export function NotificationList({ audience }: { audience: 'player' | 'admin' })
       ) : !list.data ? (
         <SkeletonRows />
       ) : list.data.items.length === 0 ? (
-        <EmptyState title="You’re all caught up" description="Updates about your requests and matches appear here." />
+        <EmptyState title={t("You’re all caught up")} description={t("Updates about your requests and matches appear here.")} />
       ) : (
         <ul className="divide-y divide-ink-100 dark:divide-ink-800">
           {list.data.items.map((n) => (

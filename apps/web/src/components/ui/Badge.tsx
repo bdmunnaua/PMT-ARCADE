@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import { BUY_STATUS_LABELS, MATCH_STATUS_LABELS, SELL_STATUS_LABELS } from '@arena/shared';
+import { t } from '../../lib/i18n';
 
 export type Tone = 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'info';
 
@@ -61,5 +62,5 @@ const LABELS: Record<string, string> = { ...MATCH_STATUS_LABELS, ...SELL_STATUS_
 
 export function StatusBadge({ status }: { status: string }) {
   const label = LABELS[status] ?? status.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
-  return <Badge tone={STATUS_TONES[status] ?? 'neutral'}>{label}</Badge>;
+  return <Badge tone={STATUS_TONES[status] ?? 'neutral'}>{t(label)}</Badge>;
 }

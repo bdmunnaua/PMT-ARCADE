@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
+import { t } from '../../lib/i18n';
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
   return <section className={clsx('card', className)}>{children}</section>;
@@ -64,7 +65,7 @@ export function KeyValue({ items, columns = 2 }: { items: [ReactNode, ReactNode]
     <dl className={clsx('grid gap-x-6 gap-y-4', columns === 1 ? 'grid-cols-1' : columns === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3')}>
       {items.map(([k, v], i) => (
         <div key={i} className="min-w-0">
-          <dt className="text-xs font-medium tracking-wide text-ink-500 uppercase dark:text-ink-400">{k}</dt>
+          <dt className="text-xs font-medium tracking-wide text-ink-500 uppercase dark:text-ink-400">{typeof k === 'string' ? t(k) : k}</dt>
           <dd className="mt-1 text-sm font-medium break-words">{v}</dd>
         </div>
       ))}

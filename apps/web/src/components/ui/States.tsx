@@ -3,16 +3,17 @@ import { AlertCircle, Inbox, Loader2, RotateCcw } from 'lucide-react';
 import clsx from 'clsx';
 import type { ApiError } from '../../lib/api';
 import { Button } from './Button';
+import { t } from '../../lib/i18n';
 
 export function Spinner({ className }: { className?: string }) {
-  return <Loader2 className={clsx('size-5 animate-spin text-brand-500', className)} aria-label="Loading" />;
+  return <Loader2 className={clsx('size-5 animate-spin text-brand-500', className)} aria-label={t("Loading")} />;
 }
 
 export function PageLoader({ label = 'Loading…' }: { label?: string }) {
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-sm text-ink-500" role="status">
       <Spinner className="size-7" />
-      {label}
+      {t(label)}
     </div>
   );
 }
@@ -35,8 +36,8 @@ export function EmptyState({ title, description, icon, action }: { title: string
   return (
     <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
       <div className="mb-4 grid size-14 place-items-center rounded-2xl bg-ink-100 text-ink-400 dark:bg-ink-800">{icon ?? <Inbox className="size-6" />}</div>
-      <h3 className="font-semibold">{title}</h3>
-      {description && <p className="mt-1 max-w-sm text-sm text-ink-500 dark:text-ink-400">{description}</p>}
+      <h3 className="font-semibold">{t(title)}</h3>
+      {description && <p className="mt-1 max-w-sm text-sm text-ink-500 dark:text-ink-400">{typeof description === 'string' ? t(description) : description}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
@@ -44,16 +45,17 @@ export function EmptyState({ title, description, icon, action }: { title: string
 
 export function ErrorState({ error, onRetry }: { error: ApiError | Error | string | null; onRetry?: () => void }) {
   const message = typeof error === 'string' ? error : (error?.message ?? 'Something went wrong.');
+  // server messages are English; known ones have a Bangla translation
   return (
     <div className="flex flex-col items-center justify-center px-6 py-12 text-center" role="alert">
       <div className="mb-4 grid size-14 place-items-center rounded-2xl bg-rose-50 text-rose-500 dark:bg-rose-500/10">
         <AlertCircle className="size-6" />
       </div>
-      <h3 className="font-semibold">Couldn’t load this</h3>
-      <p className="mt-1 max-w-sm text-sm text-ink-500 dark:text-ink-400">{message}</p>
+      <h3 className="font-semibold">{t("Couldn’t load this")}</h3>
+      <p className="mt-1 max-w-sm text-sm text-ink-500 dark:text-ink-400">{t(message)}</p>
       {onRetry && (
         <Button variant="outline" size="sm" className="mt-5" icon={<RotateCcw className="size-3.5" />} onClick={onRetry}>
-          Try again
+          {t("Try again")}
         </Button>
       )}
     </div>

@@ -67,3 +67,27 @@ export const bdDayStart = (ms: number) => {
   d.setUTCHours(0, 0, 0, 0);
   return d.getTime() - BD_OFFSET;
 };
+
+/**
+ * Weekly tournament: Monday 00:00 → next Monday 00:00, Bangladesh time. The featured game
+ * rotates through this list (games with a wide score range, so ties are rare).
+ */
+export const TOURNAMENT_GAMES = ['neon-rush', 'tower-stack', 'merge-2048', 'snake-arena', 'fruit-slice', 'brick-breaker', 'sky-hop', 'block-fit', 'knife-throw', 'bubble-pop', 'bounce-up', 'fruit-rush', 'rhythm-tiles', 'color-sort'];
+/** the first tournament week (earlier weeks are never paid) */
+export const TOURNAMENT_FIRST_WEEK = '2026-09-28';
+export const WEEK_MS = 7 * 86_400_000;
+/** prizes are paid this long after the week ends, so games started before the end can still finish */
+export const TOURNAMENT_GRACE_MS = RUN_MAX_MS;
+
+/** Start (ms) of the Bangladesh week containing `ms`. */
+export function tournamentWeekStart(ms: number): number {
+  const daysSinceMonday = (new Date(ms + BD_OFFSET).getUTCDay() + 6) % 7;
+  return bdDayStart(ms) - daysSinceMonday * 86_400_000;
+}
+
+export function tournamentWeek(startMs: number): { weekStart: string; gameId: string; startsAt: number; endsAt: number } {
+  const epoch = Date.UTC(2026, 0, 5) - BD_OFFSET; // a Monday, Bangladesh time
+  const i = Math.round((startMs - epoch) / WEEK_MS);
+  const n = TOURNAMENT_GAMES.length;
+  return { weekStart: bdDate(startMs), gameId: TOURNAMENT_GAMES[((i % n) + n) % n]!, startsAt: startMs, endsAt: startMs + WEEK_MS };
+}

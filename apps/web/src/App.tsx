@@ -24,6 +24,7 @@ const TransactionsPage = lazy(() => import('./pages/player/Transactions'));
 const TransactionDetailPage = lazy(() => import('./pages/player/TransactionDetail'));
 const BuyRequestDetailPage = lazy(() => import('./pages/player/BuyRequestDetail'));
 const SellRequestDetailPage = lazy(() => import('./pages/player/SellRequestDetail'));
+const TournamentPage = lazy(() => import('./pages/player/Tournament'));
 const LeaderboardPage = lazy(() => import('./pages/player/Leaderboard'));
 const NotificationsPage = lazy(() => import('./pages/player/Notifications'));
 const SupportPage = lazy(() => import('./pages/player/Support'));
@@ -108,6 +109,7 @@ const router = createBrowserRouter([
       { path: 'wallet/transactions/:id', element: <TransactionDetailPage /> },
       { path: 'wallet/buy/:id', element: <BuyRequestDetailPage /> },
       { path: 'wallet/sell/:id', element: <SellRequestDetailPage /> },
+      { path: 'tournament', element: <TournamentPage /> },
       { path: 'leaderboard', element: <LeaderboardPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
       { path: 'support', element: <SupportPage /> },

@@ -9,6 +9,7 @@ import { tokens } from '../lib/format';
 import { useApi } from '../lib/hooks';
 import { useWallet } from './Wallet';
 import { Badge, Button, Card, CardBody, CardHeader, Input, useToast } from './ui';
+import { t, tn } from '../lib/i18n';
 
 export const useArcadeConfig = () => useApi<ArcadeConfigDto>('/api/arcade/config');
 
@@ -19,13 +20,13 @@ export function FreeGameCard({ game, to, href, plays }: { game: ArcadeGameDto; t
       <div className="stage-3d relative grid aspect-[4/3] place-items-center overflow-hidden rounded-2xl" style={{ background: `linear-gradient(135deg, ${game.colors[0]}, ${game.colors[1]})` }}>
         <span className="text-5xl drop-shadow-[0_8px_10px_rgb(0_0_0/0.35)] transition-transform duration-300 [transform:rotateX(18deg)_translateZ(0)] group-hover:scale-110 group-hover:[transform:rotateX(0deg)]">{game.emoji}</span>
         <span className="absolute inset-0 bg-[radial-gradient(90%_60%_at_25%_0%,rgb(255_255_255/0.35),transparent_60%)]" />
-        {game.isNew && <span className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-black text-ink-900">NEW</span>}
-        {!!plays && <span className="absolute right-2 bottom-2 rounded-full bg-black/35 px-2 py-0.5 text-[10px] font-semibold text-white">{plays.toLocaleString()} plays</span>}
+        {game.isNew && <span className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-black text-ink-900">{t("NEW")}</span>}
+        {!!plays && <span className="absolute right-2 bottom-2 rounded-full bg-black/35 px-2 py-0.5 text-[10px] font-semibold text-white">{tn(plays, '{n} play', '{n} plays')}</span>}
       </div>
       <div className="px-1 pt-2">
         <p className="truncate text-sm font-bold">{game.name}</p>
         <p className="truncate text-xs text-ink-500">
-          {game.tag} · up to {game.maxPerRunTokens} PMT
+          {t(game.tag)} · {t("up to {n} PMT", { n: game.maxPerRunTokens })}
         </p>
       </div>
     </>
@@ -67,26 +68,26 @@ export function CheckinCard() {
       me.reload();
       wallet.reload();
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : 'Check-in failed.');
+      toast.error(e instanceof ApiError ? e.message : t("Check-in failed."));
     } finally {
       setBusy(false);
     }
   };
   return (
     <Card>
-      <CardHeader title="Daily check-in" subtitle="Come back every day — the reward grows with your streak." icon={<CalendarCheck className="size-4" />} />
+      <CardHeader title={t("Daily check-in")} subtitle={t("Come back every day — the reward grows with your streak.")} icon={<CalendarCheck className="size-4" />} />
       <CardBody className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className={clsx('grid size-12 place-items-center rounded-2xl text-white shadow-lg', m?.streak ? 'bg-gradient-to-br from-orange-400 to-rose-500' : 'bg-ink-300 dark:bg-ink-700')}>
             <Flame className="size-6" />
           </span>
           <div>
-            <p className="text-lg font-black">{m ? `${m.streak} day${m.streak === 1 ? '' : 's'}` : '…'}</p>
-            <p className="text-xs text-ink-500">{m ? `Free games today: ${tokens(m.earnedTodayUnits)} of ${tokens(m.dailyCapUnits)}` : ''}</p>
+            <p className="text-lg font-black">{m ? tn(m.streak, '{n} day', '{n} days') : '…'}</p>
+            <p className="text-xs text-ink-500">{m ? t('Free games today: {a} of {b}', { a: tokens(m.earnedTodayUnits), b: tokens(m.dailyCapUnits) }) : ''}</p>
           </div>
         </div>
         <Button loading={busy} disabled={!m || m.checkedInToday} onClick={checkin}>
-          {m?.checkedInToday ? 'Checked in ✓' : `Check in · +${m?.nextCheckinTokens ?? ''} PMT`}
+          {m?.checkedInToday ? t("Checked in ✓") : t('Check in · +{n} PMT', { n: m?.nextCheckinTokens ?? '' })}
         </Button>
       </CardBody>
     </Card>
@@ -105,19 +106,19 @@ export function InviteCard() {
   const use = async () => {
     try {
       await post('/api/arcade/referral', { code: code.trim() });
-      toast.success('Invite code saved.');
+      toast.success(t("Invite code saved."));
       me.reload();
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : 'Could not use that code.');
+      toast.error(e instanceof ApiError ? e.message : t("Could not use that code."));
     }
   };
   return (
     <Card>
       <CardHeader
-        title="Invite friends"
+        title={t("Invite friends")}
         icon={<Gift className="size-4" />}
-        subtitle={c ? `You get ${c.referralBonusTokens} PMT and your friend ${c.referralWelcomeTokens} PMT once they earn ${c.referralUnlockTokens} PMT from free games.` : undefined}
-        actions={m ? <Badge tone="brand">{m.refCount} invited</Badge> : null}
+        subtitle={c ? t('You get {a} PMT and your friend {b} PMT once they earn {c} PMT from free games.', { a: c.referralBonusTokens, b: c.referralWelcomeTokens, c: c.referralUnlockTokens }) : undefined}
+        actions={m ? <Badge tone="brand">{t('{n} invited', { n: m.refCount })}</Badge> : null}
       />
       <CardBody className="space-y-3">
         <div className="flex items-center gap-2 rounded-xl bg-ink-50 px-3 py-2 dark:bg-ink-850">
@@ -126,18 +127,18 @@ export function InviteCard() {
             size="sm"
             variant="outline"
             icon={<Copy className="size-4" />}
-            onClick={() => navigator.clipboard?.writeText(link).then(() => toast.success('Invite link copied.'), () => toast.error('Could not copy.'))}
+            onClick={() => navigator.clipboard?.writeText(link).then(() => toast.success(t("Invite link copied.")), () => toast.error(t("Could not copy.")))}
           >
-            Copy
+            {t("Copy")}
           </Button>
         </div>
         {m && !m.referred && (
           <div className="flex items-end gap-2">
             <div className="flex-1">
-              <Input label="Got an invite code?" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ABC2345" maxLength={12} />
+              <Input label={t("Got an invite code?")} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ABC2345" maxLength={12} />
             </div>
             <Button variant="outline" disabled={code.trim().length < 4} onClick={use}>
-              Use code
+              {t("Use code")}
             </Button>
           </div>
         )}

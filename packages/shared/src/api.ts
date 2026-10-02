@@ -603,6 +603,29 @@ export interface ArcadeLeaderboardDto {
   since: number;
   rows: { playerNumber: number; name: string; score: number; isYou?: boolean }[];
 }
+/** Weekly free-game tournament: best score in the featured game, Monday → Monday (Bangladesh time). */
+export interface TournamentRowDto {
+  rank: number;
+  playerNumber: number;
+  name: string;
+  score: number;
+  /** prize for this place (paid, or what it would pay if the week ended now) */
+  prizeUnits: number;
+  isYou?: boolean;
+}
+export interface TournamentWeekDto {
+  weekStart: string;
+  gameId: string;
+  startsAt: number;
+  endsAt: number;
+}
+export interface TournamentDto {
+  enabled: boolean;
+  current: TournamentWeekDto & { prizesUnits: number[]; players: number; rows: TournamentRowDto[]; you: { rank: number; score: number } | null };
+  next: TournamentWeekDto;
+  /** the week before: PENDING while late scores can still arrive, then PAID / NO_ENTRIES / OFF */
+  last: (TournamentWeekDto & { status: 'PENDING' | 'PAID' | 'NO_ENTRIES' | 'OFF'; rows: TournamentRowDto[] }) | null;
+}
 export interface RewardsPoolDto {
   balanceUnits: number;
   paidTodayUnits: number;

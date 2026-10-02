@@ -6,6 +6,7 @@ import { ApiError, get, post } from '../lib/api';
 import { dateTime } from '../lib/format';
 import { useRealtime } from '../lib/realtime';
 import { Button, Card, CardHeader, EmptyState, Spinner } from './ui';
+import { t } from '../lib/i18n';
 
 /**
  * Private chat attached to a buy/sell request. `side` decides which API is used:
@@ -24,7 +25,7 @@ export function ChatPanel({ kind, requestId, side, canSend = true }: { kind: Fin
       setMessages(await get<ChatMessageDto[]>(base));
       await post(`${base}/read`);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Could not load messages.');
+      setError(e instanceof ApiError ? e.message : t("Could not load messages."));
     }
   }, [base]);
 
@@ -47,7 +48,7 @@ export function ChatPanel({ kind, requestId, side, canSend = true }: { kind: Fin
       setMessages((m) => [...(m ?? []), sent]);
       setText('');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Message not sent.');
+      setError(err instanceof ApiError ? err.message : t("Message not sent."));
     } finally {
       setSending(false);
     }
@@ -55,14 +56,14 @@ export function ChatPanel({ kind, requestId, side, canSend = true }: { kind: Fin
 
   return (
     <Card className="flex flex-col">
-      <CardHeader title="Conversation" subtitle={side === 'PLAYER' ? 'Private chat with the support team about this request' : 'Private chat with the player'} icon={<MessageSquare className="size-4" />} />
+      <CardHeader title={t("Conversation")} subtitle={side === 'PLAYER' ? t("Private chat with the support team about this request") : t("Private chat with the player")} icon={<MessageSquare className="size-4" />} />
       <div className="max-h-[420px] min-h-48 flex-1 space-y-3 overflow-y-auto px-5 py-4" aria-live="polite">
         {messages === null && !error && (
           <div className="flex justify-center py-8">
             <Spinner />
           </div>
         )}
-        {messages?.length === 0 && <EmptyState title="No messages yet" description="Questions about this request? Send a message." />}
+        {messages?.length === 0 && <EmptyState title={t("No messages yet")} description={t("Questions about this request? Send a message.")} />}
         {messages?.map((m) => (
           <div key={m.id} className={clsx('flex', m.isMine ? 'justify-end' : 'justify-start')}>
             <div
@@ -75,7 +76,7 @@ export function ChatPanel({ kind, requestId, side, canSend = true }: { kind: Fin
               <p className="break-words whitespace-pre-wrap">{m.message}</p>
               <p className={clsx('mt-1 text-[11px]', m.isMine ? 'text-white/70' : 'text-ink-500')}>
                 {dateTime(m.createdAt)}
-                {m.isMine && m.readAt ? ' · Read' : ''}
+                {m.isMine && m.readAt ? t(" · Read") : ''}
               </p>
             </div>
           </div>
@@ -86,11 +87,11 @@ export function ChatPanel({ kind, requestId, side, canSend = true }: { kind: Fin
       {canSend && (
         <form onSubmit={send} className="flex gap-2 border-t border-ink-100 p-3 dark:border-ink-800">
           <label htmlFor={`chat-${requestId}`} className="sr-only">
-            Message
+            {t("Message")}
           </label>
           <input id={`chat-${requestId}`} className="input" placeholder="Write a message… (never share PINs or OTPs)" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} />
-          <Button type="submit" loading={sending} icon={<Send className="size-4" />} aria-label="Send message">
-            <span className="hidden sm:inline">Send</span>
+          <Button type="submit" loading={sending} icon={<Send className="size-4" />} aria-label={t("Send message")}>
+            <span className="hidden sm:inline">{t("Send")}</span>
           </Button>
         </form>
       )}

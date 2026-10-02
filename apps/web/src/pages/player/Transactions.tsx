@@ -6,25 +6,26 @@ import { Amount } from '../../components/Common';
 import { Badge, Card, DataTable, FilterBar, Input, PageHeader, Pagination, Select, StatusBadge, Tabs } from '../../components/ui';
 import { bdt, dateTime, tokens } from '../../lib/format';
 import { useApi, useDocumentTitle, usePaged } from '../../lib/hooks';
+import { t, t as tr } from '../../lib/i18n';
 
 type Tab = 'ledger' | 'buy' | 'sell';
 
 const toMs = (d: string, end = false) => (d ? new Date(`${d}T${end ? '23:59:59' : '00:00:00'}`).getTime() : undefined);
 
 export default function TransactionsPage() {
-  useDocumentTitle('Transaction history');
+  useDocumentTitle(t("Transaction history"));
   const [params, setParams] = useSearchParams();
   const tab = (params.get('tab') as Tab) || 'ledger';
   return (
     <div className="space-y-4">
-      <PageHeader back={<BackLink to="/wallet">Wallet</BackLink>} title="Transaction history" subtitle="Every token movement on your account, from the immutable ledger." />
+      <PageHeader back={<BackLink to="/wallet">{t("Wallet")}</BackLink>} title={t("Transaction history")} subtitle={t("Every token movement on your account, from the immutable ledger.")} />
       <Tabs<Tab>
         value={tab}
         onChange={(t) => setParams({ tab: t })}
         items={[
-          { key: 'ledger', label: 'Token movements' },
-          { key: 'buy', label: 'Buy requests' },
-          { key: 'sell', label: 'Sell requests' },
+          { key: 'ledger', label: t("Token movements") },
+          { key: 'buy', label: t("Buy requests") },
+          { key: 'sell', label: t("Sell requests") },
         ]}
       />
       {tab === 'ledger' ? <LedgerTab /> : tab === 'buy' ? <BuyTab /> : <SellTab />}
@@ -44,25 +45,25 @@ function LedgerTab() {
   return (
     <Card>
       <FilterBar>
-        <Select label="Type" value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">All types</option>
+        <Select label={t("Type")} value={category} onChange={(e) => setCategory(e.target.value)}>
+          <option value="">{t("All types")}</option>
           {PLAYER_TX_CATEGORIES.map((c) => (
             <option key={c} value={c}>
-              {TX_CATEGORY_LABELS[c]}
+              {t(TX_CATEGORY_LABELS[c])}
             </option>
           ))}
         </Select>
-        <Input label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <Input label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        <Select label="Game" value={gameId} onChange={(e) => setGameId(e.target.value)}>
-          <option value="">All games</option>
+        <Input label={t("From")} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <Input label={t("To")} type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        <Select label={t("Game")} value={gameId} onChange={(e) => setGameId(e.target.value)}>
+          <option value="">{t("All games")}</option>
           {games.data?.map((g) => (
             <option key={g.id} value={g.id}>
               {g.name}
             </option>
           ))}
         </Select>
-        <Input label="Transaction ID" value={txId} onChange={(e) => setTxId(e.target.value)} placeholder="01J…" />
+        <Input label={t("Transaction ID")} value={txId} onChange={(e) => setTxId(e.target.value)} placeholder="01J…" />
       </FilterBar>
       <DataTable
         rows={list.data?.items}
@@ -71,14 +72,14 @@ function LedgerTab() {
         onRetry={list.reload}
         rowKey={(t) => t.id}
         onRowClick={(t) => navigate(`/wallet/transactions/${t.id}`)}
-        empty={{ title: 'No transactions match', description: 'Try clearing the filters.' }}
+        empty={{ title: t("No transactions match"), description: t("Try clearing the filters.") }}
         columns={[
-          { header: 'Date', cell: (t) => <span className="text-ink-500">{dateTime(t.createdAt)}</span> },
-          { header: 'Type', cell: (t) => <Badge tone="neutral">{TX_CATEGORY_LABELS[t.category]}</Badge> },
-          { header: 'Description', cell: (t) => <span className="text-ink-600 dark:text-ink-300">{t.description}</span>, hideOnMobile: true },
-          { header: 'Available', cell: (t) => (t.effects.AVAILABLE ? <Amount units={t.effects.AVAILABLE} signed /> : '—'), className: 'text-right' },
-          { header: 'Locked / bonus', cell: (t) => <LockedEffects t={t} />, className: 'text-right', hideOnMobile: true },
-          { header: 'Status', cell: () => <StatusBadge status="COMPLETED" />, hideOnMobile: true },
+          { header: t("Date"), cell: (t) => <span className="text-ink-500">{dateTime(t.createdAt)}</span> },
+          { header: t("Type"), cell: (t) => <Badge tone="neutral">{tr(TX_CATEGORY_LABELS[t.category])}</Badge> },
+          { header: t("Description"), cell: (t) => <span className="text-ink-600 dark:text-ink-300">{t.description}</span>, hideOnMobile: true },
+          { header: t("Available"), cell: (t) => (t.effects.AVAILABLE ? <Amount units={t.effects.AVAILABLE} signed /> : '—'), className: 'text-right' },
+          { header: t("Locked / bonus"), cell: (t) => <LockedEffects t={t} />, className: 'text-right', hideOnMobile: true },
+          { header: t("Status"), cell: () => <StatusBadge status="COMPLETED" />, hideOnMobile: true },
         ]}
       />
       <Pagination page={list.page} hasMore={!!list.data?.hasMore} onPage={list.setPage} />
@@ -88,9 +89,9 @@ function LedgerTab() {
 
 function LockedEffects({ t }: { t: PlayerTransactionDto }) {
   const parts = [
-    t.effects.LOCKED_GAME ? `game ${tokens(t.effects.LOCKED_GAME, { signed: true })}` : null,
-    t.effects.LOCKED_SELL ? `sell ${tokens(t.effects.LOCKED_SELL, { signed: true })}` : null,
-    t.effects.BONUS ? `bonus ${tokens(t.effects.BONUS, { signed: true })}` : null,
+    t.effects.LOCKED_GAME ? `${tr('game')} ${tokens(t.effects.LOCKED_GAME, { signed: true })}` : null,
+    t.effects.LOCKED_SELL ? `${tr('sell')} ${tokens(t.effects.LOCKED_SELL, { signed: true })}` : null,
+    t.effects.BONUS ? `${tr('bonus')} ${tokens(t.effects.BONUS, { signed: true })}` : null,
   ].filter(Boolean);
   return <span className="text-xs text-ink-500">{parts.length ? parts.join(' · ') : '—'}</span>;
 }
@@ -102,11 +103,11 @@ function BuyTab() {
   return (
     <Card>
       <FilterBar>
-        <Select label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">All statuses</option>
+        <Select label={t("Status")} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">{t("All statuses")}</option>
           {BUY_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {BUY_STATUS_LABELS[s]}
+              {t(BUY_STATUS_LABELS[s])}
             </option>
           ))}
         </Select>
@@ -118,14 +119,14 @@ function BuyTab() {
         onRetry={list.reload}
         rowKey={(r) => r.id}
         onRowClick={(r) => navigate(`/wallet/buy/${r.id}`)}
-        empty={{ title: 'No buy requests' }}
+        empty={{ title: t("No buy requests") }}
         columns={[
-          { header: 'Request', cell: (r) => <span className="font-semibold">#{r.requestNumber}</span> },
-          { header: 'Date', cell: (r) => dateTime(r.createdAt), hideOnMobile: true },
-          { header: 'Paid', cell: (r) => bdt(r.amountPoisha) },
-          { header: 'Tokens', cell: (r) => tokens(r.tokenUnits) },
-          { header: 'Rate', cell: (r) => `৳1 = ${r.rateTokensPerBdt}`, hideOnMobile: true },
-          { header: 'Status', cell: (r) => <StatusBadge status={r.status} /> },
+          { header: t("Request"), cell: (r) => <span className="font-semibold">#{r.requestNumber}</span> },
+          { header: t("Date"), cell: (r) => dateTime(r.createdAt), hideOnMobile: true },
+          { header: t("Paid"), cell: (r) => bdt(r.amountPoisha) },
+          { header: t("Tokens"), cell: (r) => tokens(r.tokenUnits) },
+          { header: t("Rate"), cell: (r) => `৳1 = ${r.rateTokensPerBdt}`, hideOnMobile: true },
+          { header: t("Status"), cell: (r) => <StatusBadge status={r.status} /> },
         ]}
       />
       <Pagination page={list.page} hasMore={!!list.data?.hasMore} onPage={list.setPage} />
@@ -140,11 +141,11 @@ function SellTab() {
   return (
     <Card>
       <FilterBar>
-        <Select label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">All statuses</option>
+        <Select label={t("Status")} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">{t("All statuses")}</option>
           {SELL_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {SELL_STATUS_LABELS[s]}
+              {t(SELL_STATUS_LABELS[s])}
             </option>
           ))}
         </Select>
@@ -156,14 +157,14 @@ function SellTab() {
         onRetry={list.reload}
         rowKey={(r) => r.id}
         onRowClick={(r) => navigate(`/wallet/sell/${r.id}`)}
-        empty={{ title: 'No sell requests' }}
+        empty={{ title: t("No sell requests") }}
         columns={[
-          { header: 'Request', cell: (r) => <span className="font-semibold">#{r.requestNumber}</span> },
-          { header: 'Date', cell: (r) => dateTime(r.createdAt), hideOnMobile: true },
-          { header: 'Tokens', cell: (r) => tokens(r.amountUnits) },
-          { header: 'Payout', cell: (r) => bdt(r.bdtPoisha) },
-          { header: 'Rate', cell: (r) => `${r.rateTokensPerBdt} = ৳1`, hideOnMobile: true },
-          { header: 'Status', cell: (r) => <StatusBadge status={r.status} /> },
+          { header: t("Request"), cell: (r) => <span className="font-semibold">#{r.requestNumber}</span> },
+          { header: t("Date"), cell: (r) => dateTime(r.createdAt), hideOnMobile: true },
+          { header: t("Tokens"), cell: (r) => tokens(r.amountUnits) },
+          { header: t("Payout"), cell: (r) => bdt(r.bdtPoisha) },
+          { header: t("Rate"), cell: (r) => `${r.rateTokensPerBdt} = ৳1`, hideOnMobile: true },
+          { header: t("Status"), cell: (r) => <StatusBadge status={r.status} /> },
         ]}
       />
       <Pagination page={list.page} hasMore={!!list.data?.hasMore} onPage={list.setPage} />

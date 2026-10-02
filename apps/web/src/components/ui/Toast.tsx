@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { CheckCircle2, Info, XCircle } from 'lucide-react';
 import clsx from 'clsx';
+import { t as tr } from '../../lib/i18n';
 
 type ToastTone = 'success' | 'error' | 'info';
 interface ToastItem {
@@ -34,7 +35,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role={t.tone === 'error' ? 'alert' : 'status'}
           >
             {t.tone === 'success' ? <CheckCircle2 className="size-5 shrink-0" /> : t.tone === 'error' ? <XCircle className="size-5 shrink-0" /> : <Info className="size-5 shrink-0" />}
-            <span>{t.message}</span>
+            <span>{tr(t.message)}</span>
           </div>
         ))}
       </div>

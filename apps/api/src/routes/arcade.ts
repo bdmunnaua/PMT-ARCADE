@@ -1,5 +1,5 @@
 /**
- * Free arcade games. Public: config, popularity, leaderboards. Signed in: profile, daily check-in,
+ * Free arcade games. Public: config, popularity, leaderboards, the weekly tournament. Signed in: profile, daily check-in,
  * invite codes, and game sessions (start → finish with a score; the server decides the reward).
  */
 import { Hono, type MiddlewareHandler } from 'hono';
@@ -17,6 +17,9 @@ export function arcadeRoutes(auth: MiddlewareHandler<AppEnv>) {
     return ok(c, { plays: await c.get('services').arcade.popular() });
   });
   r.get('/leaderboard', async (c) => ok(c, await c.get('services').arcade.leaderboard(c.req.query('game') ?? '', null)));
+
+  r.get('/tournament', async (c) => ok(c, await c.get('services').tournaments.view(null)));
+  r.get('/tournament/me', auth, requireUser, async (c) => ok(c, await c.get('services').tournaments.view(c.get('user').id)));
 
   r.get('/me', auth, requireUser, async (c) => ok(c, await c.get('services').arcade.me(c.get('user'))));
   r.post('/checkin', auth, requireUser, rateLimit('arcade_checkin'), async (c) => ok(c, await c.get('services').arcade.checkin(c.get('user'))));

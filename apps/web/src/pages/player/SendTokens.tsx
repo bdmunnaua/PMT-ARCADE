@@ -9,10 +9,11 @@ import { Button, Card, CardBody, CardHeader, ConfirmDialog, Input, KeyValue, Not
 import { ApiError, get, post } from '../../lib/api';
 import { tokens } from '../../lib/format';
 import { useDocumentTitle, useIdempotencyKey } from '../../lib/hooks';
+import { t } from '../../lib/i18n';
 
 /** Send PMT to another player by player number (bought or won PMT only; bonus cannot be sent). */
 export default function SendTokensPage() {
-  useDocumentTitle('Send PMT');
+  useDocumentTitle(t("Send PMT"));
   const config = useConfig();
   const me = useMe();
   const wallet = useWallet();
@@ -32,12 +33,12 @@ export default function SendTokensPage() {
     setRecipient(null);
     setLookupError(null);
     if (!Number.isInteger(n) || n < 100_000) return;
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       get<TransferRecipientDto>(`/api/wallet/transfers/recipient/${n}`)
         .then(setRecipient)
-        .catch((e: unknown) => setLookupError(e instanceof ApiError && e.code === 'NOT_FOUND' ? 'No player has that number.' : 'Could not look that player up.'));
+        .catch((e: unknown) => setLookupError(t(e instanceof ApiError && e.code === 'NOT_FOUND' ? 'No player has that number.' : 'Could not look that player up.')));
     }, 350);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [n]);
 
   if (!config) return <PageLoader />;
@@ -45,7 +46,7 @@ export default function SendTokensPage() {
   const available = wallet.data?.availableUnits ?? 0;
   const min = config.minimumTransferTokens * 100;
   const fee = units ? Math.floor((units * config.transferFeeBps) / 10_000) : 0;
-  const amountError = amount && (units === null || units < min) ? `Send at least ${tokens(min)}.` : units && units > available ? 'More than your available PMT (bonus PMT cannot be sent).' : null;
+  const amountError = amount && (units === null || units < min) ? t('Send at least {amount}.', { amount: tokens(min) }) : units && units > available ? t('More than your available PMT (bonus PMT cannot be sent).') : null;
   const self = recipient?.playerNumber === me.playerNumber;
   const ready = !!recipient && !self && !!units && !amountError && config.transfersEnabled && me.accountStatus === 'ACTIVE';
 
@@ -56,15 +57,15 @@ export default function SendTokensPage() {
 
   return (
     <div className="space-y-6">
-      <BackLink to="/wallet">Wallet</BackLink>
-      <PageHeader title="Send PMT" subtitle="Send PMT to another player using their player number." />
-      {!config.transfersEnabled && <Notice tone="warning">Sending PMT is switched off right now.</Notice>}
+      <BackLink to="/wallet">{t("Wallet")}</BackLink>
+      <PageHeader title={t("Send PMT")} subtitle={t("Send PMT to another player using their player number.")} />
+      {!config.transfersEnabled && <Notice tone="warning">{t("Sending PMT is switched off right now.")}</Notice>}
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <Card>
-          <CardHeader title="Transfer" subtitle={`Available to send: ${tokens(available)}`} />
+          <CardHeader title={t("Transfer")} subtitle={t('Available to send: {amount}', { amount: tokens(available) })} />
           <CardBody>
             <form onSubmit={submit} className="space-y-4">
-              <Input label="Player number" value={number} onChange={(e) => setNumber(e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="100002" error={lookupError ?? (self ? 'That is you.' : undefined)} required />
+              <Input label={t("Player number")} value={number} onChange={(e) => setNumber(e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="100002" error={lookupError ?? (self ? t('That is you.') : undefined)} required />
               {recipient && !self && (
                 <div className="flex items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm dark:bg-emerald-500/10">
                   <UserRound className="size-4 text-emerald-600" />
@@ -73,28 +74,28 @@ export default function SendTokensPage() {
                   </span>
                 </div>
               )}
-              <Input label="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" suffix="PMT" error={amountError ?? undefined} required />
-              <Input label="Message (optional)" value={note} onChange={(e) => setNote(e.target.value)} maxLength={140} placeholder="For the match" />
+              <Input label={t("Amount")} value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" suffix="PMT" error={amountError ?? undefined} required />
+              <Input label={t("Message (optional)")} value={note} onChange={(e) => setNote(e.target.value)} maxLength={140} placeholder="For the match" />
               <Button type="submit" size="lg" className="w-full" disabled={!ready} icon={<Send className="size-4" />}>
-                Send {units ? tokens(units) : ''}
+                {t("Send")} {units ? tokens(units) : ''}
               </Button>
             </form>
           </CardBody>
         </Card>
         <Card>
-          <CardHeader title="Good to know" />
+          <CardHeader title={t("Good to know")} />
           <CardBody className="space-y-2 text-sm text-ink-600 dark:text-ink-300">
-            <p>• Fee: {config.transferFeeBps / 100}% — the player receives the amount minus the fee.</p>
-            <p>• Minimum {tokens(min)}; up to {tokens(config.dailyTransferLimitTokens * 100)} per 24 hours.</p>
-            <p>• Only PMT you bought or won can be sent. Bonus PMT from free games stays with you.</p>
-            <p>• Transfers cannot be undone — check the player number and name.</p>
+            <p>• {t('Fee: {fee}% — the player receives the amount minus the fee.', { fee: config.transferFeeBps / 100 })}</p>
+            <p>• {t('Minimum {min}; up to {max} per 24 hours.', { min: tokens(min), max: tokens(config.dailyTransferLimitTokens * 100) })}</p>
+            <p>• {t("Only PMT you bought or won can be sent. Bonus PMT from free games stays with you.")}</p>
+            <p>• {t("Transfers cannot be undone — check the player number and name.")}</p>
           </CardBody>
         </Card>
       </div>
       <ConfirmDialog
         open={confirming}
         onClose={() => setConfirming(false)}
-        title="Send PMT?"
+        title={t("Send PMT?")}
         confirmLabel={`Send ${tokens(units ?? 0)}`}
         message={
           <KeyValue

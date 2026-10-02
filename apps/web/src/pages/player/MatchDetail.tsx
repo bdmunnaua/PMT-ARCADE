@@ -12,6 +12,7 @@ import { ApiError, post } from '../../lib/api';
 import { dateTime, percentFromBps, tokens } from '../../lib/format';
 import { useApi, useDocumentTitle } from '../../lib/hooks';
 import { useRealtime } from '../../lib/realtime';
+import { t } from '../../lib/i18n';
 
 export default function MatchDetailPage() {
   const { id = '' } = useParams();
@@ -20,7 +21,7 @@ export default function MatchDetailPage() {
   const game = useApi<GameDto>(match.data ? `/api/games/${match.data.gameId}` : null);
   const [leaving, setLeaving] = useState(false);
   const [disputing, setDisputing] = useState(false);
-  useDocumentTitle(match.data ? `Match #${match.data.matchNumber}` : 'Match');
+  useDocumentTitle(match.data ? `Match #${match.data.matchNumber}` : t("Match"));
   useRealtime(match.data?.isParticipant ? `match:${id}` : null, () => match.reload());
 
   if (match.loading && !match.data) return <PageLoader />;
@@ -33,19 +34,19 @@ export default function MatchDetailPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        back={<BackLink to="/matches">Matches</BackLink>}
+        back={<BackLink to="/matches">{t("Matches")}</BackLink>}
         title={`Match #${m.matchNumber}`}
         subtitle={m.gameName}
         actions={
           <>
             {canLeave && (
               <Button variant="outline" icon={<LogOut className="size-4" />} onClick={() => setLeaving(true)}>
-                {m.isCreator ? 'Cancel room' : 'Leave room'}
+                {m.isCreator ? t("Cancel room") : t("Leave room")}
               </Button>
             )}
             {canDispute && (
               <Button variant="outline" icon={<Flag className="size-4" />} onClick={() => setDisputing(true)}>
-                Report a problem
+                {t("Report a problem")}
               </Button>
             )}
           </>
@@ -53,23 +54,23 @@ export default function MatchDetailPage() {
       />
 
       {m.status === 'WAITING_FOR_OPPONENT' && (
-        <Notice tone="info" title="Waiting for opponent">
-          Your stake is locked in escrow. {m.visibility === 'PRIVATE' && m.joinCode ? <>Share this room code: <CopyText value={m.joinCode} label="Room code" /></> : 'Other players can join from the game lobby.'} Rooms that wait longer than 30 minutes are cancelled and refunded automatically.
+        <Notice tone="info" title={t("Waiting for opponent")}>
+          {t("Your stake is locked in escrow.")} {m.visibility === 'PRIVATE' && m.joinCode ? <>{t("Share this room code:")} <CopyText value={m.joinCode} label={t("Room code")} /></> : t("Other players can join from the game lobby.")} {t("Rooms that wait longer than 30 minutes are cancelled and refunded automatically.")}
         </Notice>
       )}
-      {m.status === 'DISPUTED' && <Notice tone="warning" title="Under review">This match is frozen while an administrator reviews a dispute. Stakes stay in escrow until it is resolved.</Notice>}
+      {m.status === 'DISPUTED' && <Notice tone="warning" title={t("Under review")}>{t("This match is frozen while an administrator reviews a dispute. Stakes stay in escrow until it is resolved.")}</Notice>}
 
       {/* the table comes first so players never scroll past the details to play */}
       {live && game.data && <GameRoomPanel match={m} game={game.data} />}
       {isTerminal(m.status) && m.myResult && (
-        <Notice tone={m.myResult === 'WIN' ? 'success' : m.myResult === 'LOSS' ? 'danger' : 'info'} title={m.myResult === 'WIN' ? 'You won!' : m.myResult === 'LOSS' ? 'You lost this match' : 'Stake returned'}>
-          {m.myResult === 'WIN' ? `${tokens(m.payoutUnits)} was added to your available balance.` : m.myResult === 'LOSS' ? 'Your stake went to the winner (minus the platform fee).' : 'Your full stake is back in your wallet.'}
+        <Notice tone={m.myResult === 'WIN' ? 'success' : m.myResult === 'LOSS' ? 'danger' : 'info'} title={m.myResult === 'WIN' ? t("You won!") : m.myResult === 'LOSS' ? t('You lost this match') : t('Stake returned')}>
+          {m.myResult === 'WIN' ? t('{amount} was added to your available balance.', { amount: tokens(m.payoutUnits) }) : t(m.myResult === 'LOSS' ? 'Your stake went to the winner (minus the platform fee).' : 'Your full stake is back in your wallet.')}
         </Notice>
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader title="Match details" actions={<StatusBadge status={m.status} />} />
+          <CardHeader title={t("Match details")} actions={<StatusBadge status={m.status} />} />
           <CardBody>
             <KeyValue
               columns={3}
@@ -79,7 +80,7 @@ export default function MatchDetailPage() {
                 ['Platform fee', `${percentFromBps(m.feeBps)}${m.feeUnits != null ? ` · ${tokens(m.feeUnits)}` : ''}`],
                 ['Winner payout', m.payoutUnits ? tokens(m.payoutUnits) : '—'],
                 ['Visibility', m.visibility === 'PRIVATE' ? 'Private' : 'Public'],
-                ['Mode', m.mode === 'QUICK' ? 'Quick match' : 'Room'],
+                ['Mode', t(m.mode === 'QUICK' ? 'Quick match' : 'Room')],
                 ['Created', dateTime(m.createdAt)],
                 ['Started', dateTime(m.startedAt)],
                 ['Ended', dateTime(m.endedAt)],
@@ -88,13 +89,13 @@ export default function MatchDetailPage() {
           </CardBody>
         </Card>
         <Card>
-          <CardHeader title="Players" subtitle={`${m.playerCount}/${m.maxPlayers}`} />
+          <CardHeader title={t("Players")} subtitle={`${m.playerCount}/${m.maxPlayers}`} />
           <ul className="divide-y divide-ink-100 dark:divide-ink-800">
             {m.players.map((p) => (
               <li key={p.playerNumber} className="flex items-center justify-between px-5 py-3">
                 <div>
                   <p className="font-semibold">
-                    {p.displayName} {p.isYou && <Badge tone="brand">You</Badge>}
+                    {p.displayName} {p.isYou && <Badge tone="brand">{t("You")}</Badge>}
                   </p>
                   <p className="text-xs text-ink-500">
                     #{p.playerNumber} · @{p.username}
@@ -113,13 +114,13 @@ export default function MatchDetailPage() {
       <ConfirmDialog
         open={leaving}
         onClose={() => setLeaving(false)}
-        title={m.isCreator ? 'Cancel this room?' : 'Leave this room?'}
-        confirmLabel={m.isCreator ? 'Cancel room' : 'Leave room'}
+        title={m.isCreator ? t("Cancel this room?") : t("Leave this room?")}
+        confirmLabel={m.isCreator ? t("Cancel room") : t("Leave room")}
         tone="danger"
-        message={m.isCreator ? 'Everyone in the room gets their full stake back.' : `Your ${tokens(m.stakeUnits)} stake will be returned to your wallet.`}
+        message={m.isCreator ? t("Everyone in the room gets their full stake back.") : t('Your {amount} stake will be returned to your wallet.', { amount: tokens(m.stakeUnits) })}
         onConfirm={async () => {
           await post(`/api/matches/${m.id}/leave`);
-          toast.success('Stake returned to your wallet.');
+          toast.success(t("Stake returned to your wallet."));
           match.reload();
         }}
       />
@@ -147,15 +148,15 @@ function GameRoomPanel({ match, game }: { match: MatchDto; game: GameDto }) {
   });
   if (!Client || !game.moduleInstalled) {
     return (
-      <Notice tone="info" title="Game client not installed">
-        The playable client for {game.name} has not been installed in this build yet, so this match cannot be played here. Stakes stay safely in escrow; rooms that never start are refunded automatically.
+      <Notice tone="info" title={t("Game client not installed")}>
+        {t('The playable client for {game} has not been installed in this build yet, so this match cannot be played here. Stakes stay safely in escrow; rooms that never start are refunded automatically.', { game: game.name })}
       </Notice>
     );
   }
   return (
     <Card>
       <CardHeader
-        title="Game room"
+        title={t("Game room")}
         icon={<Radio className="size-4" />}
         actions={
           <span className="flex items-center gap-2">
@@ -183,11 +184,11 @@ function DisputeModal({ open, onClose, match, onDone }: { open: boolean; onClose
     setError(null);
     try {
       await post(`/api/matches/${match.id}/disputes`, { category, description });
-      toast.success('Dispute submitted. An administrator will review it.');
+      toast.success(t("Dispute submitted. An administrator will review it."));
       onClose();
       onDone();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Could not submit.');
+      setError(e instanceof ApiError ? e.message : t("Could not submit."));
     } finally {
       setBusy(false);
     }
@@ -196,28 +197,28 @@ function DisputeModal({ open, onClose, match, onDone }: { open: boolean; onClose
     <Modal
       open={open}
       onClose={onClose}
-      title={`Report a problem with Match #${match.matchNumber}`}
+      title={t('Report a problem with Match #{n}', { n: String(match.matchNumber) })}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button onClick={submit} loading={busy} disabled={description.trim().length < 10}>
-            Submit dispute
+            {t("Submit dispute")}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
-        <Select label="What happened?" value={category} onChange={(e) => setCategory(e.target.value as DisputeCategory)}>
+        <Select label={t("What happened?")} value={category} onChange={(e) => setCategory(e.target.value as DisputeCategory)}>
           {DISPUTE_CATEGORIES.map((c) => (
             <option key={c} value={c}>
               {DISPUTE_CATEGORY_LABELS[c]}
             </option>
           ))}
         </Select>
-        <Textarea label="Details" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} rows={5} hint="At least 10 characters. Include times and what you saw." required />
-        {['PLAYING', 'RESULT_PENDING'].includes(match.status) && <Notice tone="warning">Reporting now freezes the match until an administrator resolves it.</Notice>}
+        <Textarea label={t("Details")} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} rows={5} hint={t("At least 10 characters. Include times and what you saw.")} required />
+        {['PLAYING', 'RESULT_PENDING'].includes(match.status) && <Notice tone="warning">{t("Reporting now freezes the match until an administrator resolves it.")}</Notice>}
         {error && <Notice tone="danger">{error}</Notice>}
       </div>
     </Modal>

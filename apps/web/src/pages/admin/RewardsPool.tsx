@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { ArrowDownToLine, ArrowUpFromLine, Flag, Gamepad2, Gift, Users } from 'lucide-react';
-import { hasPermission, parseTokenAmount, type RewardsPoolDto, type SystemWalletEntryDto } from '@arena/shared';
+import { ArrowDownToLine, ArrowUpFromLine, Flag, Gamepad2, Gift, Medal, Users } from 'lucide-react';
+import { Link } from 'react-router';
+import { hasPermission, parseTokenAmount, type RewardsPoolDto, type SystemWalletEntryDto, type TournamentDto } from '@arena/shared';
 import { useMe } from '../../auth/AuthProvider';
 import { Amount } from '../../components/Common';
 import { Button, Card, CardBody, CardHeader, ConfirmDialog, DataTable, Input, Notice, PageHeader, Pagination, StatCard, useToast } from '../../components/ui';
@@ -18,6 +19,7 @@ export default function RewardsPoolPage() {
   const idem = useIdempotencyKey();
   const [page, setPage] = useState(1);
   const d = useApi<Page>(`/api/admin/rewards-pool${qs({ page, pageSize: 25 })}`);
+  const tour = useApi<TournamentDto>('/api/arcade/tournament');
   const [amount, setAmount] = useState('');
   const [direction, setDirection] = useState<'TO_POOL' | 'FROM_POOL' | null>(null);
   const units = parseTokenAmount(amount);
@@ -34,6 +36,7 @@ export default function RewardsPoolPage() {
         <StatCard label="Impossible scores (7 days)" value={x ? x.flagged7d : '…'} hint="earned nothing; hidden from leaderboards" icon={<Flag className="size-5" />} tone={x && x.flagged7d > 0 ? 'rose' : 'emerald'} />
       </div>
       {x && x.balanceUnits === 0 && <Notice tone="warning">The pool is empty: free games still work, but pay nothing until you add PMT here.</Notice>}
+      {tour.data && <TournamentCard t={tour.data} />}
       {canMove && (
         <Card>
           <CardHeader title="Fund or reduce the pool" subtitle="Ledger transaction + audit log. Plan: 10% of the PMT supply, released slowly." />
@@ -83,5 +86,41 @@ export default function RewardsPoolPage() {
         }}
       />
     </div>
+  );
+}
+
+/** This week's tournament and last week's winners (players are looked up by player number). */
+function TournamentCard({ t }: { t: TournamentDto }) {
+  const perWeek = t.current.prizesUnits.reduce((a, b) => a + b, 0);
+  return (
+    <Card>
+      <CardHeader
+        title="Weekly tournament"
+        icon={<Medal className="size-4" />}
+        subtitle={t.enabled ? `This week: ${t.current.gameId} · ${t.current.players} players · prizes ${tokens(perWeek)} per week` : 'Switched off in Settings'}
+        actions={<Link to="/admin/settings" className="text-sm font-semibold text-brand-600">Prizes & on/off</Link>}
+      />
+      {t.last && (
+        <CardBody>
+          <p className="mb-2 text-sm font-semibold">
+            Last week ({t.last.gameId}, from {t.last.weekStart}): {t.last.status === 'PENDING' ? 'paying soon' : t.last.status.toLowerCase().replace('_', ' ')}
+          </p>
+          {t.last.rows.length === 0 ? (
+            <p className="text-sm text-ink-500">No entries.</p>
+          ) : (
+            <ol className="grid gap-1 text-sm sm:grid-cols-2">
+              {t.last.rows.map((r) => (
+                <li key={r.rank} className="flex justify-between gap-3 rounded-lg bg-ink-50 px-3 py-1.5 dark:bg-ink-850">
+                  <span>
+                    #{r.rank} · <Link className="font-semibold text-brand-600" to={`/admin/players?q=${r.playerNumber}`}>{r.name} ({r.playerNumber})</Link> · {r.score.toLocaleString()}
+                  </span>
+                  <span className="font-mono">{tokens(r.prizeUnits)}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </CardBody>
+      )}
+    </Card>
   );
 }

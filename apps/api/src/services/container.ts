@@ -26,6 +26,7 @@ import { SettingsService } from './settings';
 import { ReserveService } from './reserve';
 import { TransferService } from './transfers';
 import { ArcadeService } from './arcade';
+import { TournamentService } from './tournaments';
 import { createChainClient, type ChainClient } from './chain';
 import { OnchainService } from './onchain';
 import { TransparencyService } from './transparency';
@@ -72,6 +73,7 @@ export function createServices(env: Env, meta: RequestMeta, opts: ContainerOptio
   const reserve = new ReserveService(db, settings, now);
   const transfers = new TransferService(db, users, wallets, ledger, settings, notifications, now);
   const arcade = new ArcadeService(db, ledger, settings, now);
+  const tournaments = new TournamentService(db, ledger, settings, notifications, now);
   const chain = (opts.chain ?? createChainClient)(env);
   const onchain = new OnchainService(db, wallets, ledger, settings, notifications, chain, now);
   const transparency = new TransparencyService(db, reserve, chain, now);
@@ -91,6 +93,7 @@ export function createServices(env: Env, meta: RequestMeta, opts: ContainerOptio
     reserve,
     transfers,
     arcade,
+    tournaments,
     onchain,
     transparency,
     notifications,

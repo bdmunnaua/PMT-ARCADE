@@ -26,7 +26,7 @@ export default {
     return new Response('Not found', { status: 404 });
   },
 
-  /** Every 10 minutes: expire stale rooms (refund), alert on stuck matches, purge old counters. */
+  /** Every 10 minutes: expire stale rooms (refund), alert on stuck matches, pay tournament prizes, purge old counters. */
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     const publisher = env.REALTIME ? new DurableObjectPublisher(env.REALTIME, (p) => ctx.waitUntil(p)) : new NoopPublisher();
     const services = createServices(env, { requestId: `cron-${crypto.randomUUID()}`, ip: null, userAgent: 'cron', country: null }, { publisher });
@@ -39,6 +39,12 @@ export default {
       }
       await services.crash.markCrashed(round.id, now);
     }
+    // weekly free-game tournament prizes (once per finished week)
+    const t = await services.tournaments.settleDue().catch((e: unknown) => {
+      console.error(JSON.stringify({ level: 'error', cron: 'tournament', message: e instanceof Error ? e.message : String(e) }));
+      return { settled: [] as string[] };
+    });
+    if (t.settled.length) console.log(JSON.stringify({ level: 'info', cron: 'tournament', ...t }));
     await run(env.DB, 'DELETE FROM rate_limit_counters WHERE window_start < ?', now - 24 * 60 * 60 * 1000);
     await run(env.DB, 'DELETE FROM login_security_events WHERE created_at < ?', now - LOGIN_EVENT_RETENTION_MS);
     if (res.cancelled || res.alerted) console.log(JSON.stringify({ level: 'info', cron: 'matches', ...res }));

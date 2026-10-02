@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import type { ApiError } from '../../lib/api';
 import { Button } from './Button';
 import { EmptyState, ErrorState, SkeletonRows } from './States';
+import { t } from '../../lib/i18n';
 
 export interface Column<T> {
   header: ReactNode;
@@ -34,7 +35,7 @@ export function DataTable<T>({
 }) {
   if (error) return <ErrorState error={error} onRetry={onRetry} />;
   if (loading && !rows) return <SkeletonRows />;
-  if (!rows || rows.length === 0) return <EmptyState title={empty?.title ?? 'Nothing here yet'} description={empty?.description} action={empty?.action} />;
+  if (!rows || rows.length === 0) return <EmptyState title={empty?.title ?? t('Nothing here yet')} description={empty?.description} action={empty?.action} />;
   return (
     <div className={clsx('overflow-x-auto', loading && 'opacity-60 transition-opacity')}>
       <table className="min-w-full divide-y divide-ink-100 dark:divide-ink-800">
@@ -72,14 +73,14 @@ export function DataTable<T>({
 export function Pagination({ page, hasMore, onPage }: { page: number; hasMore: boolean; onPage: (p: number) => void }) {
   if (page === 1 && !hasMore) return null;
   return (
-    <nav className="flex items-center justify-between border-t border-ink-100 px-5 py-3 dark:border-ink-800" aria-label="Pagination">
-      <span className="text-sm text-ink-500">Page {page}</span>
+    <nav className="flex items-center justify-between border-t border-ink-100 px-5 py-3 dark:border-ink-800" aria-label={t("Pagination")}>
+      <span className="text-sm text-ink-500">{t("Page")} {page}</span>
       <div className="flex gap-2">
         <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)} icon={<ChevronLeft className="size-3.5" />}>
-          Previous
+          {t("Previous")}
         </Button>
         <Button variant="outline" size="sm" disabled={!hasMore} onClick={() => onPage(page + 1)}>
-          Next <ChevronRight className="size-3.5" />
+          {t("Next")} <ChevronRight className="size-3.5" />
         </Button>
       </div>
     </nav>

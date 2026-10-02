@@ -12,8 +12,8 @@ export default function AdminPlayers() {
   const [params, setParams] = useSearchParams();
   const status = params.get('status') ?? '';
   const flagged = params.get('flagged') ?? '';
-  const [q, setQ] = useState('');
-  const [search, setSearch] = useState('');
+  const [q, setQ] = useState(() => params.get('q') ?? '');
+  const [search, setSearch] = useState(() => params.get('q') ?? '');
   const list = usePaged<AdminPlayerRowDto>('/api/admin/players', { status: status || undefined, flagged: flagged || undefined, q: search || undefined });
   const title = flagged ? 'Flagged players' : status ? `${status.charAt(0)}${status.slice(1).toLowerCase()} players` : 'All players';
   return (

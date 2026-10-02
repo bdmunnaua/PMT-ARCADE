@@ -6,24 +6,27 @@ import { GameCard } from '../../components/Common';
 import { ErrorState, Notice, PageHeader, Skeleton } from '../../components/ui';
 import { percentFromBps } from '../../lib/format';
 import { useApi, useDocumentTitle } from '../../lib/hooks';
+import { TournamentBanner } from '../../components/Tournament';
+import { t } from '../../lib/i18n';
 
 /** The lobby: free games that earn PMT, and games played against other players for stakes. */
 export default function PlayPage() {
-  useDocumentTitle('Play');
+  useDocumentTitle(t("Play"));
   const config = useConfig();
   const games = useApi<GameDto[]>('/api/games');
   const arcade = useArcadeConfig();
   const popular = useApi<{ plays: Record<string, number> }>('/api/arcade/popular');
   return (
     <div className="space-y-10">
+      <TournamentBanner />
       <section>
         <PageHeader
           title={
             <span className="flex items-center gap-2">
-              <Gamepad2 className="size-6 text-brand-500" /> Free games
+              <Gamepad2 className="size-6 text-brand-500" /> {t("Free games")}
             </span>
           }
-          subtitle={arcade.data ? `Play for free and earn bonus PMT for your scores — up to ${arcade.data.dailyCapTokens.toLocaleString()} PMT a day.` : 'Play for free and earn bonus PMT for your scores.'}
+          subtitle={arcade.data ? t('Play for free and earn bonus PMT for your scores — up to {n} PMT a day.', { n: arcade.data.dailyCapTokens }) : t("Play for free and earn bonus PMT for your scores.")}
         />
         {arcade.error ? (
           <ErrorState error={arcade.error} onRetry={arcade.reload} />
@@ -42,14 +45,14 @@ export default function PlayPage() {
         <PageHeader
           title={
             <span className="flex items-center gap-2">
-              <Swords className="size-6 text-brand-500" /> Play for PMT
+              <Swords className="size-6 text-brand-500" /> {t("Play for PMT")}
             </span>
           }
-          subtitle={`Challenge other players. The winner takes the pot minus a ${percentFromBps(config?.matchFeeBps ?? 100)} platform fee; draws and cancelled matches are fully refunded.`}
+          subtitle={t('Challenge other players. The winner takes the pot minus a {fee} platform fee; draws and cancelled matches are fully refunded.', { fee: percentFromBps(config?.matchFeeBps ?? 100) })}
         />
         {config && !config.gamesEnabled && (
           <div className="mb-4">
-            <Notice tone="warning">Games for stakes are temporarily switched off.</Notice>
+            <Notice tone="warning">{t("Games for stakes are temporarily switched off.")}</Notice>
           </div>
         )}
         {games.error ? (

@@ -7,9 +7,10 @@ import { Badge, Button, Card, CardBody, CardHeader, Input, KeyValue, PageHeader,
 import { ApiError, patch } from '../../lib/api';
 import { dateTime } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
+import { t } from '../../lib/i18n';
 
 export default function ProfilePage() {
-  useDocumentTitle('Profile');
+  useDocumentTitle(t("Profile"));
   const me = useMe();
   const { refreshMe, signOut } = useAuth();
   const toast = useToast();
@@ -22,19 +23,19 @@ export default function ProfilePage() {
     try {
       await patch<MeDto>('/api/me', { displayName, avatarUrl });
       await refreshMe();
-      toast.success('Profile saved.');
+      toast.success(t("Profile saved."));
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'Could not save.');
+      toast.error(err instanceof ApiError ? err.message : t("Could not save."));
     } finally {
       setBusy(false);
     }
   };
   return (
     <div className="space-y-6">
-      <PageHeader title="Profile" actions={<Button variant="outline" icon={<LogOut className="size-4" />} onClick={() => void signOut()}>Sign out</Button>} />
+      <PageHeader title={t("Profile")} actions={<Button variant="outline" icon={<LogOut className="size-4" />} onClick={() => void signOut()}>{t("Sign out")}</Button>} />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Account" actions={<StatusBadge status={me.accountStatus} />} />
+          <CardHeader title={t("Account")} actions={<StatusBadge status={me.accountStatus} />} />
           <CardBody>
             <KeyValue
               items={[
@@ -46,35 +47,35 @@ export default function ProfilePage() {
                     {me.email}
                     {me.emailVerified ? (
                       <Badge tone="success">
-                        <BadgeCheck className="size-3" /> Verified
+                        <BadgeCheck className="size-3" /> {t("Verified")}
                       </Badge>
                     ) : (
                       <Badge tone="warning">
-                        <MailWarning className="size-3" /> Unverified
+                        <MailWarning className="size-3" /> {t("Unverified")}
                       </Badge>
                     )}
                   </span>,
                 ],
                 ['Member since', dateTime(me.createdAt)],
                 ['Last sign-in', dateTime(me.lastLoginAt)],
-                ['Account ID', <CopyText value={me.id} label="Account ID" />],
+                ['Account ID', <CopyText value={me.id} label={t("Account ID")} />],
               ]}
             />
-            <p className="mt-5 text-xs text-ink-500 dark:text-ink-400">Email, password and verification are managed by your main account.</p>
+            <p className="mt-5 text-xs text-ink-500 dark:text-ink-400">{t("Email, password and verification are managed by your main account.")}</p>
           </CardBody>
         </Card>
         <Card>
-          <CardHeader title="Public profile" subtitle="Your player number and username are permanent." />
+          <CardHeader title={t("Public profile")} subtitle={t("Your player number and username are permanent.")} />
           <CardBody>
             <form onSubmit={save} className="space-y-4">
-              <Input label="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={40} required />
-              <Input label="Avatar image URL (https, optional)" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://…" />
+              <Input label={t("Display name")} value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={40} required />
+              <Input label={t("Avatar image URL (https, optional)")} value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://…" />
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2 text-sm text-ink-500">
-                  Theme <ThemeToggle />
+                  {t("Theme")} <ThemeToggle />
                 </span>
                 <Button type="submit" loading={busy}>
-                  Save changes
+                  {t("Save changes")}
                 </Button>
               </div>
             </form>

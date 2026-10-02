@@ -7,6 +7,7 @@ import { get } from '../lib/api';
 import { dateTime, human, tokens } from '../lib/format';
 import { useRealtime } from '../lib/realtime';
 import { Badge, useToast } from './ui';
+import { t } from '../lib/i18n';
 
 export function BackLink({ to, children }: { to: string; children: ReactNode }) {
   return (
@@ -29,7 +30,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     }
   };
   return (
-    <button onClick={toggle} className={clsx('rounded-xl p-2 text-ink-500 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-ink-800', className)} aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}>
+    <button onClick={toggle} className={clsx('rounded-xl p-2 text-ink-500 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-ink-800', className)} aria-label={dark ? t("Switch to light theme") : t("Switch to dark theme")}>
       {dark ? <Sun className="size-5" /> : <Moon className="size-5" />}
     </button>
   );
@@ -64,7 +65,7 @@ export function CopyText({ value, label }: { value: string; label?: string }) {
       type="button"
       className="inline-flex items-center gap-1.5 font-mono text-xs break-all text-ink-600 hover:text-brand-600 dark:text-ink-300"
       onClick={() => navigator.clipboard?.writeText(value).then(() => toast.success(`${label ?? 'Value'} copied`))}
-      title="Copy"
+      title={t("Copy")}
     >
       {value} <Copy className="size-3 shrink-0" />
     </button>
@@ -80,7 +81,7 @@ export function Timeline({ events }: { events: RequestEventDto[] }) {
           <span className={clsx('absolute top-1 -left-[25px] size-2.5 rounded-full ring-4 ring-white dark:ring-ink-900', i === events.length - 1 ? 'bg-brand-500' : 'bg-ink-300 dark:bg-ink-600')} />
           <p className="text-sm font-semibold">{human(e.status)}</p>
           <p className="text-xs text-ink-500">
-            {dateTime(e.createdAt)} · {e.actorType === 'ADMIN' ? 'Support team' : e.actorType === 'PLAYER' ? 'You' : 'System'}
+            {dateTime(e.createdAt)} · {e.actorType === 'ADMIN' ? t("Support team") : e.actorType === 'PLAYER' ? 'You' : 'System'}
           </p>
           {e.note && <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">{e.note}</p>}
         </li>
@@ -129,14 +130,14 @@ export function GameCard({ game, paused = false }: { game: GameDto; paused?: boo
       <div className="relative">
         <GameArt game={game} className="aspect-[16/10] w-full" />
         <div className="absolute top-3 left-3">
-          {paused ? <Badge tone="warning">Paused</Badge> : game.playable ? <Badge tone="success">Live</Badge> : game.maintenanceMode ? <Badge tone="warning">Maintenance</Badge> : <Badge tone="neutral">Coming soon</Badge>}
+          {paused ? <Badge tone="warning">{t("Paused")}</Badge> : game.playable ? <Badge tone="success">{t("Live")}</Badge> : game.maintenanceMode ? <Badge tone="warning">{t("Maintenance")}</Badge> : <Badge tone="neutral">{t("Coming soon")}</Badge>}
         </div>
       </div>
       <div className="p-4">
         <h3 className="font-semibold">{game.name}</h3>
         <p className="mt-0.5 line-clamp-2 min-h-10 text-sm text-ink-500 dark:text-ink-400">{game.description}</p>
         <p className="mt-3 text-xs text-ink-500">
-          Stakes {tokens(game.minimumStakeUnits)} – {tokens(game.maximumStakeUnits)} · {game.minimumPlayers === game.maximumPlayers ? game.minimumPlayers : `${game.minimumPlayers}–${game.maximumPlayers}`} players
+          {t("Stakes")} {tokens(game.minimumStakeUnits)} – {tokens(game.maximumStakeUnits)} · {game.minimumPlayers === game.maximumPlayers ? game.minimumPlayers : `${game.minimumPlayers}–${game.maximumPlayers}`} players
         </p>
       </div>
     </>
