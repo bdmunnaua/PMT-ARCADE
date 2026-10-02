@@ -59,6 +59,8 @@ export interface PublicConfigDto {
   gamesEnabled: boolean;
   paymentMethods: { id: PaymentMethod; label: string; accountLabel: string; referenceLabel: string }[];
   bkashReceivingNumber: string;
+  /** AGENT → Cash Out, PERSONAL → Send Money, MERCHANT → Payment */
+  bkashAccountType: 'AGENT' | 'PERSONAL' | 'MERCHANT';
   paymentNotice: string;
   transfersEnabled: boolean;
   transferFeeBps: number;

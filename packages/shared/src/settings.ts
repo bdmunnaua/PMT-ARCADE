@@ -28,6 +28,8 @@ export const settingsSchema = z.object({
   games_enabled: z.boolean(),
   enabled_payment_methods: z.array(z.enum(PAYMENT_METHODS)).max(PAYMENT_METHODS.length),
   bkash_receiving_number: z.string().trim().max(20),
+  /** what kind of bKash account the receiving number is: AGENT → buyers use Cash Out, PERSONAL → Send Money, MERCHANT → Payment */
+  bkash_account_type: z.enum(['AGENT', 'PERSONAL', 'MERCHANT']),
   payment_provider_notice: z.string().trim().max(2000),
   large_transaction_tokens: z.int().min(1).max(1_000_000_000),
   /** Aviator: highest multiplier a round can reach (×100; 10000 = 100.00×) */
@@ -89,6 +91,7 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   games_enabled: true,
   enabled_payment_methods: ['BKASH_MANUAL'],
   bkash_receiving_number: '',
+  bkash_account_type: 'AGENT',
   payment_provider_notice:
     'Send the exact amount from your own bKash account, then submit the transaction ID. Never share your bKash PIN or OTP with anyone — we will never ask for it.',
   large_transaction_tokens: 10_000_000,

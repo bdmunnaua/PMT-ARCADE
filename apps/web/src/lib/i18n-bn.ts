@@ -652,4 +652,14 @@ export const BN: Record<string, string> = {
   'imo & more apps': 'imo ও অন্যান্য অ্যাপ',
   'You are invited': 'আপনি আমন্ত্রিত',
   'Join game': 'খেলায় যোগ দিন',
+  // bKash receiving account (Buy PMT page)
+  'bKash agent number': 'bKash এজেন্ট নম্বর',
+  'bKash personal number': 'bKash পার্সোনাল নম্বর',
+  'bKash merchant number': 'bKash মার্চেন্ট নম্বর',
+  'Use “Cash Out” in your bKash app to this agent number.': 'আপনার bKash অ্যাপ থেকে এই এজেন্ট নম্বরে “ক্যাশ আউট” করুন।',
+  'Use “Send Money” in your bKash app to this number.': 'আপনার bKash অ্যাপ থেকে এই নম্বরে “সেন্ড মানি” করুন।',
+  'Use “Payment” in your bKash app to this merchant number.': 'আপনার bKash অ্যাপ থেকে এই মার্চেন্ট নম্বরে “পেমেন্ট” করুন।',
+  'Open bKash → Cash Out → enter the agent number above and the amount.': 'bKash খুলুন → ক্যাশ আউট → উপরের এজেন্ট নম্বর ও টাকার পরিমাণ দিন।',
+  'Open bKash → Send Money → enter the number above and the amount.': 'bKash খুলুন → সেন্ড মানি → উপরের নম্বর ও টাকার পরিমাণ দিন।',
+  'Open bKash → Payment → enter the merchant number above and the amount.': 'bKash খুলুন → পেমেন্ট → উপরের মার্চেন্ট নম্বর ও টাকার পরিমাণ দিন।',
 };

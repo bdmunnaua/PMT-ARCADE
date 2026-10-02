@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { checkSettings, hasPermission, PAYMENT_METHODS, PAYMENT_PROVIDERS, type AdminSettingsDto, type PlatformSettings, type SettingKey } from '@arena/shared';
 import { useMe } from '../../auth/AuthProvider';
-import { Button, Card, CardBody, CardHeader, Checkbox, ConfirmDialog, ErrorState, Input, Notice, PageHeader, PageLoader, Textarea, useToast } from '../../components/ui';
+import { Button, Card, CardBody, CardHeader, Checkbox, ConfirmDialog, ErrorState, Input, Notice, PageHeader, PageLoader, Select, Textarea, useToast } from '../../components/ui';
 import { patch } from '../../lib/api';
 import { percentFromBps } from '../../lib/format';
 import { useApi, useDocumentTitle } from '../../lib/hooks';
@@ -110,7 +110,12 @@ export default function SettingsPage() {
                 onChange={(v) => canEdit && set('enabled_payment_methods', v ? [...draft.enabled_payment_methods, m] : draft.enabled_payment_methods.filter((x) => x !== m))}
               />
             ))}
-            <Input label="bKash receiving number (shown to buyers)" value={draft.bkash_receiving_number} onChange={(e) => set('bkash_receiving_number', e.target.value)} disabled={!canEdit} />
+            <Input label="bKash receiving number (shown to buyers)" hint="Change it any time — buyers always see the current number" value={draft.bkash_receiving_number} onChange={(e) => set('bkash_receiving_number', e.target.value)} disabled={!canEdit} />
+            <Select label="bKash account type" hint="Tells buyers which bKash option to use" value={draft.bkash_account_type} onChange={(e) => set('bkash_account_type', e.target.value as PlatformSettings['bkash_account_type'])} disabled={!canEdit}>
+              <option value="AGENT">Agent number — buyers use Cash Out</option>
+              <option value="PERSONAL">Personal number — buyers use Send Money</option>
+              <option value="MERCHANT">Merchant number — buyers use Payment</option>
+            </Select>
             <Textarea label="Payment provider notice" value={draft.payment_provider_notice} onChange={(e) => set('payment_provider_notice', e.target.value)} rows={3} disabled={!canEdit} />
           </CardBody>
         </Card>

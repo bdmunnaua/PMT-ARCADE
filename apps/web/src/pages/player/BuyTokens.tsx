@@ -10,6 +10,13 @@ import { bdt, tokens } from '../../lib/format';
 import { useDocumentTitle, useIdempotencyKey } from '../../lib/hooks';
 import { t } from '../../lib/i18n';
 
+/** What the buyer does in the bKash app, by the kind of receiving number the admin set. */
+const BKASH_ACCOUNT = {
+  AGENT: { label: 'bKash agent number', action: 'Use “Cash Out” in your bKash app to this agent number.', step: 'Open bKash → Cash Out → enter the agent number above and the amount.' },
+  PERSONAL: { label: 'bKash personal number', action: 'Use “Send Money” in your bKash app to this number.', step: 'Open bKash → Send Money → enter the number above and the amount.' },
+  MERCHANT: { label: 'bKash merchant number', action: 'Use “Payment” in your bKash app to this merchant number.', step: 'Open bKash → Payment → enter the merchant number above and the amount.' },
+} as const;
+
 export default function BuyTokensPage() {
   useDocumentTitle(t("Buy tokens"));
   const config = useConfig();
@@ -98,13 +105,18 @@ export default function BuyTokensPage() {
             <CardHeader title={t("How to pay")} icon={<Smartphone className="size-4" />} />
             <CardBody className="space-y-3 text-sm">
               {method === 'BKASH_MANUAL' && config.bkashReceivingNumber ? (
-                <p>
-                  {t("Send money to bKash:")} <CopyText value={config.bkashReceivingNumber} label={t("bKash number")} />
-                </p>
+                <div className="rounded-2xl border-2 border-pink-500/60 bg-pink-50 p-4 dark:bg-pink-500/10">
+                  <p className="text-xs font-bold tracking-wide text-pink-700 uppercase dark:text-pink-300">{t(BKASH_ACCOUNT[config.bkashAccountType].label)}</p>
+                  <div className="mt-1 text-2xl font-black tracking-wider">
+                    <CopyText value={config.bkashReceivingNumber} label={t("bKash number")} />
+                  </div>
+                  <p className="mt-2 font-semibold">{t(BKASH_ACCOUNT[config.bkashAccountType].action)}</p>
+                </div>
               ) : method === 'BKASH_MANUAL' ? (
                 <Notice tone="warning">{t("The receiving bKash number has not been published yet. Contact support before paying.")}</Notice>
               ) : null}
               <ol className="list-decimal space-y-1.5 pl-5 text-ink-600 dark:text-ink-300">
+                {method === 'BKASH_MANUAL' && <li>{t(BKASH_ACCOUNT[config.bkashAccountType].step)}</li>}
                 <li>{t("Send the exact amount from your own account.")}</li>
                 <li>{t("Copy the transaction ID from the confirmation.")}</li>
                 <li>{t("Submit this form. We verify and credit your tokens.")}</li>

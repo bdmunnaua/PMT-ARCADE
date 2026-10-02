@@ -36,6 +36,7 @@ export function publicRoutes() {
         return { id, label: p.label, accountLabel: p.accountLabel, referenceLabel: p.referenceLabel };
       }),
       bkashReceivingNumber: s.bkash_receiving_number,
+      bkashAccountType: s.bkash_account_type,
       paymentNotice: s.payment_provider_notice,
       transfersEnabled: s.transfers_enabled,
       transferFeeBps: s.transfer_fee_bps,
