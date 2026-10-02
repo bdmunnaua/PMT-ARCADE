@@ -39,8 +39,8 @@ npm run deploy
 Undo at any time: `npx wrangler rollback --env production` (in `apps/api`) brings the old arcade back.
 
 ## 4. First admin, PMT supply, rewards pool, old balances
-1. **(owner)** Sign in at https://pmtarcade.com with bdmunnaua@gmail.com.
-2. `npm run admin:create -- --email bdmunnaua@gmail.com --remote`
+1. **(owner)** Sign in at https://pmtarcade.com with the account that should be the first admin.
+2. `npm run admin:create -- --email you@example.com --remote`
 3. Admin → Finance → Admin treasury: issue the PMT you plan to use (e.g. the 20% sale + 10% rewards).
 4. Admin → Finance → Rewards pool: move the rewards budget in (at least what old players are owed).
 5. Carry over old balances (credited as bonus PMT when each player first signs in):
@@ -66,5 +66,5 @@ Undo at any time: `npx wrangler rollback --env production` (in `apps/api`) bring
 
 ## 7. Afterwards
 - Admin → Finance → Ledger integrity: run it — it must say PASS.
-- The old GitHub repository `bdmunnaua/PMT-ARCADE` deploys the *old* arcade on every push to
-  `main`. Do not push old arcade code after going live; move the repository to this project.
+- This repository replaced the old PMT-ARCADE code (still in the git history). Deploys are run
+  by hand with `npx wrangler deploy --env production`; GitHub only runs the tests.
