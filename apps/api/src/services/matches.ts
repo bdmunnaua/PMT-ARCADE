@@ -3,6 +3,7 @@
  * joining (stake locking), leaving, starting. Escrow is only ever RESOLVED by SettlementService.
  */
 import {
+  type InvitePreviewDto,
   ACTIVE_MATCH_STATUSES,
   formatTokens,
   isTerminal,
@@ -249,6 +250,26 @@ export class MatchService {
     }
     const created = await this.create(user, { gameId, stakeUnits, visibility: 'PUBLIC', mode: 'QUICK' }, clientKey);
     return { match: created.match, joined: false };
+  }
+
+  /** Public preview of a private room for its invite page. Shows only what the invite already implies. */
+  async invitePreview(code: string, welcomeBonusTokens: number): Promise<InvitePreviewDto> {
+    const m = await first<MatchRow>(this.db, 'SELECT * FROM matches WHERE join_code = ? ORDER BY created_at DESC LIMIT 1', code.toUpperCase());
+    if (!m || m.visibility !== 'PRIVATE') throw notFound('Room');
+    const dto = await this.get(m.id, null);
+    const host = dto.players.find((pl) => pl.seat === 0) ?? dto.players[0];
+    return {
+      code: code.toUpperCase(),
+      matchId: dto.id,
+      open: dto.status === 'WAITING_FOR_OPPONENT' && dto.playerCount < dto.maxPlayers,
+      gameId: dto.gameId,
+      gameName: dto.gameName,
+      stakeUnits: dto.stakeUnits,
+      hostName: host?.displayName || host?.username || 'A friend',
+      playerCount: dto.playerCount,
+      maxPlayers: dto.maxPlayers,
+      welcomeBonusTokens,
+    };
   }
 
   async joinByCode(user: UserRecord, code: string): Promise<MatchDto> {

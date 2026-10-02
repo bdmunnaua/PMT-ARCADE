@@ -26,6 +26,8 @@ function applyTestEconomy(db: TestD1): void {
     maximum_match_stake: 100_000,
     large_transaction_tokens: 100_000,
     crash_max_profit_tokens: 100_000,
+    // free-game tests count rewards with the original 50 PMT welcome bonus (production: 1,000)
+    arcade_welcome_bonus_tokens: 50,
   };
   for (const [k, v] of Object.entries(set)) db.exec(`UPDATE platform_settings SET value = '${v}' WHERE key = '${k}'`);
   db.exec("UPDATE games SET minimum_stake_units = 1000, maximum_stake_units = 1000000 WHERE minimum_stake_units > 0");

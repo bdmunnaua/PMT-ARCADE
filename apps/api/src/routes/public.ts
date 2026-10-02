@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { PAYMENT_PROVIDERS, paginationSchema, type PublicConfigDto } from '@arena/shared';
 import type { AppEnv } from '../env';
+import { notFound } from '../lib/errors';
 import { ok, param, parseQuery } from '../lib/http';
 
 export function publicRoutes() {
@@ -48,6 +49,15 @@ export function publicRoutes() {
   r.get('/transparency', async (c) => {
     c.header('Cache-Control', 'public, max-age=60');
     return ok(c, await c.get('services').transparency.get());
+  });
+
+  /** Invite link preview (pmtarcade.com/r/CODE): game, stake and host name of a private room. */
+  r.get('/invites/:code', async (c) => {
+    const code = param(c, 'code');
+    if (!/^[A-Za-z0-9]{4,12}$/.test(code)) throw notFound('Room');
+    const s = c.get('services');
+    const settings = await s.settings.get();
+    return ok(c, await s.matches.invitePreview(code, settings.arcade_welcome_bonus_tokens));
   });
 
   r.get('/games', async (c) => ok(c, await c.get('services').games.list()));

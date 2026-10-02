@@ -6,6 +6,7 @@ import { ErrorState, PageLoader } from './components/ui';
 import { AdminLayout } from './layouts/AdminLayout';
 import { PlayerLayout } from './layouts/PlayerLayout';
 import { BlockedPage, SessionErrorPage, SetupRequiredPage, SignedOutPage } from './pages/auth/AuthStates';
+import { InviteWelcomePage, JoinInvitePage } from './pages/Invite';
 import { DashboardPage } from './pages/player/Dashboard';
 import { NotFoundPage } from './pages/NotFound';
 
@@ -69,7 +70,7 @@ function RequireAuth({ children }: { children: ReactNode }) {
   const { status, error } = useAuth();
   if (status === 'unconfigured') return <SetupRequiredPage />;
   if (status === 'loading') return <PageLoader label="Signing you in…" />;
-  if (status === 'signed_out') return <SignedOutPage />;
+  if (status === 'signed_out') return /^\/r\/[A-Za-z0-9]{4,12}/.test(window.location.pathname) ? <InviteWelcomePage /> : <SignedOutPage />;
   if (status === 'blocked') return <BlockedPage message={error} />;
   if (status === 'error') return <SessionErrorPage message={error} />;
   return <>{children}</>;
@@ -100,6 +101,7 @@ const router = createBrowserRouter([
       { path: 'play/:slug', element: <GameDetailPage /> },
       { path: 'matches', element: <MatchesPage /> },
       { path: 'matches/:id', element: <MatchDetailPage /> },
+      { path: 'r/:code', element: <JoinInvitePage /> },
       { path: 'wallet', element: <WalletPage /> },
       { path: 'wallet/buy', element: <BuyTokensPage /> },
       { path: 'wallet/sell', element: <SellTokensPage /> },

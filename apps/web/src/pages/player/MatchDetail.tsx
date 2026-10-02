@@ -3,6 +3,7 @@ import { useParams } from 'react-router';
 import { Flag, LogOut, Radio } from 'lucide-react';
 import { DISPUTE_CATEGORIES, DISPUTE_CATEGORY_LABELS, isTerminal, type DisputeCategory, type GameDto, type MatchDto } from '@arena/shared';
 import { BackLink, CopyText } from '../../components/Common';
+import { InviteShare } from '../../components/InviteShare';
 import { Badge, Button, Card, CardBody, CardHeader, ConfirmDialog, ErrorState, KeyValue, Modal, Notice, PageHeader, PageLoader, Select, StatusBadge, Textarea, useToast } from '../../components/ui';
 import { GAME_CLIENTS } from '../../games/registry';
 import { useGameRoom } from '../../games/useGameRoom';
@@ -55,8 +56,15 @@ export default function MatchDetailPage() {
 
       {m.status === 'WAITING_FOR_OPPONENT' && (
         <Notice tone="info" title={t("Waiting for opponent")}>
-          {t("Your stake is locked in escrow.")} {m.visibility === 'PRIVATE' && m.joinCode ? <>{t("Share this room code:")} <CopyText value={m.joinCode} label={t("Room code")} /></> : t("Other players can join from the game lobby.")} {t("Rooms that wait longer than 30 minutes are cancelled and refunded automatically.")}
+          {t("Your stake is locked in escrow.")} {m.visibility === 'PRIVATE' && m.joinCode ? <>{t("Room code:")} <CopyText value={m.joinCode} label={t("Room code")} /></> : t("Other players can join from the game lobby.")} {t("Rooms that wait longer than 30 minutes are cancelled and refunded automatically.")}
         </Notice>
+      )}
+      {m.status === 'WAITING_FOR_OPPONENT' && m.visibility === 'PRIVATE' && m.joinCode && m.isParticipant && m.playerCount < m.maxPlayers && (
+        <Card>
+          <CardBody>
+            <InviteShare code={m.joinCode} host={m.players.find((p) => p.isYou)?.displayName ?? 'A friend'} gameName={m.gameName} stakeUnits={m.stakeUnits} />
+          </CardBody>
+        </Card>
       )}
       {m.status === 'DISPUTED' && <Notice tone="warning" title={t("Under review")}>{t("This match is frozen while an administrator reviews a dispute. Stakes stay in escrow until it is resolved.")}</Notice>}
 

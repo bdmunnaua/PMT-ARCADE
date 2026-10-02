@@ -191,6 +191,22 @@ export interface MatchDto {
   endedAt: number | null;
 }
 
+/** What an invite link (pmtarcade.com/r/CODE) shows before the visitor signs in. Public. */
+export interface InvitePreviewDto {
+  code: string;
+  matchId: string;
+  /** false when the room has started, filled up, or was cancelled */
+  open: boolean;
+  gameId: string;
+  gameName: string;
+  stakeUnits: number;
+  hostName: string;
+  playerCount: number;
+  maxPlayers: number;
+  /** one-time joining reward a new player receives, in whole PMT */
+  welcomeBonusTokens: number;
+}
+
 export interface RequestEventDto {
   status: string;
   note: string | null;
