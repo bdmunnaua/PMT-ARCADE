@@ -30,6 +30,7 @@
     "db:seed:local": "node scripts/seed-dev.mjs",
     "admin:create": "node scripts/create-super-admin.mjs",
     "arcade:import": "node scripts/import-arcade-legacy.mjs",
+    "health": "node scripts/health-check.mjs",
     "lint": "eslint .",
     "typecheck": "tsc -p packages/shared/tsconfig.json && tsc -p packages/games/tsconfig.json && tsc -p apps/api/tsconfig.json && tsc -p apps/web/tsconfig.json && tsc -p tests/tsconfig.json",
     "test": "vitest run",
