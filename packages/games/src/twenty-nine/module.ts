@@ -26,8 +26,13 @@ export const TN_HAND_PAUSE_MS = 5_000;
 export const TN_MAX_TIMEOUTS = 3;
 const FAST_MS = 800;
 
+/** a 🤖 bot acts after this pause, like a person would */
+export const TN_BOT_MS = 1_200;
+
 export interface TwentyNineRoomState extends TwentyNineState {
   deadline: number | null;
+  /** seats played by a 🤖 bot (absent in rooms created before bots existed) */
+  bots?: boolean[];
 }
 
 function outcomeOf(s: TwentyNineState): MatchOutcome | undefined {
@@ -37,10 +42,10 @@ function outcomeOf(s: TwentyNineState): MatchOutcome | undefined {
   return { type: 'WIN', winnerUserId: s.players[a]!, teammateUserIds: [s.players[b]!], reason: 'NORMAL' };
 }
 
-function schedule(s: TwentyNineState, now: number, persist: { type: string; payload: unknown }[] = []): ModuleResult<TwentyNineRoomState> {
+function schedule(s: TwentyNineState & { bots?: boolean[] }, now: number, persist: { type: string; payload: unknown }[] = []): ModuleResult<TwentyNineRoomState> {
   let deadline: number | null = null;
   if (s.phase === 'HAND_END') deadline = now + TN_HAND_PAUSE_MS;
-  else if (s.phase !== 'OVER') deadline = now + (s.timeouts[s.turn]! >= TN_MAX_TIMEOUTS ? FAST_MS : TN_TURN_MS);
+  else if (s.phase !== 'OVER') deadline = now + (s.bots?.[s.turn] ? TN_BOT_MS : s.timeouts[s.turn]! >= TN_MAX_TIMEOUTS ? FAST_MS : TN_TURN_MS);
   const out = [...persist];
   if (s.phase === 'OVER') out.push({ type: 'TWENTY_NINE_FINISHED', payload: { gameScore: s.gameScore, history: s.history } });
   return { state: { ...s, deadline }, timerAt: deadline, outcome: outcomeOf(s), persist: out };
@@ -70,7 +75,11 @@ export const twentyNineModule: GameModule<TwentyNineRoomState> = {
   maxPlayers: 4,
   disconnectPolicy: { reconnectWindowMs: 90_000, onTimeout: 'MODULE' },
 
-  createRoom: (ctx) => ({ ...newTwentyNine([...ctx.players].sort((a, b) => a.seat - b.seat).map((p) => p.userId)), deadline: null }),
+  createRoom: (ctx) => {
+    const seated = [...ctx.players].sort((a, b) => a.seat - b.seat);
+    const bots = seated.map((p) => p.isBot === true);
+    return { ...newTwentyNine(seated.map((p) => p.userId)), deadline: null, ...(bots.some(Boolean) ? { bots } : {}) };
+  },
   joinRoom: (state) => ({ state }),
   startMatch: (state, ctx) => schedule(deal(state, ctx.random), ctx.now),
 
@@ -112,8 +121,9 @@ export const twentyNineModule: GameModule<TwentyNineRoomState> = {
 
   handleTimeout(state, ctx) {
     if (state.phase === 'OVER') return { state, timerAt: null };
-    const s: TwentyNineState = { ...state, timeouts: [...state.timeouts] };
-    if (s.phase !== 'HAND_END') s.timeouts[s.turn]! += 1;
+    const s: TwentyNineRoomState = { ...state, timeouts: [...state.timeouts] };
+    // a 🤖 bot's turn is played by the server and never counts as a missed turn
+    if (s.phase !== 'HAND_END' && !s.bots?.[s.turn]) s.timeouts[s.turn]! += 1;
     return schedule(auto(s, ctx), ctx.now);
   },
 

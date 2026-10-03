@@ -95,7 +95,9 @@ export interface GameModule<TState = unknown> {
 export type ClientToRoomMessage =
   | { t: 'move'; data: unknown }
   | { t: 'forfeit' }
-  | { t: 'ping' };
+  | { t: 'ping' }
+  /** voice chat signalling, relayed only to players at the same table (`to` = player number, or everyone) */
+  | { t: 'rtc'; to?: number; data: unknown };
 
 export type RoomToClientMessage =
   | { t: 'welcome'; matchId: string; you: number; players: { playerNumber: number; connected: boolean }[] }
@@ -104,4 +106,5 @@ export type RoomToClientMessage =
   | { t: 'event'; data: unknown }
   | { t: 'result'; outcome: { type: MatchOutcome['type']; winnerPlayerNumber?: number | null } }
   | { t: 'error'; code: string; message: string }
-  | { t: 'pong' };
+  | { t: 'pong' }
+  | { t: 'rtc'; from: number; data: unknown };

@@ -3,6 +3,7 @@ import { NavLink, Outlet, Link } from 'react-router';
 import { Bell, Gamepad2, LayoutDashboard, LifeBuoy, LogOut, Medal, ShieldCheck, Swords, Trophy, User, Wallet, Megaphone } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth, useMe } from '../auth/AuthProvider';
+import { ActiveMatchBar } from '../components/ActiveMatchBar';
 import { NotificationBell, ThemeToggle } from '../components/Common';
 import { Notice, PageLoader } from '../components/ui';
 import { LangToggle, t } from '../lib/i18n';
@@ -96,6 +97,7 @@ export function PlayerLayout() {
             </Notice>
           </div>
         )}
+        <ActiveMatchBar />
         <Suspense fallback={<PageLoader />}>
           <Outlet />
         </Suspense>

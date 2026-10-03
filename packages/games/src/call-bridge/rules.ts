@@ -211,3 +211,24 @@ function clone(s: CallBridgeState): CallBridgeState {
     timeouts: [...s.timeouts],
   };
 }
+
+/**
+ * The 🤖 bot's card: it tries to make exactly the tricks it called. While it still needs tricks it
+ * wins with the cheapest card that takes the trick (and leads its strongest side-suit card);
+ * once it has enough, it plays low. Only its own hand and the cards on the table are used.
+ */
+export function botCard(state: CallBridgeState, player: number): Card {
+  const legal = legalCards(state, player);
+  const needs = state.tricksWon[player]! < (state.bids[player] ?? 0);
+  const cheap = (cards: Card[]) => [...cards].sort((a, b) => power(a) - power(b) || (suitOf(a) === 'S' ? 1 : 0) - (suitOf(b) === 'S' ? 1 : 0));
+  if (state.trick.length === 0) {
+    if (!needs) return cheap(legal)[0]!;
+    const sideAces = legal.filter((c) => suitOf(c) !== 'S' && (rankOf(c) === 'A' || rankOf(c) === 'K'));
+    return sideAces.length ? [...sideAces].sort((a, b) => power(b) - power(a))[0]! : cheap(legal)[0]!;
+  }
+  const wins = (c: Card) => winningIndex([...state.trick, { player, card: c }]) === state.trick.length;
+  const winners = cheap(legal.filter(wins));
+  const losers = cheap(legal.filter((c) => !wins(c)));
+  if (needs && winners.length) return winners[0]!;
+  return losers[0] ?? cheap(legal)[0]!;
+}

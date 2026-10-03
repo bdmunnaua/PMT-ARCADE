@@ -127,7 +127,27 @@ export class GameRoom extends DurableObject<Env> {
     } catch {
       return;
     }
+    if ((parsed as { t?: string } | null)?.t === 'rtc') return this.relayRtc(userId, parsed as { to?: unknown; data?: unknown });
     await this.applyEffects(this.engine!.message(userId, parsed, Date.now()));
+  }
+
+  /** Voice chat signalling: passed straight to the other players at this table, never to the game. */
+  private relayRtc(userId: string, m: { to?: unknown; data?: unknown }): void {
+    const players = this.engine?.snapshot.players ?? [];
+    const me = players.find((p) => p.userId === userId);
+    if (!me || me.isBot || typeof m.data !== 'object' || m.data === null) return;
+    const out = JSON.stringify({ t: 'rtc', from: me.playerNumber, data: m.data });
+    for (const p of players) {
+      if (p.userId === userId || p.isBot) continue;
+      if (typeof m.to === 'number' && m.to !== p.playerNumber) continue;
+      for (const ws of this.ctx.getWebSockets(p.userId)) {
+        try {
+          ws.send(out);
+        } catch {
+          /* closing */
+        }
+      }
+    }
   }
 
   override async webSocketClose(ws: WebSocket): Promise<void> {

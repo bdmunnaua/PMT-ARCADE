@@ -9,6 +9,7 @@ import { GAME_CLIENTS } from '../../games/registry';
 import { useGameRoom } from '../../games/useGameRoom';
 import { SoundToggle } from '../../games/shared/GameUi';
 import { useSoundOnChange } from '../../games/shared/sound';
+import { VoiceChat } from '../../games/shared/VoiceChat';
 import { ApiError, post } from '../../lib/api';
 import { dateTime, percentFromBps, tokens } from '../../lib/format';
 import { useApi, useDocumentTitle } from '../../lib/hooks';
@@ -59,7 +60,7 @@ export default function MatchDetailPage() {
           {t("Your stake is locked in escrow.")} {m.visibility === 'PRIVATE' && m.joinCode ? <>{t("Room code:")} <CopyText value={m.joinCode} label={t("Room code")} /></> : t("Other players can join from the game lobby.")} {t("Rooms that wait longer than 30 minutes are cancelled and refunded automatically.")}
         </Notice>
       )}
-      {m.status === 'WAITING_FOR_OPPONENT' && m.isCreator && game.data?.moduleKey === 'ludo' && m.playerCount < m.maxPlayers && <BotFill match={m} />}
+      {m.status === 'WAITING_FOR_OPPONENT' && m.isCreator && m.playerCount < m.maxPlayers && <HostStart match={m} botsAllowed={['ludo', 'call-bridge', 'twenty-nine'].includes(game.data?.moduleKey ?? '')} />}
       {m.status === 'WAITING_FOR_OPPONENT' && m.visibility === 'PRIVATE' && m.joinCode && m.isParticipant && m.playerCount < m.maxPlayers && (
         <Card>
           <CardBody>
@@ -178,6 +179,11 @@ function GameRoomPanel({ match, game }: { match: MatchDto; game: GameDto }) {
         {room.error && <Notice tone="danger">{room.error}</Notice>}
         <Client match={match} room={room} />
       </CardBody>
+      {match.visibility === 'PRIVATE' && room.status === 'open' && (
+        <div className="border-t border-ink-100 p-3 dark:border-ink-800">
+          <VoiceChat room={room} players={match.players} />
+        </div>
+      )}
     </Card>
   );
 }
@@ -234,33 +240,45 @@ function DisputeModal({ open, onClose, match, onDone }: { open: boolean; onClose
   );
 }
 
-/** The host fills the empty seats with 🤖 bots (Ludo); the game then starts. */
-function BotFill({ match }: { match: MatchDto }) {
+/** The host starts now: with the people who joined (no bots), or with 🤖 bots in the empty seats. */
+function HostStart({ match, botsAllowed }: { match: MatchDto; botsAllowed: boolean }) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const empty = match.maxPlayers - match.playerCount;
+  const canStartNow = match.playerCount >= match.minPlayers;
+  const run = async (path: 'start' | 'bots', done: string) => {
+    setBusy(true);
+    try {
+      await post(`/api/matches/${match.id}/${path}`);
+      toast.success(done);
+    } catch (e) {
+      toast.error(e instanceof ApiError ? t(e.message) : t('Something went wrong.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (!canStartNow && !botsAllowed) return null;
   return (
     <Card>
-      <CardBody className="flex flex-wrap items-center justify-between gap-3">
+      <CardBody className="space-y-3">
         <p className="text-sm">
-          {t('Do not want to wait? Fill the {n} empty seat(s) with 🤖 bots and start now. Bots are always shown as bots.', { n: empty })}
+          {canStartNow
+            ? t('{n} player(s) are here. Start now with them, or wait for more friends.', { n: match.playerCount })
+            : t('Waiting for friends. You can also fill the {n} empty seat(s) with 🤖 bots and start now.', { n: empty })}
         </p>
-        <Button
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            try {
-              await post(`/api/matches/${match.id}/bots`);
-              toast.success(t('Bots joined — the game is starting!'));
-            } catch (e) {
-              toast.error(e instanceof ApiError ? t(e.message) : t('Could not add bots.'));
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          🤖 {t('Start with bots')}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {canStartNow && (
+            <Button disabled={busy} onClick={() => run('start', t('The game is starting!'))}>
+              ▶ {t('Start now with {n} players', { n: match.playerCount })}
+            </Button>
+          )}
+          {botsAllowed && (
+            <Button variant="outline" disabled={busy} onClick={() => run('bots', t('Bots joined — the game is starting!'))}>
+              🤖 {t('Fill {n} seat(s) with bots', { n: empty })}
+            </Button>
+          )}
+        </div>
+        {botsAllowed && <p className="text-xs text-ink-500">{t('Bots are always shown as bots.')}</p>}
       </CardBody>
     </Card>
   );

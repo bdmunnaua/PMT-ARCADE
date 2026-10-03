@@ -280,6 +280,40 @@ export class MatchService {
     return this.join(user, match.id);
   }
 
+  /**
+   * The host starts the game with the people already in the room (no bots): the room shrinks to
+   * the players present. Needs at least the game's minimum (Ludo: 2).
+   */
+  async startNow(user: UserRecord, matchId: string): Promise<MatchDto> {
+    const match = await this.repo.find(matchId);
+    if (!match) throw notFound('Match');
+    if (match.creator_id !== user.id) throw new AppError('FORBIDDEN', 'Only the player who opened the room can start it.');
+    if (match.status !== 'WAITING_FOR_OPPONENT') throw invalidState('This room is not waiting for players.');
+    if (match.player_count < match.min_players) throw new AppError('VALIDATION_ERROR', `This game needs at least ${match.min_players} players.`);
+    const now = this.now();
+    await runBatch(this.db, [
+      this.db
+        .prepare("UPDATE matches SET max_players = player_count, status = 'READY', ready_at = ?, updated_at = ? WHERE id = ? AND status = 'WAITING_FOR_OPPONENT' AND player_count >= min_players")
+        .bind(now, now, matchId),
+      assertStmt(this.db, "SELECT EXISTS (SELECT 1 FROM matches WHERE id = ? AND status = 'READY')", matchId),
+      this.repo.eventStmt(matchId, 'READY', { startedBy: user.playerNumber, players: match.player_count }, 'PLAYER', user.id),
+    ]);
+    const dto = await this.get(matchId, user.id);
+    this.publisher.publish(`match:${matchId}`, { type: 'match.updated' });
+    const players = await this.repo.players(matchId);
+    for (const p of players) {
+      if (p.user_id === user.id) continue;
+      await this.notifications.notifyPlayer(p.user_id, {
+        type: 'MATCH_OPPONENT_FOUND',
+        title: `Game starting — Match #${dto.matchNumber}`,
+        body: `${dto.gameName} for ${formatTokens(dto.stakeUnits)} each. The host started the game.`,
+        link: `/matches/${matchId}`,
+      });
+    }
+    await this.fraud.checkMatchOpponents(matchId, players.map((p) => p.user_id));
+    return dto;
+  }
+
   /** Creator leaving cancels the room (everyone refunded); anyone else gets only their own stake back. */
   async leave(user: UserRecord, matchId: string): Promise<MatchDto> {
     const match = await this.repo.find(matchId);

@@ -16,6 +16,8 @@ export interface GameRoomConnection {
   /** last per-player error message from the game (e.g. an illegal move) */
   lastError: string | null;
   send: (m: ClientToRoomMessage) => void;
+  /** voice chat signalling from other players at the table */
+  onRtc: (fn: (from: number, data: unknown) => void) => () => void;
 }
 
 /** Connects to the match's GameRoom Durable Object; reconnects automatically while mounted. */
@@ -30,6 +32,7 @@ export function useGameRoom(matchId: string, enabled: boolean): GameRoomConnecti
   const [serverOffset, setServerOffset] = useState(0);
   const [lastError, setLastError] = useState<string | null>(null);
   const ws = useRef<WebSocket | null>(null);
+  const rtcListeners = useRef(new Set<(from: number, data: unknown) => void>());
 
   useEffect(() => {
     if (!enabled) return;
@@ -63,6 +66,7 @@ export function useGameRoom(matchId: string, enabled: boolean): GameRoomConnecti
             setLastError(err ?? null);
           }
           else if (m.t === 'error') setError(m.message);
+          else if (m.t === 'rtc') for (const fn of rtcListeners.current) fn(m.from, m.data);
         };
         sock.onclose = () => {
           setStatus('closed');
@@ -86,5 +90,12 @@ export function useGameRoom(matchId: string, enabled: boolean): GameRoomConnecti
     if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify(m));
   }, []);
 
-  return { status, error, view, presence, reconnectDeadline: deadline, result, events, serverOffset, lastError, send };
+  const onRtc = useCallback((fn: (from: number, data: unknown) => void) => {
+    rtcListeners.current.add(fn);
+    return () => {
+      rtcListeners.current.delete(fn);
+    };
+  }, []);
+
+  return { status, error, view, presence, reconnectDeadline: deadline, result, events, serverOffset, lastError, send, onRtc };
 }

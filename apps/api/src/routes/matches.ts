@@ -38,6 +38,8 @@ export function matchRoutes(auth: MiddlewareHandler<AppEnv>) {
   r.post('/:id/join', rateLimit('match_join'), async (c) => ok(c, await c.get('services').matches.join(c.get('user'), param(c, 'id'))));
 
   r.post('/:id/leave', rateLimit('match_join'), async (c) => ok(c, await c.get('services').matches.leave(c.get('user'), param(c, 'id'))));
+  /** host starts the game with the players already in the room (no bots) */
+  r.post('/:id/start', rateLimit('match_join'), async (c) => ok(c, await c.get('services').matches.startNow(c.get('user'), param(c, 'id'))));
   /** host fills the empty seats with 🤖 bots, which starts the game */
   r.post('/:id/bots', rateLimit('match_join'), async (c) => ok(c, await c.get('services').bots.fill(c.get('user'), param(c, 'id'))));
 

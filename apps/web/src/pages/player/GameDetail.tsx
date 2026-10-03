@@ -14,6 +14,8 @@ import { t } from '../../lib/i18n';
 
 type Mode = 'quick' | 'room' | 'code';
 
+const BOT_GAMES = ['ludo', 'call-bridge', 'twenty-nine'];
+
 export default function GameDetailPage() {
   const { slug = '' } = useParams();
   const game = useApi<GameDto>(`/api/games/${slug}`);
@@ -40,6 +42,7 @@ function GameLobby({ game }: { game: GameDto }) {
   const [mode, setMode] = useState<Mode>('quick');
   const [stake, setStake] = useState(formatMinor(Math.max(game.minimumStakeUnits, (config?.minimumMatchStake ?? 10) * 100)).replace(/,/g, ''));
   const [isPrivate, setPrivate] = useState(false);
+  const [seats, setSeats] = useState(game.maximumPlayers);
   const [code, setCode] = useState('');
   const [confirm, setConfirm] = useState<null | { kind: 'quick' } | { kind: 'room' } | { kind: 'bot' } | { kind: 'join'; match: MatchDto }>(null);
   const open = useApi<MatchDto[]>(`/api/matches/open?gameId=${game.id}`);
@@ -77,7 +80,7 @@ function GameLobby({ game }: { game: GameDto }) {
           throw e;
         }
       } else if (confirm.kind === 'room') {
-        const r = await post<{ match: MatchDto }>('/api/matches', { gameId: game.id, stakeUnits, visibility: isPrivate ? 'PRIVATE' : 'PUBLIC' }, idem.key());
+        const r = await post<{ match: MatchDto }>('/api/matches', { gameId: game.id, stakeUnits, visibility: isPrivate ? 'PRIVATE' : 'PUBLIC', maxPlayers: seats }, idem.key());
         idem.rotate();
         toast.success(t("Room created. Your stake is locked until the match ends or you leave."));
         go(r.match);
@@ -140,6 +143,18 @@ function GameLobby({ game }: { game: GameDto }) {
             {mode !== 'code' ? (
               <>
                 <Input label={t("Stake")} inputMode="decimal" value={stake} onChange={(e) => setStake(e.target.value)} suffix="PMT" error={stake ? stakeError : null} hint={stakeUnits && !stakeError ? feeLine(stakeUnits) : undefined} />
+                {mode === 'room' && game.minimumPlayers < game.maximumPlayers && (
+                  <div>
+                    <p className="mb-1.5 text-sm font-medium">{t('Players')}</p>
+                    <div className="flex gap-2">
+                      {Array.from({ length: game.maximumPlayers - game.minimumPlayers + 1 }, (_, i) => game.minimumPlayers + i).map((n) => (
+                        <Button key={n} size="sm" variant={seats === n ? 'primary' : 'secondary'} className="flex-1" onClick={() => setSeats(n)}>
+                          {n === 2 ? t('Duo (2)') : `${n}`}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {mode === 'room' && (
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={isPrivate} onChange={(e) => setPrivate(e.target.checked)} className="size-4 accent-brand-600" />
@@ -149,9 +164,9 @@ function GameLobby({ game }: { game: GameDto }) {
                 <Button className="w-full" disabled={!!stakeError || !stakeUnits} icon={mode === 'quick' ? <Zap className="size-4" /> : <DoorOpen className="size-4" />} onClick={() => setConfirm(mode === 'quick' ? { kind: 'quick' } : { kind: 'room' })}>
                   {mode === 'quick' ? t("Find an opponent") : t("Create room")}
                 </Button>
-                {game.moduleKey === 'ludo' && (
+                {BOT_GAMES.includes(game.moduleKey ?? '') && (
                   <Button className="w-full" variant="outline" disabled={!!stakeError || !stakeUnits} icon={<Bot className="size-4" />} onClick={() => setConfirm({ kind: 'bot' })}>
-                    {t("Play against a 🤖 bot")}
+                    {game.maximumPlayers > 2 && game.minimumPlayers > 2 ? t('Play with 🤖 bots') : t('Play against a 🤖 bot')}
                   </Button>
                 )}
               </>

@@ -30,7 +30,7 @@ export const BOTS = [
 ] as const;
 
 /** game modules that have a bot player */
-export const BOT_GAMES = new Set(['ludo']);
+export const BOT_GAMES = new Set(['ludo', 'call-bridge', 'twenty-nine']);
 
 /** a bot is topped up to this many stakes at a time, so it does not need a transfer every game */
 const TOP_UP_STAKES = 5;
@@ -119,7 +119,7 @@ export class BotService {
     if (match.creator_id !== host.id) throw new AppError('FORBIDDEN', 'Only the player who opened the room can add bots.');
     if (match.status !== 'WAITING_FOR_OPPONENT') throw invalidState('This room is not waiting for players.');
     const game = await this.games.get(match.game_id);
-    if (!game.moduleKey || !BOT_GAMES.has(game.moduleKey)) throw new AppError('GAME_UNAVAILABLE', 'Bots can play Ludo for now. Invite a friend for this game.');
+    if (!game.moduleKey || !BOT_GAMES.has(game.moduleKey)) throw new AppError('GAME_UNAVAILABLE', 'Bots can play Ludo, Call Bridge and 29 for now. Invite a friend for this game.');
     const seats = match.max_players - match.player_count;
     if (seats <= 0) throw new AppError('MATCH_FULL');
     // worst case the house loses every bot stake in this room

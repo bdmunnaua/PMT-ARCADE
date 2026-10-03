@@ -1,6 +1,6 @@
 import type { GameModule, MatchOutcome, ModuleResult, RoomContext } from '@arena/shared';
 import { sortHand, type Card } from '../common/cards';
-import { autoBid, autoCard, bid, CB_RANKS, deal, forfeit, legalCards, newCallBridge, play, type CallBridgeState } from './rules';
+import { autoBid, autoCard, bid, botCard, CB_RANKS, deal, forfeit, legalCards, newCallBridge, play, type CallBridgeState } from './rules';
 
 export const CB_TURN_MS = 20_000;
 export const CB_ROUND_PAUSE_MS = 5_000;
@@ -8,8 +8,13 @@ const FORFEITED_TURN_MS = 800;
 /** after this many consecutive timeouts the player is auto-played instantly for the rest of the game */
 export const CB_MAX_TIMEOUTS = 3;
 
+/** a 🤖 bot bids / plays after this pause, like a person would */
+export const CB_BOT_MS = 1_200;
+
 export interface CallBridgeRoomState extends CallBridgeState {
   deadline: number | null;
+  /** seats played by a 🤖 bot (absent in rooms created before bots existed) */
+  bots?: boolean[];
 }
 
 function outcomeOf(s: CallBridgeState): MatchOutcome | undefined {
@@ -18,20 +23,21 @@ function outcomeOf(s: CallBridgeState): MatchOutcome | undefined {
   return { type: 'DRAW' };
 }
 
-function schedule(s: CallBridgeState, now: number, extraPersist: { type: string; payload: unknown }[] = []): ModuleResult<CallBridgeRoomState> {
+function schedule(s: CallBridgeState & { bots?: boolean[] }, now: number, extraPersist: { type: string; payload: unknown }[] = []): ModuleResult<CallBridgeRoomState> {
   let deadline: number | null = null;
   if (s.phase === 'ROUND_END') deadline = now + CB_ROUND_PAUSE_MS;
-  else if (s.phase === 'BIDDING' || s.phase === 'PLAYING') deadline = now + (s.forfeited[s.turn] || s.timeouts[s.turn]! >= CB_MAX_TIMEOUTS ? FORFEITED_TURN_MS : CB_TURN_MS);
+  else if (s.phase === 'BIDDING' || s.phase === 'PLAYING')
+    deadline = now + (s.bots?.[s.turn] ? CB_BOT_MS : s.forfeited[s.turn] || s.timeouts[s.turn]! >= CB_MAX_TIMEOUTS ? FORFEITED_TURN_MS : CB_TURN_MS);
   const state: CallBridgeRoomState = { ...s, deadline };
   const persist = [...extraPersist];
   if (s.phase === 'OVER') persist.push({ type: 'CALL_BRIDGE_FINISHED', payload: { scores: s.scores, history: s.history } });
   return { state, timerAt: deadline, outcome: outcomeOf(s), persist };
 }
 
-function act(s: CallBridgeState, ctx: RoomContext): CallBridgeState {
+function act(s: CallBridgeState & { bots?: boolean[] }, ctx: RoomContext): CallBridgeState {
   if (s.phase === 'ROUND_END') return deal(s, ctx.random);
   if (s.phase === 'BIDDING') return bid(s, s.turn, autoBid(s, s.turn));
-  if (s.phase === 'PLAYING') return play(s, s.turn, autoCard(s, s.turn));
+  if (s.phase === 'PLAYING') return play(s, s.turn, s.bots?.[s.turn] ? botCard(s, s.turn) : autoCard(s, s.turn));
   return s;
 }
 
@@ -42,7 +48,11 @@ export const callBridgeModule: GameModule<CallBridgeRoomState> = {
   maxPlayers: 4,
   disconnectPolicy: { reconnectWindowMs: 90_000, onTimeout: 'MODULE' },
 
-  createRoom: (ctx) => ({ ...newCallBridge([...ctx.players].sort((a, b) => a.seat - b.seat).map((p) => p.userId)), deadline: null }),
+  createRoom: (ctx) => {
+    const seated = [...ctx.players].sort((a, b) => a.seat - b.seat);
+    const bots = seated.map((p) => p.isBot === true);
+    return { ...newCallBridge(seated.map((p) => p.userId)), deadline: null, ...(bots.some(Boolean) ? { bots } : {}) };
+  },
   joinRoom: (state) => ({ state }),
   startMatch: (state, ctx) => schedule(deal(state, ctx.random), ctx.now),
 
@@ -63,8 +73,9 @@ export const callBridgeModule: GameModule<CallBridgeRoomState> = {
 
   handleTimeout(state, ctx) {
     if (state.phase === 'OVER') return { state, timerAt: null };
-    const s: CallBridgeState = { ...state, timeouts: [...state.timeouts] };
-    if (s.phase === 'BIDDING' || s.phase === 'PLAYING') s.timeouts[s.turn]! += 1;
+    const s: CallBridgeRoomState = { ...state, timeouts: [...state.timeouts] };
+    // a 🤖 bot's turn is played by the server and never counts as a missed turn
+    if ((s.phase === 'BIDDING' || s.phase === 'PLAYING') && !s.bots?.[s.turn]) s.timeouts[s.turn]! += 1;
     return schedule(act(s, ctx), ctx.now);
   },
 
