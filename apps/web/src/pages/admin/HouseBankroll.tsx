@@ -24,7 +24,7 @@ export default function HouseBankroll() {
   const x = d.data;
   return (
     <div className="space-y-6">
-      <PageHeader title="House bankroll" subtitle="Backs Aviator: pays winning cash-outs, receives losing bets. Funded only from the admin treasury." />
+      <PageHeader title="House bankroll" subtitle="Backs 🤖 bot stakes (as bonus PMT) and Aviator: pays what players win from the house, receives what the house wins. Funded only from the admin treasury." />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Bankroll" value={x ? tokens(x.balanceUnits) : '…'} icon={<Plane className="size-5" />} />
         <StatCard label="Open exposure" value={x ? tokens(x.openExposureUnits) : '…'} hint="Max profit open bets could still win" icon={<Scale className="size-5" />} tone="amber" />

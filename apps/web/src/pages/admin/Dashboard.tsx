@@ -45,7 +45,7 @@ export default function AdminDashboard() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {tile('/admin/finance/treasury', <StatCard label="Admin treasury" value={tokens(x.finance.treasuryUnits)} hint={`Issued total ${tokens(x.finance.issuedUnits)}`} icon={<Landmark className="size-5" />} />)}
           {tile('/admin/finance/platform-fees', <StatCard label="Platform fee wallet" value={tokens(x.finance.platformFeesUnits)} hint={`Last 24h ${tokens(x.games.fees24hUnits)}`} icon={<PiggyBank className="size-5" />} tone="emerald" />)}
-          {tile('/admin/finance/house-bankroll', <StatCard label="House bankroll (Aviator)" value={tokens(x.finance.houseBankrollUnits)} icon={<Plane className="size-5" />} tone="amber" />)}
+          {tile('/admin/finance/house-bankroll', <StatCard label="House bankroll (bots and Aviator)" value={tokens(x.finance.houseBankrollUnits)} icon={<Plane className="size-5" />} tone="amber" />)}
           <StatCard label="Purchases (24h)" value={bdt(x.finance.buyVolume24hPoisha)} icon={<ShoppingCart className="size-5" />} tone="sky" />
           <StatCard label="Redemptions paid (24h)" value={bdt(x.finance.sellVolume24hPoisha)} icon={<ArrowLeftRight className="size-5" />} tone="amber" />
         </div>
