@@ -207,6 +207,20 @@ export class CrashGame extends DurableObject<Env> {
     return { x100, panel, payoutUnits: res.payoutUnits };
   }
 
+  /** A bet can be cancelled (full refund) only while betting is open, before take-off. */
+  private async cancel(userId: string, panel: 1 | 2): Promise<unknown> {
+    const s = this.services();
+    const m = this.mem!;
+    if (m.phase !== 'BETTING' || !m.roundId) throw new AppError('ROUND_CLOSED', 'Bets can only be cancelled before take-off.');
+    const bet = await s.crash.betFor(m.roundId, userId, panel);
+    if (!bet) throw new AppError('NOT_FOUND', 'You have no bet on this panel in this round.');
+    if (bet.status !== 'ACTIVE') throw new AppError('ALREADY_PROCESSED', 'This bet is already settled.');
+    const res = await s.settlement.settleCrashBet(bet.id, { type: 'REFUND', reason: 'Cancelled by the player before take-off' });
+    const round = await s.crash.round(m.roundId);
+    if (round) this.broadcast({ t: 'bets', bets: await s.crash.roundBets(round, null) });
+    return { panel, refundedUnits: res.payoutUnits };
+  }
+
   override async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const userId = request.headers.get('x-arena-user') ?? '';
@@ -225,6 +239,10 @@ export class CrashGame extends DurableObject<Env> {
       if (url.pathname === '/bet' && request.method === 'POST') {
         const body = (await request.json()) as { amountUnits: number; autoCashoutX100?: number; clientKey: string };
         return reply({ status: 200, body: { data: await this.run(gameId, () => this.bet(userId, body)) } });
+      }
+      if (url.pathname === '/cancel' && request.method === 'POST') {
+        const { panel } = (await request.json()) as { panel?: 1 | 2 };
+        return reply({ status: 200, body: { data: await this.run(gameId, () => this.cancel(userId, panel === 2 ? 2 : 1)) } });
       }
       if (url.pathname === '/cashout' && request.method === 'POST') {
         const { panel } = (await request.json()) as { panel?: 1 | 2 };

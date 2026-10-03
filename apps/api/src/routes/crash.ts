@@ -40,5 +40,7 @@ export function crashRoutes(auth: MiddlewareHandler<AppEnv>) {
     return ok(c, await crashGame(c, '/bet', { ...input, clientKey: c.get('idempotencyKey') }), 201);
   });
   r.post('/:gameId/cashout', rateLimit('crash_cashout'), async (c) => ok(c, await crashGame(c, '/cashout', await parseBody(c, crashCashoutSchema))));
+  /** cancel a bet before take-off (full refund) */
+  r.post('/:gameId/cancel', rateLimit('crash_cashout'), async (c) => ok(c, await crashGame(c, '/cancel', await parseBody(c, crashCashoutSchema))));
   return r;
 }

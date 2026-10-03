@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Maximize2 } from 'lucide-react';
 import { crashPointX100, formatX, multiplierAt, sha256Hex } from '@arena/games/aviator';
 import { BetPanel } from './BetPanel';
 import { drawScene } from './scene';
 import { playSound } from '../shared/sound';
+import { t } from '../../lib/i18n';
 import { SoundToggle } from '../shared/GameUi';
 import { formatMinor, type CrashRoundDto, type CrashStateDto, type GameDto } from '@arena/shared';
 import { useMe } from '../../auth/AuthProvider';
@@ -17,6 +18,7 @@ import { useWallet } from '../../components/Wallet';
 type Msg = { t?: string; serverNow?: number; round?: CrashRoundDto | null; bets?: CrashStateDto['bets'] };
 
 export function AviatorGame({ game }: { game: GameDto }) {
+  const room = useRef<HTMLDivElement>(null);
   const me = useMe();
   const toast = useToast();
   const wallet = useWallet();
@@ -81,9 +83,16 @@ export function AviatorGame({ game }: { game: GameDto }) {
     return () => cancelAnimationFrame(raf);
   }, [round, flying, offset]);
 
+  const toggleFullscreen = () => {
+    const el = room.current;
+    if (!el) return;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void el.requestFullscreen?.({ navigationUI: 'hide' }).catch(() => undefined);
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" aria-label="Recent crash points">
+    <div ref={room} className="space-y-6 [&:fullscreen]:overflow-y-auto [&:fullscreen]:bg-ink-950 [&:fullscreen]:p-3 [&:fullscreen]:text-white">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" aria-label={t('Recent results')}>
         {state?.history.map((h) => (
           <span key={h.roundNumber} className={clsx('shrink-0 rounded-full px-2.5 py-1 text-xs font-bold', h.crashX100 >= 1000 ? 'bg-fuchsia-500/20 text-fuchsia-500' : h.crashX100 >= 200 ? 'bg-sky-500/20 text-sky-500' : 'bg-ink-200 text-ink-600 dark:bg-ink-800 dark:text-ink-300')}>
             {formatX(h.crashX100)}
@@ -96,27 +105,34 @@ export function AviatorGame({ game }: { game: GameDto }) {
             <canvas ref={canvas} className="h-72 w-full sm:h-96" />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-white">
               {!round ? (
-                <p className="text-lg font-semibold">Connecting…</p>
+                <p className="text-lg font-semibold">{t('Connecting…')}</p>
               ) : round.phase === 'BETTING' ? (
                 <>
-                  <p className="text-sm tracking-widest text-white/70 uppercase">Place your bets</p>
+                  <p className="text-sm tracking-widest text-white/70 uppercase">{t('Place your bets')}</p>
                   <p className="text-6xl font-black tabular-nums">{bettingLeft}s</p>
                 </>
               ) : round.phase === 'FLYING' ? (
                 <p className="text-7xl font-black tabular-nums [text-shadow:0_4px_0_rgb(76_29_149),0_8px_24px_rgb(0_0_0/0.6)]">{formatX(x100)}</p>
               ) : (
                 <>
-                  <p className="text-sm tracking-widest text-rose-300 uppercase">Flew away</p>
+                  <p className="text-sm tracking-widest text-rose-300 uppercase">{t('Flew away')}</p>
                   <p className="text-6xl font-black text-rose-400 tabular-nums">{formatX(round.crashX100 ?? 100)}</p>
                 </>
               )}
             </div>
-            {round && <p className="absolute bottom-2 left-3 text-xs text-white/50">Round #{round.roundNumber}</p>}
-            <SoundToggle className="absolute top-2 right-2 text-white/70 hover:bg-white/10 hover:text-white" />
+            {round && <p className="absolute bottom-2 left-3 text-xs text-white/50">{t('Round')} #{round.roundNumber}</p>}
+            <div className="absolute top-2 right-2 flex items-center gap-1">
+              {typeof document !== 'undefined' && document.fullscreenEnabled && (
+                <button type="button" onClick={toggleFullscreen} className="grid size-9 place-items-center rounded-xl text-white/70 hover:bg-white/10 hover:text-white" aria-label={t('Full screen')} title={t('Full screen')}>
+                  <Maximize2 className="size-4" />
+                </button>
+              )}
+              <SoundToggle className="text-white/70 hover:bg-white/10 hover:text-white" />
+            </div>
           </div>
         </div>
         <div className="space-y-3">
-          <p className="text-sm text-ink-500">Available {wallet.data ? tokens(wallet.data.availableUnits + wallet.data.bonusUnits) : '…'}</p>
+          <p className="text-sm text-ink-500">{t('Available')} {wallet.data ? tokens(wallet.data.availableUnits + wallet.data.bonusUnits) : '…'}</p>
           {([1, 2] as const).map((panel) => (
             <BetPanel
               key={panel}
@@ -133,16 +149,16 @@ export function AviatorGame({ game }: { game: GameDto }) {
           ))}
           {state && (
             <p className="text-xs text-ink-500">
-              Bets {tokens(state.limits.minBetUnits)} – {tokens(state.limits.maxBetUnits)} · max {formatX(state.limits.maxX100)} · max win per bet {tokens(state.limits.maxProfitUnits)}
+              {t('Bets')} {tokens(state.limits.minBetUnits)} – {tokens(state.limits.maxBetUnits)} · {t('max')} {formatX(state.limits.maxX100)} · {t('max win per bet')} {tokens(state.limits.maxProfitUnits)}
             </p>
           )}
         </div>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Live bets" subtitle={`${state?.bets.length ?? 0} ${state?.bets.length === 1 ? 'player' : 'players'} this round`} />
+          <CardHeader title={t('Live bets')} subtitle={t('{n} player(s) this round', { n: state?.bets.length ?? 0 })} />
           <ul className="max-h-80 divide-y divide-ink-100 overflow-y-auto dark:divide-ink-800">
-            {state?.bets.length === 0 && <li className="px-5 py-4 text-sm text-ink-500">No bets yet this round.</li>}
+            {state?.bets.length === 0 && <li className="px-5 py-4 text-sm text-ink-500">{t('No bets yet this round.')}</li>}
             {state?.bets.map((b) => (
               <li key={b.id} className={clsx('flex items-center justify-between px-5 py-2.5 text-sm', b.isYou && 'bg-brand-50 dark:bg-brand-500/10')}>
                 <span>
