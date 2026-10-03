@@ -31,6 +31,8 @@ import {
   Wallet,
   X,
   type LucideIcon,
+  MessageSquare,
+  Megaphone,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { Permission } from '@arena/shared';
@@ -71,6 +73,13 @@ const GROUPS: Group[] = [
       { to: '/admin/games/live', label: 'Live matches', icon: Activity, perm: ['matches.view'] },
       { to: '/admin/games/history', label: 'Match history', icon: Swords, perm: ['matches.view'] },
       { to: '/admin/games/disputes', label: 'Disputes', icon: Gavel, perm: ['disputes.view'] },
+    ],
+  },
+  {
+    title: 'Community',
+    items: [
+      { to: '/admin/messages', label: 'Messages', icon: MessageSquare, perm: ['support.view'] },
+      { to: '/admin/creators', label: 'Creator rewards', icon: Megaphone, perm: ['support.view'] },
     ],
   },
   {

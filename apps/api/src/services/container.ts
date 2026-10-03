@@ -31,6 +31,8 @@ import { createChainClient, type ChainClient } from './chain';
 import { OnchainService } from './onchain';
 import { TransparencyService } from './transparency';
 import { BotService } from './bots';
+import { InboxService } from './inbox';
+import { CreatorService } from './creators';
 import { SettlementService } from './settlement';
 import { TreasuryService } from './treasury';
 
@@ -79,6 +81,8 @@ export function createServices(env: Env, meta: RequestMeta, opts: ContainerOptio
   const onchain = new OnchainService(db, wallets, ledger, settings, notifications, chain, now);
   const transparency = new TransparencyService(db, reserve, chain, now);
   const bots = new BotService(db, users, ledger, settings, games, matches, matchesRepo, now);
+  const inbox = new InboxService(db, notifications, now);
+  const creators = new CreatorService(db, ledger, settings, notifications, { ip: meta.ip, userAgent: meta.userAgent }, now);
   const integrity = new IntegrityService(db, now);
   const rateLimiter = new RateLimiter(db, resolveRateLimits(env.RATE_LIMIT_OVERRIDES), now);
 
@@ -99,6 +103,8 @@ export function createServices(env: Env, meta: RequestMeta, opts: ContainerOptio
     onchain,
     transparency,
     bots,
+    inbox,
+    creators,
     notifications,
     fraud,
     ledger,

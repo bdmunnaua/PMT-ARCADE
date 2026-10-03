@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { NavLink, Outlet, Link } from 'react-router';
-import { Bell, Gamepad2, LayoutDashboard, LifeBuoy, LogOut, Medal, ShieldCheck, Swords, Trophy, User, Wallet } from 'lucide-react';
+import { Bell, Gamepad2, LayoutDashboard, LifeBuoy, LogOut, Medal, ShieldCheck, Swords, Trophy, User, Wallet, Megaphone } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth, useMe } from '../auth/AuthProvider';
 import { NotificationBell, ThemeToggle } from '../components/Common';
@@ -15,6 +15,7 @@ const NAV = [
   { to: '/matches', label: 'Matches', icon: Swords },
   { to: '/wallet', label: 'Wallet', icon: Wallet },
   { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { to: '/creator-rewards', label: 'Creator rewards', icon: Megaphone },
   { to: '/notifications', label: 'Notifications', icon: Bell },
   { to: '/support', label: 'Support', icon: LifeBuoy },
   { to: '/profile', label: 'Profile', icon: User },

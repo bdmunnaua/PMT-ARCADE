@@ -29,6 +29,8 @@ const NUMBER_FIELDS: { key: SettingKey; label: string; hint: string }[] = [
   { key: 'onchain_withdraw_fee_tokens', label: 'Crypto: withdrawal fee (PMT)', hint: 'Covers the BNB network cost; goes to platform fees' },
   { key: 'onchain_min_deposit_tokens', label: 'Crypto: minimum deposit (PMT)', hint: 'Whole PMT' },
   { key: 'onchain_confirmations', label: 'Crypto: deposit confirmations', hint: 'Blocks before a deposit is credited (BNB Chain: ~3 s per block)' },
+  { key: 'creator_reward_tokens', label: 'Creator reward (PMT per approved post)', hint: 'Bonus PMT from the rewards pool' },
+  { key: 'creator_reward_max', label: 'Creator reward: most creators this campaign', hint: 'Submissions close when this many are approved' },
   { key: 'bot_daily_loss_limit_tokens', label: 'Bots: most the house may lose per day (PMT)', hint: 'Bonus PMT from the house bankroll; when reached, bots pause until tomorrow' },
 ];
 
@@ -77,6 +79,7 @@ export default function SettingsPage() {
             <Checkbox label="Buy requests enabled" checked={draft.buy_requests_enabled} onChange={(v) => canEdit && set('buy_requests_enabled', v)} />
             <Checkbox label="Sell requests enabled" checked={draft.sell_requests_enabled} onChange={(v) => canEdit && set('sell_requests_enabled', v)} />
             <Checkbox label="Free-game rewards enabled" hint="Free games keep working when off, but pay nothing" checked={draft.arcade_enabled} onChange={(v) => canEdit && set('arcade_enabled', v)} />
+            <Checkbox label="Creator rewards open" hint="Players can submit an original post for review" checked={draft.creator_rewards_enabled} onChange={(v) => canEdit && set('creator_rewards_enabled', v)} />
             <Checkbox label="🤖 Bots can fill empty seats (Ludo)" hint="Bots stake bonus PMT from the house bankroll and are always shown as bots" checked={draft.bots_enabled} onChange={(v) => canEdit && set('bots_enabled', v)} />
             <Checkbox label="Crypto withdrawals open" hint="Needs the payout hot wallet (PAYOUT_PRIVATE_KEY)" checked={draft.onchain_withdrawals_enabled} onChange={(v) => canEdit && set('onchain_withdrawals_enabled', v)} />
             <Checkbox label="Crypto deposits open" hint="Credited as bonus PMT before the public launch" checked={draft.onchain_deposits_enabled} onChange={(v) => canEdit && set('onchain_deposits_enabled', v)} />

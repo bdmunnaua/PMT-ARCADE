@@ -243,6 +243,25 @@ export const cryptoWithdrawSchema = z.object({ amountUnits: units });
 export const cryptoDepositSchema = z.object({ txHash: z.string().trim().regex(/^0x[0-9a-fA-F]{64}$/, 'Paste the transaction ID: 0x followed by 64 characters.') });
 export const cryptoRejectSchema = z.object({ reason: z.string().trim().min(3).max(500) });
 
+/** A message from a player to the team (advice, a request, a problem). */
+export const PLAYER_MESSAGE_CATEGORIES = ['ADVICE', 'REQUEST', 'PROBLEM', 'OTHER'] as const;
+export const playerMessageSchema = z.object({
+  category: z.enum(PLAYER_MESSAGE_CATEGORIES),
+  body: z.string().trim().min(5, 'Write at least 5 characters.').max(2000),
+});
+export const messageReplySchema = z.object({ reply: z.string().trim().min(2).max(2000) });
+export const messageStatusSchema = z.object({ status: z.enum(['NEW', 'READ', 'REPLIED', 'CLOSED']) });
+
+/** Creator rewards: an original post about PMT Arcade, submitted for review. */
+export const CREATOR_PLATFORMS = ['FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'YOUTUBE', 'OTHER'] as const;
+export const creatorSubmissionSchema = z.object({
+  platform: z.enum(CREATOR_PLATFORMS),
+  postUrl: z.url({ protocol: /^https$/ }).max(500),
+  socialHandle: z.string().trim().min(2).max(80),
+});
+export const creatorReviewSchema = z.object({ note: z.string().trim().max(500).optional() });
+export const creatorRejectSchema = z.object({ note: z.string().trim().min(3).max(500) });
+
 /** A wallet published on the transparency page (supply, allocation share, liquidity, payout). */
 export const publicWalletSchema = z.object({
   label: z.string().trim().min(2).max(60),

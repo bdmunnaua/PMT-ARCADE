@@ -702,6 +702,48 @@ export interface HotWalletDto {
   blockedAddress: string | null;
 }
 
+export interface PlayerMessageDto {
+  id: string;
+  category: 'ADVICE' | 'REQUEST' | 'PROBLEM' | 'OTHER';
+  body: string;
+  status: 'NEW' | 'READ' | 'REPLIED' | 'CLOSED';
+  adminReply: string | null;
+  repliedAt: number | null;
+  createdAt: number;
+  /** admin view only */
+  sender?: { userId: string; playerNumber: number; username: string; displayName: string; email: string | null };
+}
+
+export interface CreatorInfoDto {
+  enabled: boolean;
+  rewardTokens: number;
+  maxCreators: number;
+  approved: number;
+  remaining: number;
+}
+
+export interface CreatorSubmissionDto {
+  id: string;
+  platform: 'FACEBOOK' | 'INSTAGRAM' | 'TIKTOK' | 'YOUTUBE' | 'OTHER';
+  postUrl: string;
+  socialHandle: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewNote: string | null;
+  rewardUnits: number | null;
+  createdAt: number;
+  reviewedAt: number | null;
+  /** admin view only */
+  sender?: { userId: string; playerNumber: number; username: string; email: string | null; createdAt: number };
+  /** admin view only: other accounts that signed in from the same network, games played */
+  risk?: { sameIpAccounts: number; gamesPlayed: number };
+}
+
+export interface CreatorMeDto extends CreatorInfoDto {
+  /** has finished at least one game (free game or match) — required before submitting */
+  eligible: boolean;
+  submission: CreatorSubmissionDto | null;
+}
+
 /** A published on-chain wallet with its live PMT balance (whole PMT, as text). */
 export interface PublicWalletDto {
   id: string;

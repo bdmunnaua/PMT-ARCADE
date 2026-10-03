@@ -1,9 +1,9 @@
 import { Hono, type MiddlewareHandler } from 'hono';
 import { z } from 'zod';
-import { matchListQuerySchema, paginationSchema, transactionQuerySchema, updateProfileSchema } from '@arena/shared';
+import { creatorSubmissionSchema, matchListQuerySchema, paginationSchema, playerMessageSchema, transactionQuerySchema, updateProfileSchema } from '@arena/shared';
 import type { AppEnv } from '../env';
 import { ok, param, parseBody, parseQuery } from '../lib/http';
-import { requireUser } from '../middleware';
+import { rateLimit, requireUser } from '../middleware';
 
 const markReadSchema = z.object({ ids: z.array(z.string().max(64)).max(100).optional(), all: z.boolean().optional() });
 
@@ -24,6 +24,20 @@ export function meRoutes(auth: MiddlewareHandler<AppEnv>) {
   });
 
   r.get('/me/wallet', async (c) => ok(c, await c.get('services').wallets.getWallet(c.get('user').id)));
+
+  // messages to the team (advice, requests, problems) and the team's replies
+  r.get('/me/messages', async (c) => ok(c, await c.get('services').inbox.mine(c.get('user').id)));
+  r.post('/me/messages', rateLimit('player_message'), async (c) => {
+    const body = await parseBody(c, playerMessageSchema);
+    return ok(c, await c.get('services').inbox.send(c.get('user'), body), 201);
+  });
+
+  // creator rewards
+  r.get('/me/creator', async (c) => ok(c, await c.get('services').creators.me(c.get('user'))));
+  r.post('/me/creator', rateLimit('creator_submit'), async (c) => {
+    const body = await parseBody(c, creatorSubmissionSchema);
+    return ok(c, await c.get('services').creators.submit(c.get('user'), body), 201);
+  });
 
   r.get('/me/transactions', async (c) => {
     const q = parseQuery(c, transactionQuerySchema);

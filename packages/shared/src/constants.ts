@@ -41,6 +41,8 @@ export const DEFAULT_RATE_LIMITS = {
   buy_create: { limit: 5, windowSec: 3600 },
   sell_create: { limit: 5, windowSec: 3600 },
   transfer_create: { limit: 20, windowSec: 3600 },
+  player_message: { limit: 5, windowSec: 3600 },
+  creator_submit: { limit: 5, windowSec: 3600 },
   arcade_run: { limit: 150, windowSec: 3600 },
   arcade_checkin: { limit: 10, windowSec: 3600 },
   crypto_action: { limit: 10, windowSec: 3600 },

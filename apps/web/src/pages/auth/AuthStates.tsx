@@ -3,7 +3,7 @@
  * blocked accounts, connection errors and missing configuration.
  */
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { Coins, Gamepad2, ShieldBan, ShieldCheck, Swords, UserRound, Wrench } from 'lucide-react';
+import { Coins, Gamepad2, Megaphone, ShieldBan, Trophy, UserRound, Wrench } from 'lucide-react';
 import { useAuth } from '../../auth/AuthProvider';
 import { devAuthEnabled, devSignIn } from '../../auth/identity';
 import { SignInCard } from '../../auth/SignInCard';
@@ -59,17 +59,17 @@ export function SignedOutPage() {
       </header>
       <section className="hero-gradient mx-4 grid gap-8 overflow-hidden rounded-3xl p-6 text-white sm:mx-8 sm:p-10 lg:grid-cols-[1fr_380px] lg:items-center">
         <div>
-          <h1 className="text-3xl leading-tight font-black sm:text-5xl">{t("Play free games. Earn PMT. Challenge real players.")}</h1>
-          <p className="mt-4 max-w-xl text-white/75">{t("16 free arcade games pay bonus PMT for your scores. Play Ludo, Call Bridge, 29, Carrom and Chess against other players — the server decides every result.")}</p>
+          <h1 className="text-3xl leading-tight font-black sm:text-5xl">{t("Play free games. Earn PMT.")}</h1>
+          <p className="mt-4 max-w-xl text-white/75">{t("16 free browser games — no download, no purchase needed. Climb the leaderboards, collect daily rewards and earn PMT for your scores.")}</p>
           <ul className="mt-6 grid gap-3 text-sm text-white/85 sm:grid-cols-3">
             <li className="flex items-center gap-2">
               <Gamepad2 className="size-5 text-amber-300" /> {t("Free games, daily check-in")}
             </li>
             <li className="flex items-center gap-2">
-              <Swords className="size-5 text-amber-300" /> {t("Fair 1% match fee")}
+              <Trophy className="size-5 text-amber-300" /> {t("Leaderboards & weekly tournament")}
             </li>
             <li className="flex items-center gap-2">
-              <ShieldCheck className="size-5 text-amber-300" /> {t("Every PMT recorded")}
+              <Megaphone className="size-5 text-amber-300" /> {t("Creator rewards")}
             </li>
           </ul>
         </div>
@@ -77,6 +77,15 @@ export function SignedOutPage() {
           {firebaseConfigured && <SignInCard />}
           {devAuthEnabled && <DevIdentityPanel />}
         </div>
+      </section>
+      <section className="px-4 pt-6 sm:px-8">
+        <a href="/creator-rewards" className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-amber-300/60 bg-amber-50 p-5 text-amber-950 transition hover:shadow-md dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+          <span>
+            <span className="block text-lg font-black">{t("🎁 Creator reward: 100,000 PMT")}</span>
+            <span className="text-sm">{t("Make an original video or post about PMT Arcade and get rewarded after approval.")}</span>
+          </span>
+          <span className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white">{t("How it works")}</span>
+        </a>
       </section>
       <section className="px-4 py-8 sm:px-8">
         <h2 className="mb-1 flex items-center gap-2 text-xl font-bold">
@@ -91,7 +100,7 @@ export function SignedOutPage() {
           <a href="/transparency/" className="hover:text-brand-600">{t("Transparency")}</a>
           <a href="/whitepaper/" className="hover:text-brand-600">{t("Whitepaper")}</a>
         </nav>
-        {t("PMT is the platform's game token, not an investment. Play responsibly.")}
+        {t("Free to play. No purchase required. PMT does not have an established DEX market price yet.")}
       </footer>
     </div>
   );

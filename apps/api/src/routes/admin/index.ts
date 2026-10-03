@@ -9,6 +9,7 @@ import { adminGameRoutes } from './games';
 import { adminPlayerRoutes } from './players';
 import { adminSecurityRoutes } from './security';
 import { adminSystemRoutes } from './system';
+import { adminCommunityRoutes } from './community';
 
 /**
  * /api/admin — every route requires a verified identity, an ACTIVE account, an active admin role
@@ -48,5 +49,6 @@ export function adminRoutes(auth: MiddlewareHandler<AppEnv>) {
   r.route('/', adminFinanceRoutes());
   r.route('/', adminSecurityRoutes());
   r.route('/', adminSystemRoutes());
+  r.route('/', adminCommunityRoutes());
   return r;
 }

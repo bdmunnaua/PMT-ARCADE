@@ -7,6 +7,7 @@ import { AdminLayout } from './layouts/AdminLayout';
 import { PlayerLayout } from './layouts/PlayerLayout';
 import { BlockedPage, SessionErrorPage, SetupRequiredPage, SignedOutPage } from './pages/auth/AuthStates';
 import { InviteWelcomePage, JoinInvitePage } from './pages/Invite';
+import { CreatorRewardsPublicPage } from './pages/CreatorRewards';
 import { DashboardPage } from './pages/player/Dashboard';
 import { NotFoundPage } from './pages/NotFound';
 
@@ -21,6 +22,7 @@ const BuyTokensPage = lazy(() => import('./pages/player/BuyTokens'));
 const SellTokensPage = lazy(() => import('./pages/player/SellTokens'));
 const SendTokensPage = lazy(() => import('./pages/player/SendTokens'));
 const CryptoWalletPage = lazy(() => import('./pages/player/CryptoWallet'));
+const CreatorRewardsPage = lazy(() => import('./pages/CreatorRewards'));
 const TransactionsPage = lazy(() => import('./pages/player/Transactions'));
 const TransactionDetailPage = lazy(() => import('./pages/player/TransactionDetail'));
 const BuyRequestDetailPage = lazy(() => import('./pages/player/BuyRequestDetail'));
@@ -55,6 +57,8 @@ const A = {
   RewardsPool: lazy(() => import('./pages/admin/RewardsPool')),
   CryptoWithdrawals: lazy(() => import('./pages/admin/CryptoWithdrawals')),
   Liquidity: lazy(() => import('./pages/admin/Liquidity')),
+  Messages: lazy(() => import('./pages/admin/Messages')),
+  Creators: lazy(() => import('./pages/admin/Creators')),
   Distribute: lazy(() => import('./pages/admin/Distribute')),
   FraudFlags: lazy(() => import('./pages/admin/FraudFlags')),
   LoginActivity: lazy(() => import('./pages/admin/LoginActivity')),
@@ -70,7 +74,12 @@ function RequireAuth({ children }: { children: ReactNode }) {
   const { status, error } = useAuth();
   if (status === 'unconfigured') return <SetupRequiredPage />;
   if (status === 'loading') return <PageLoader label="Signing you in…" />;
-  if (status === 'signed_out') return /^\/r\/[A-Za-z0-9]{4,12}/.test(window.location.pathname) ? <InviteWelcomePage /> : <SignedOutPage />;
+  if (status === 'signed_out') {
+    const path = window.location.pathname;
+    if (/^\/r\/[A-Za-z0-9]{4,12}/.test(path)) return <InviteWelcomePage />;
+    if (path.startsWith('/creator-rewards')) return <CreatorRewardsPublicPage />;
+    return <SignedOutPage />;
+  }
   if (status === 'blocked') return <BlockedPage message={error} />;
   if (status === 'error') return <SessionErrorPage message={error} />;
   return <>{children}</>;
@@ -102,6 +111,7 @@ const router = createBrowserRouter([
       { path: 'matches', element: <MatchesPage /> },
       { path: 'matches/:id', element: <MatchDetailPage /> },
       { path: 'r/:code', element: <JoinInvitePage /> },
+      { path: 'creator-rewards', element: <CreatorRewardsPage /> },
       { path: 'wallet', element: <WalletPage /> },
       { path: 'wallet/buy', element: <BuyTokensPage /> },
       { path: 'wallet/sell', element: <SellTokensPage /> },
@@ -153,6 +163,8 @@ const router = createBrowserRouter([
       { path: 'finance/rewards-pool', element: guard(<A.RewardsPool />, ['finance.view']) },
       { path: 'finance/crypto', element: guard(<A.CryptoWithdrawals />, ['finance.view', 'finance.sell.manage']) },
       { path: 'finance/liquidity', element: guard(<A.Liquidity />, ['finance.view']) },
+      { path: 'messages', element: guard(<A.Messages />, ['support.view']) },
+      { path: 'creators', element: guard(<A.Creators />, ['support.view']) },
       { path: 'security/fraud-flags', element: guard(<A.FraudFlags />, ['risk.view']) },
       { path: 'security/login-activity', element: guard(<A.LoginActivity />, ['security.login_activity']) },
       { path: 'security/audit', element: guard(<A.AuditLogs />, ['audit.view']) },

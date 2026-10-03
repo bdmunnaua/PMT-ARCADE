@@ -61,6 +61,9 @@ export function publicRoutes() {
     return ok(c, await s.matches.invitePreview(code, settings.arcade_welcome_bonus_tokens));
   });
 
+  /** Creator reward campaign: reward size and places left (public, for the landing page). */
+  r.get('/creator/info', async (c) => ok(c, await c.get('services').creators.info()));
+
   r.get('/games', async (c) => ok(c, await c.get('services').games.list()));
   r.get('/games/:id', async (c) => ok(c, await c.get('services').games.get(param(c, 'id'))));
 

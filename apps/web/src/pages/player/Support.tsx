@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router';
 import { Gavel, MessageSquare, ShieldAlert } from 'lucide-react';
 import { DISPUTE_CATEGORY_LABELS, type DisputeDto } from '@arena/shared';
+import { MessageBox } from '../../components/MessageBox';
 import { Card, CardBody, CardHeader, DataTable, PageHeader, Pagination, StatusBadge } from '../../components/ui';
 import { dateTime } from '../../lib/format';
 import { useDocumentTitle, usePaged } from '../../lib/hooks';
@@ -36,6 +37,7 @@ export default function SupportPage() {
           </CardBody>
         </Card>
       </div>
+      <MessageBox />
       <Card>
         <CardHeader title={t("Your disputes")} />
         <DataTable

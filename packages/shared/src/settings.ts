@@ -60,6 +60,11 @@ export const settingsSchema = z.object({
   tournament_prizes_tokens: z.array(z.int().min(0).max(100_000_000)).max(20),
   /** 🤖 bots can fill empty seats in stake games; their stakes are bonus PMT from the house bankroll */
   bots_enabled: z.boolean(),
+  /** creator rewards: PMT (bonus) for an approved original post about PMT Arcade */
+  creator_rewards_enabled: z.boolean(),
+  creator_reward_tokens: z.int().min(0).max(100_000_000),
+  /** most creators rewarded in the current campaign */
+  creator_reward_max: z.int().min(0).max(1_000_000),
   /** most the house may lose to players in bot games per Bangladesh day, in whole PMT (then bots pause) */
   bot_daily_loss_limit_tokens: z.int().min(0).max(1_000_000_000),
   /** PMT on BNB Chain: withdraw to a player's own wallet (admin approves each payout) */
@@ -115,6 +120,9 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   tournament_enabled: true,
   tournament_prizes_tokens: [20_000, 10_000, 5_000, 3_000, 2_000, 1_000, 1_000, 1_000, 1_000, 1_000],
   bots_enabled: true,
+  creator_rewards_enabled: true,
+  creator_reward_tokens: 100_000,
+  creator_reward_max: 1_000,
   bot_daily_loss_limit_tokens: 200_000,
   onchain_withdrawals_enabled: false,
   onchain_deposits_enabled: false,
