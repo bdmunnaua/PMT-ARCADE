@@ -100,7 +100,7 @@ export function ConfirmDialog({ open, onClose, title, message, confirmLabel, ton
       await onConfirm(reason.trim());
       onClose();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : t("Something went wrong."));
+      setError(e instanceof ApiError ? t(e.message) : t("Something went wrong."));
     } finally {
       setBusy(false);
     }

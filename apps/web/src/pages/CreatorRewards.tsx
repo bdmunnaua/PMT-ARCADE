@@ -127,7 +127,7 @@ export default function CreatorRewardsPage() {
       toast.success(t('Submitted! Our team will check your post.'));
       me.reload();
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : t('Could not submit. Try again.'));
+      toast.error(e instanceof ApiError ? t(e.message) : t('Could not submit. Try again.'));
     } finally {
       setBusy(false);
     }

@@ -752,4 +752,16 @@ export const BN: Record<string, string> = {
   'Bet cancelled — stake returned.': 'বাজি বাতিল — PMT ফেরত দেওয়া হয়েছে।',
   'Auto cash-out': 'অটো ক্যাশ আউট',
   'Wait for the next round': 'পরের রাউন্ডের অপেক্ষা করুন',
+  'This game is switched off right now. Try the free games or play Ludo with friends.': 'এই গেমটি এখন বন্ধ আছে। ফ্রি গেমগুলো খেলুন বা বন্ধুদের সাথে লুডু খেলুন।',
+  // ---- server messages
+  'Bots are resting right now. Invite a friend instead!': 'বটরা এখন বিশ্রামে আছে। বরং একজন বন্ধুকে আমন্ত্রণ জানান!',
+  'Bots are resting for today. Invite a friend instead!': 'বটরা আজকের জন্য বিশ্রামে। বরং একজন বন্ধুকে আমন্ত্রণ জানান!',
+  'Bots are switched off right now.': 'বট এখন বন্ধ আছে।',
+  'Bots can play Ludo for now. Invite a friend for this game.': 'বট আপাতত শুধু লুডু খেলে। এই গেমের জন্য একজন বন্ধুকে আমন্ত্রণ জানান।',
+  'Only the player who opened the room can add bots.': 'শুধু যিনি রুম খুলেছেন তিনিই বট যোগ করতে পারেন।',
+  'Finish at least one game on PMT Arcade first, then submit your post.': 'আগে PMT Arcade-এ অন্তত একটি গেম শেষ করুন, তারপর পোস্ট জমা দিন।',
+  'This post was already submitted.': 'এই পোস্টটি আগেই জমা হয়েছে।',
+  'This social account already took part in this campaign.': 'এই সোশ্যাল অ্যাকাউন্ট আগেই এই ক্যাম্পেইনে অংশ নিয়েছে।',
+  'You already submitted a post for this campaign.': 'আপনি এই ক্যাম্পেইনে আগেই একটি পোস্ট জমা দিয়েছেন।',
+  'Bets can only be cancelled before take-off.': 'শুধু উড্ডয়নের আগে বাজি বাতিল করা যায়।',
 };

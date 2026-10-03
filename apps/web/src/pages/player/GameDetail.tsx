@@ -6,7 +6,7 @@ import { useConfig } from '../../auth/AuthProvider';
 import { BackLink, GameArt } from '../../components/Common';
 import { AviatorGame } from '../../games/aviator/AviatorGame';
 import { useWallet } from '../../components/Wallet';
-import { Button, Card, CardBody, CardHeader, ConfirmDialog, DataTable, ErrorState, Input, PageLoader, Tabs, useToast } from '../../components/ui';
+import { Button, Card, CardBody, CardHeader, ConfirmDialog, DataTable, ErrorState, Input, Notice, PageLoader, Tabs, useToast } from '../../components/ui';
 import { ApiError, post } from '../../lib/api';
 import { tokens } from '../../lib/format';
 import { useApi, useDocumentTitle, useIdempotencyKey } from '../../lib/hooks';
@@ -25,7 +25,7 @@ export default function GameDetailPage() {
       <div className="space-y-4">
         <BackLink to="/play">{t("All games")}</BackLink>
         <h1 className="text-2xl font-bold">{game.data.name}</h1>
-        <AviatorGame game={game.data} />
+        {game.data.playable ? <AviatorGame game={game.data} /> : <Notice tone="info">{t('This game is switched off right now. Try the free games or play Ludo with friends.')}</Notice>}
       </div>
     );
   return <GameLobby game={game.data} />;

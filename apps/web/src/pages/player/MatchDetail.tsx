@@ -253,7 +253,7 @@ function BotFill({ match }: { match: MatchDto }) {
               await post(`/api/matches/${match.id}/bots`);
               toast.success(t('Bots joined — the game is starting!'));
             } catch (e) {
-              toast.error(e instanceof ApiError ? e.message : t('Could not add bots.'));
+              toast.error(e instanceof ApiError ? t(e.message) : t('Could not add bots.'));
             } finally {
               setBusy(false);
             }
