@@ -1,5 +1,5 @@
 import { lazy, type ReactNode } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router';
+import { createBrowserRouter, RouterProvider, useRouteError } from 'react-router';
 import type { Permission } from '@arena/shared';
 import { useAuth } from './auth/AuthProvider';
 import { ErrorState, PageLoader } from './components/ui';
@@ -96,8 +96,29 @@ function RequireAdmin({ perm, children }: { perm?: Permission[]; children: React
 
 const guard = (el: ReactNode, perm?: Permission[]) => <RequireAdmin perm={perm}>{el}</RequireAdmin>;
 
+/** Route errors: an outdated page after a deploy reloads once; anything else shows a friendly error. */
+function RouteError() {
+  const error = useRouteError();
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  if (/dynamically imported module|Importing a module script failed|error loading dynamically/i.test(message)) {
+    let tried = false;
+    try {
+      tried = Date.now() - Number(sessionStorage.getItem('arena.reloadedAt') ?? 0) < 30_000;
+      if (!tried) sessionStorage.setItem('arena.reloadedAt', String(Date.now()));
+    } catch {
+      // storage blocked
+    }
+    if (!tried) {
+      window.location.reload();
+      return <PageLoader label="Updating to the newest version…" />;
+    }
+  }
+  return <ErrorState error="Something went wrong on this page. Please reload it." onRetry={() => window.location.reload()} />;
+}
+
 const router = createBrowserRouter([
   {
+    errorElement: <RouteError />,
     element: (
       <RequireAuth>
         <PlayerLayout />
@@ -131,6 +152,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/admin',
+    errorElement: <RouteError />,
     element: (
       <RequireAuth>
         <RequireAdmin>

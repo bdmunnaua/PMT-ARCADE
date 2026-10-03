@@ -169,7 +169,8 @@ export const gameUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(60).optional(),
     description: z.string().trim().max(500).optional(),
-    thumbnailUrl: z.union([z.url().max(500), z.literal('')]).optional(),
+    // a full https address, or a path on this site such as /games/ludo.svg (how the built-in games are stored)
+    thumbnailUrl: z.union([z.url({ protocol: /^https$/ }).max(500), z.string().regex(/^\/[A-Za-z0-9/_.-]{1,300}$/, 'Use a full https:// address or a path starting with /'), z.literal('')]).optional(),
     enabled: z.boolean().optional(),
     maintenanceMode: z.boolean().optional(),
     minimumStakeUnits: units.optional(),
