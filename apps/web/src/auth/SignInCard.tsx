@@ -16,7 +16,7 @@ import {
 import { ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { Button, Input } from '../components/ui';
 import { firebaseAuth } from '../lib/firebase';
-import { t } from '../lib/i18n';
+import { getLang, t } from '../lib/i18n';
 import { inAppBrowser, openInChromeHref } from '../lib/invite';
 
 function authError(e: unknown): string {
@@ -137,6 +137,9 @@ export function SignInCard() {
         <Button type="submit" className="w-full" loading={busy}>
           {mode === 'in' ? t("Sign in") : t("Create account")}
         </Button>
+        <p className="text-center text-xs text-ink-500">
+          {t('By continuing you agree to the')} <a href="/terms/" className="underline">{t('Terms')}</a> {t('and')} <a href="/privacy/" className="underline">{t('Privacy Policy')}</a>{getLang() === 'bn' ? '-তে রাজি হচ্ছেন।' : '.'} {t('18+ only.')}
+        </p>
         {mode === 'in' && (
           <button type="button" onClick={() => void reset()} className="w-full text-center text-sm text-brand-600 hover:underline">
             {t("Forgot password?")}

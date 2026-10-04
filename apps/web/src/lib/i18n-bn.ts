@@ -793,4 +793,10 @@ export const BN: Record<string, string> = {
   'Bots are always shown as bots.': 'বট সবসময় বট হিসেবেই দেখানো হয়।',
   'Bots can play Ludo, Call Bridge and 29 for now. Invite a friend for this game.': 'বট আপাতত লুডু, কল ব্রিজ ও ২৯ খেলে। এই গেমের জন্য একজন বন্ধুকে আমন্ত্রণ জানান।',
   'Only the player who opened the room can start it.': 'শুধু যিনি রুম খুলেছেন তিনিই শুরু করতে পারেন।',
+  Terms: 'শর্তাবলি',
+  Privacy: 'গোপনীয়তা',
+  'Privacy Policy': 'গোপনীয়তা নীতি',
+  'By continuing you agree to the': 'চালিয়ে গেলে আপনি',
+  and: 'ও',
+  '18+ only.': 'শুধু ১৮+ বয়সীদের জন্য।',
 };
