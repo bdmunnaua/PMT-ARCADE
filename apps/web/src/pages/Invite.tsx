@@ -6,7 +6,7 @@
  */
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ExternalLink, Gift, Users } from 'lucide-react';
+import { Gift, Users } from 'lucide-react';
 import type { InvitePreviewDto, MatchDto } from '@arena/shared';
 import { SignInCard } from '../auth/SignInCard';
 import { useWallet } from '../components/Wallet';
@@ -17,7 +17,6 @@ import { ApiError, get, post } from '../lib/api';
 import { tokens } from '../lib/format';
 import { useApi, useDocumentTitle } from '../lib/hooks';
 import { LangToggle, t } from '../lib/i18n';
-import { inAppBrowser, openInChromeHref } from '../lib/invite';
 
 const codeFromPath = () => (/^\/r\/([A-Za-z0-9]{4,12})/.exec(window.location.pathname)?.[1] ?? '').toUpperCase();
 
@@ -52,8 +51,6 @@ export function InviteWelcomePage() {
   useDocumentTitle('You are invited');
   const code = codeFromPath();
   const preview = useApi<InvitePreviewDto>(code ? `/api/invites/${code}` : null);
-  const inApp = inAppBrowser();
-  const chrome = openInChromeHref();
   const x = preview.data;
   return (
     <div className="min-h-screen bg-gradient-to-b from-brand-50 to-white pb-10 dark:from-ink-950 dark:to-ink-950">
@@ -87,21 +84,6 @@ export function InviteWelcomePage() {
               </CardBody>
             </Card>
 
-            {inApp ? (
-              <Card>
-                <CardBody className="space-y-3 text-center">
-                  <p className="font-semibold">{t('Google sign-in does not work inside {app}.', { app: inApp })}</p>
-                  {chrome ? (
-                    <a href={chrome} className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-brand-600 px-4 text-lg font-bold text-white">
-                      <ExternalLink className="size-5" /> {t('Open in Chrome to continue')}
-                    </a>
-                  ) : (
-                    <p className="text-sm text-ink-600 dark:text-ink-300">{t('Tap ••• (or the share icon) at the top or bottom of the screen and choose “Open in Safari” / “Open in browser”.')}</p>
-                  )}
-                  <p className="text-xs text-ink-500">{t('Or sign in with email below.')}</p>
-                </CardBody>
-              </Card>
-            ) : null}
 
             <SignInCard />
           </>

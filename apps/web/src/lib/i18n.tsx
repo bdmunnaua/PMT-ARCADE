@@ -13,6 +13,16 @@ const listeners = new Set<() => void>();
 
 function initial(): Lang {
   try {
+    // a link can pick the language (ads and posts use ?lang=bn); it is remembered like the toggle
+    const fromUrl = new URLSearchParams(window.location.search).get('lang');
+    if (fromUrl === 'en' || fromUrl === 'bn') {
+      try {
+        localStorage.setItem(KEY, fromUrl);
+      } catch {
+        /* storage unavailable: still use it for this visit */
+      }
+      return fromUrl;
+    }
     const saved = localStorage.getItem(KEY);
     if (saved === 'en' || saved === 'bn') return saved;
   } catch {

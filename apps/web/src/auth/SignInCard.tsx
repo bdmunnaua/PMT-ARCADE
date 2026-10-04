@@ -13,10 +13,11 @@ import {
   signInWithPopup,
   signInWithRedirect,
 } from 'firebase/auth';
-import { Eye, EyeOff } from 'lucide-react';
+import { ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { Button, Input } from '../components/ui';
 import { firebaseAuth } from '../lib/firebase';
 import { t } from '../lib/i18n';
+import { inAppBrowser, openInChromeHref } from '../lib/invite';
 
 function authError(e: unknown): string {
   const code = (e as { code?: string })?.code ?? '';
@@ -85,8 +86,25 @@ export function SignInCard() {
     }
   };
 
+  // Google refuses to sign people in inside Facebook / Messenger / imo browsers (ad and invite clicks land there)
+  const inApp = inAppBrowser();
+  const chrome = inApp ? openInChromeHref() : null;
+
   return (
     <div className="card space-y-4 p-6">
+      {inApp && (
+        <div className="space-y-2 rounded-2xl bg-amber-50 p-3 text-center text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+          <p className="text-sm font-semibold">{t('Google sign-in does not work inside {app}.', { app: inApp })}</p>
+          {chrome ? (
+            <a href={chrome} className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 font-bold text-white">
+              <ExternalLink className="size-5" /> {t('Open in Chrome to continue')}
+            </a>
+          ) : (
+            <p className="text-xs">{t('Tap ••• (or the share icon) at the top or bottom of the screen and choose “Open in Safari” / “Open in browser”.')}</p>
+          )}
+          <p className="text-xs">{t('Or sign in with email below.')}</p>
+        </div>
+      )}
       <div className="grid grid-cols-2 rounded-xl bg-ink-100 p-1 text-sm font-semibold dark:bg-ink-800">
         {(['in', 'up'] as const).map((m) => (
           <button key={m} type="button" onClick={() => setMode(m)} className={mode === m ? 'rounded-lg bg-white py-2 shadow dark:bg-ink-700' : 'py-2 text-ink-500'}>
