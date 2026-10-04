@@ -95,10 +95,12 @@ export function SignedOutPage() {
         {arcade.data && <FreeGamesGrid games={arcade.data.games} plays={popular.data?.plays} linkFor={(g) => ({ href: `/games/${g.id}/index.html` })} />}
       </section>
       <footer className="px-4 pb-8 text-center text-xs text-ink-400 sm:px-8">
-        <nav className="mb-2 flex justify-center gap-4 text-sm">
+        <nav className="mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm">
           <a href="/token/" className="hover:text-brand-600">{t("PMT token")}</a>
           <a href="/transparency/" className="hover:text-brand-600">{t("Transparency")}</a>
           <a href="/whitepaper/" className="hover:text-brand-600">{t("Whitepaper")}</a>
+          <a href="https://www.facebook.com/share/g/1SL8ACz5By/" target="_blank" rel="noreferrer" className="hover:text-brand-600">Facebook</a>
+          <a href="mailto:team@pmtarcade.com" className="hover:text-brand-600">team@pmtarcade.com</a>
         </nav>
         {t("Free to play. No purchase required. PMT does not have an established DEX market price yet.")}
       </footer>
