@@ -99,7 +99,7 @@ export function SignedOutPage() {
           <a href="/token/" className="hover:text-brand-600">{t("PMT token")}</a>
           <a href="/transparency/" className="hover:text-brand-600">{t("Transparency")}</a>
           <a href="/whitepaper/" className="hover:text-brand-600">{t("Whitepaper")}</a>
-          <a href="https://www.facebook.com/share/g/1SL8ACz5By/" target="_blank" rel="noreferrer" className="hover:text-brand-600">Facebook</a>
+          <a href="https://www.facebook.com/groups/1837639933582498" target="_blank" rel="noreferrer" className="hover:text-brand-600">Facebook</a>
           <a href="mailto:team@pmtarcade.com" className="hover:text-brand-600">team@pmtarcade.com</a>
         </nav>
         {t("Free to play. No purchase required. PMT does not have an established DEX market price yet.")}

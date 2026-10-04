@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1640" height="856" viewBox="0 0 1640 856">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="0.55" stop-color="#1e1b4b"/>
+      <stop offset="1" stop-color="#0e7490"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.45" r="0.55">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="rim" cx=".35" cy=".3" r=".85">
+      <stop offset="0" stop-color="#fff3b0"/><stop offset=".45" stop-color="#f5b82e"/><stop offset="1" stop-color="#a85d06"/>
+    </radialGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/><stop offset=".55" stop-color="#6366f1"/><stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1640" height="856" fill="url(#bg)"/>
+  <rect width="1640" height="856" fill="url(#glow)"/>
+
+  <!-- soft game shapes in the corners (kept outside the centre text) -->
+  <g opacity="0.16" fill="#ffffff">
+    <circle cx="150" cy="170" r="46"/>
+    <rect x="1420" y="130" width="90" height="90" rx="18" transform="rotate(14 1465 175)"/>
+    <path d="M190 700 l40 -70 l40 70 z"/>
+    <circle cx="1480" cy="690" r="34"/>
+    <rect x="300" y="90" width="40" height="40" rx="8"/>
+    <rect x="1290" y="740" width="48" height="48" rx="10" transform="rotate(-12 1314 764)"/>
+  </g>
+
+
+  <g transform="translate(820 248)">
+    <rect x="-330" y="-28" width="660" height="56" rx="28" fill="#000000" fill-opacity="0.35" stroke="#f5b82e" stroke-opacity="0.8" stroke-width="2"/>
+    <text y="9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="26" fill="#fde68a" letter-spacing="2">CRYPTO GAMING · BNB SMART CHAIN</text>
+  </g>
+  <!-- PMT coin -->
+  <g transform="translate(820 368) scale(0.6)">
+    <circle r="118" fill="url(#rim)"/>
+    <circle r="98" fill="url(#face)"/>
+    <path d="M0 -76 L52 -18 L0 40 L-52 -18 Z" fill="#ffffff"/>
+    <text y="82" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="40" fill="#ffffff" letter-spacing="3">PMT</text>
+  </g>
+
+  <text x="820" y="512" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="88" fill="#ffffff">PMT Arcade</text>
+  <text x="820" y="566" text-anchor="middle" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-weight="600" font-size="38" fill="#c7d2fe">Play free games · Earn PMT crypto · Challenge friends</text>
+
+  <rect x="630" y="590" width="380" height="58" rx="29" fill="#f5b82e"/>
+  <text x="820" y="630" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="34" fill="#0b1020">pmtarcade.com</text>
+</svg>
