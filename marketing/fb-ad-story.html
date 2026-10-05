@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>PMT Arcade story ad</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* 1080x1920. Facebook covers about the top 250px (name, progress bar) and the bottom ~640px (Reels)
+     (text + Sign up button) in Stories/Reels, so everything important sits between them. */
+  html, body { width: 1080px; height: 1920px; overflow: hidden; }
+  body {
+    font-family: "Nirmala UI", "Segoe UI", Arial, sans-serif; color: #fff;
+    background: radial-gradient(ellipse at 50% 25%, rgba(139,92,246,.5), transparent 60%),
+                linear-gradient(160deg, #0b1020 0%, #1e1b4b 55%, #0e7490 100%);
+  }
+  .safe { position: absolute; top: 230px; left: 60px; right: 60px; bottom: 640px; display: flex; flex-direction: column; }
+  .head { display: flex; align-items: center; gap: 24px; justify-content: center; }
+  .head svg { width: 120px; height: 120px; flex: none; }
+  .brand { font: 900 78px/1 "Arial Black", Arial, sans-serif; }
+  .badge { display: inline-block; margin-top: 10px; padding: 6px 18px; border: 2px solid #f5b82e; border-radius: 99px; color: #fde68a; font: 700 22px Arial, sans-serif; letter-spacing: 2px; }
+  h1 { margin-top: 30px; font-size: 70px; font-weight: 700; line-height: 1.2; text-align: center; }
+  h1 b { color: #fbbf24; }
+  .sub { margin-top: 10px; font-size: 30px; color: #c7d2fe; text-align: center; }
+  .games { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .g { border-radius: 26px; overflow: hidden; background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.15); }
+  .g img { display: block; width: 100%; height: 160px; object-fit: contain; background: rgba(0,0,0,.25); }
+  .g div { padding: 6px; font-size: 32px; font-weight: 700; text-align: center; }
+  .more { margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 22px; padding: 14px; border-radius: 26px;
+          background: linear-gradient(135deg, rgba(245,184,46,.25), rgba(139,92,246,.25)); border: 2px solid rgba(255,255,255,.15); }
+  .more .n { font: 900 64px/1 "Arial Black", Arial, sans-serif; color: #fbbf24; }
+  .more .t { font-size: 34px; font-weight: 700; }
+  .more .s { font-size: 24px; color: #c7d2fe; }
+  .url { margin: 26px auto 0; padding: 18px 44px; border-radius: 99px; background: #f5b82e; color: #0b1020; font: 900 48px Arial, sans-serif; }
+</style>
+</head>
+<body>
+  <div class="safe">
+    <div class="head">
+      <svg viewBox="-340 -340 680 680">
+        <defs>
+          <radialGradient id="rim" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#fff3b0"/><stop offset=".45" stop-color="#f5b82e"/><stop offset="1" stop-color="#a85d06"/></radialGradient>
+          <linearGradient id="face" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset=".55" stop-color="#6366f1"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
+        </defs>
+        <circle r="330" fill="url(#rim)"/><circle r="275" fill="url(#face)"/>
+        <path d="M0 -205 L140 -45 L0 115 L-140 -45 Z" fill="#fff"/>
+        <text y="225" text-anchor="middle" font-family="Arial Black, Arial" font-weight="900" font-size="112" fill="#fff" letter-spacing="8">PMT</text>
+      </svg>
+      <div>
+        <div class="brand">PMT Arcade</div>
+        <div class="badge">FREE ONLINE GAMES</div>
+      </div>
+    </div>
+
+    <h1>বন্ধুদের সাথে লুডু খেলুন,<br><b>একদম ফ্রি!</b></h1>
+    <div class="sub">মোবাইলেই খেলুন, কোনো ডাউনলোড লাগবে না</div>
+
+    <div class="games">
+      <div class="g"><img src="../apps/web/public/games/ludo.svg"><div>লুডু</div></div>
+      <div class="g"><img src="../apps/web/public/games/twenty-nine.svg"><div>টুয়েন্টি নাইন (২৯)</div></div>
+      <div class="g"><img src="../apps/web/public/games/call-bridge.svg"><div>কল ব্রিজ</div></div>
+      <div class="g"><img src="../apps/web/public/games/carrom.svg"><div>ক্যারম</div></div>
+    </div>
+    <div class="more">
+      <div class="n">১৬+</div>
+      <div><div class="t">ফ্রি আর্কেড গেম</div><div class="s">টুর্নামেন্ট · ভয়েস চ্যাট · বন্ধুকে ইনভাইট</div></div>
+    </div>
+
+    <div class="url">pmtarcade.com</div>
+  </div>
+</body>
+</html>
