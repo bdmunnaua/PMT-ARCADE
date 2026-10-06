@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useParams } from 'react-router';
-import { Flag, LogOut, Radio } from 'lucide-react';
-import { DISPUTE_CATEGORIES, DISPUTE_CATEGORY_LABELS, isTerminal, type DisputeCategory, type GameDto, type MatchDto } from '@arena/shared';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import { Flag, LogOut, Radio, RotateCcw } from 'lucide-react';
+import { BOT_MODULE_KEYS, DISPUTE_CATEGORIES, DISPUTE_CATEGORY_LABELS, isTerminal, QUICK_MATCH_BOT_AFTER_MS, type DisputeCategory, type GameDto, type MatchDto } from '@arena/shared';
 import { BackLink, CopyText } from '../../components/Common';
 import { InviteShare } from '../../components/InviteShare';
 import { Badge, Button, Card, CardBody, CardHeader, ConfirmDialog, ErrorState, KeyValue, Modal, Notice, PageHeader, PageLoader, Select, StatusBadge, Textarea, useToast } from '../../components/ui';
@@ -60,7 +60,7 @@ export default function MatchDetailPage() {
           {t("Your stake is locked in escrow.")} {m.visibility === 'PRIVATE' && m.joinCode ? <>{t("Room code:")} <CopyText value={m.joinCode} label={t("Room code")} /></> : t("Other players can join from the game lobby.")} {t("Rooms that wait longer than 30 minutes are cancelled and refunded automatically.")}
         </Notice>
       )}
-      {m.status === 'WAITING_FOR_OPPONENT' && m.isCreator && m.playerCount < m.maxPlayers && <HostStart match={m} botsAllowed={['ludo', 'call-bridge', 'twenty-nine'].includes(game.data?.moduleKey ?? '')} />}
+      {m.status === 'WAITING_FOR_OPPONENT' && m.isCreator && m.playerCount < m.maxPlayers && <HostStart match={m} botsAllowed={(BOT_MODULE_KEYS as readonly string[]).includes(game.data?.moduleKey ?? '')} onChanged={match.reload} />}
       {m.status === 'WAITING_FOR_OPPONENT' && m.visibility === 'PRIVATE' && m.joinCode && m.isParticipant && m.playerCount < m.maxPlayers && (
         <Card>
           <CardBody>
@@ -77,6 +77,7 @@ export default function MatchDetailPage() {
           {m.myResult === 'WIN' ? t('{amount} was added to your available balance.', { amount: tokens(m.payoutUnits) }) : t(m.myResult === 'LOSS' ? 'Your stake went to the winner (minus the platform fee).' : 'Your full stake is back in your wallet.')}
         </Notice>
       )}
+      {isTerminal(m.status) && m.status !== 'DISPUTED' && m.isParticipant && <PlayAgain match={m} />}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -240,10 +241,61 @@ function DisputeModal({ open, onClose, match, onDone }: { open: boolean; onClose
   );
 }
 
-/** The host starts now: with the people who joined (no bots), or with 🤖 bots in the empty seats. */
-function HostStart({ match, botsAllowed }: { match: MatchDto; botsAllowed: boolean }) {
+/** "Play another one": opens the next room for the same players, or joins the one a friend opened. */
+function PlayAgain({ match }: { match: MatchDto }) {
+  const navigate = useNavigate();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
+  const friendOpened = !!match.rematchMatchId;
+  const go = async () => {
+    setBusy(true);
+    try {
+      const next = await post<MatchDto>(`/api/matches/${match.id}/rematch`);
+      navigate(`/matches/${next.id}`);
+    } catch (e) {
+      toast.error(e instanceof ApiError ? t(e.message) : t('Something went wrong.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card>
+      <CardBody className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
+        <div>
+          <p className="font-semibold">{friendOpened ? t('Your friends are ready for another game!') : t('Play another one?')}</p>
+          <p className="text-sm text-ink-500">{t('Same game, same stake ({amount}), same players.', { amount: tokens(match.stakeUnits) })}</p>
+        </div>
+        <Button size="lg" icon={<RotateCcw className="size-5" />} loading={busy} onClick={() => void go()} className="w-full sm:w-auto">
+          {friendOpened ? t('Join the next game') : t('Play another one')}
+        </Button>
+      </CardBody>
+    </Card>
+  );
+}
+
+/** The host starts now: with the people who joined (no bots), or with 🤖 bots in the empty seats. */
+function HostStart({ match, botsAllowed, onChanged }: { match: MatchDto; botsAllowed: boolean; onChanged: () => void }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  // quick match: if nobody joins within a short wait, a 🤖 bot sits down so the player can play
+  const autoBot = botsAllowed && match.mode === 'QUICK';
+  const [left, setLeft] = useState(() => Math.max(0, match.createdAt + QUICK_MATCH_BOT_AFTER_MS - Date.now()));
+  const fired = useRef(false);
+  useEffect(() => {
+    if (!autoBot) return;
+    const iv = setInterval(() => setLeft(Math.max(0, match.createdAt + QUICK_MATCH_BOT_AFTER_MS - Date.now())), 1000);
+    return () => clearInterval(iv);
+  }, [autoBot, match.createdAt]);
+  useEffect(() => {
+    if (!autoBot || left > 0 || fired.current) return;
+    fired.current = true;
+    post(`/api/matches/${match.id}/bots`)
+      .then(() => {
+        toast.success(t('No opponent yet — a 🤖 bot joined so you can play now.'));
+        onChanged();
+      })
+      .catch(() => undefined); // someone joined meanwhile, or bots are resting
+  }, [autoBot, left, match.id, toast, onChanged]);
   const empty = match.maxPlayers - match.playerCount;
   const canStartNow = match.playerCount >= match.minPlayers;
   const run = async (path: 'start' | 'bots', done: string) => {
@@ -251,6 +303,7 @@ function HostStart({ match, botsAllowed }: { match: MatchDto; botsAllowed: boole
     try {
       await post(`/api/matches/${match.id}/${path}`);
       toast.success(done);
+      onChanged();
     } catch (e) {
       toast.error(e instanceof ApiError ? t(e.message) : t('Something went wrong.'));
     } finally {
@@ -261,6 +314,7 @@ function HostStart({ match, botsAllowed }: { match: MatchDto; botsAllowed: boole
   return (
     <Card>
       <CardBody className="space-y-3">
+        {autoBot && left > 0 && <p className="text-sm font-medium text-brand-600">{t('Looking for an opponent… if nobody joins in {n}s, a 🤖 bot will play you.', { n: Math.ceil(left / 1000) })}</p>}
         <p className="text-sm">
           {canStartNow
             ? t('{n} player(s) are here. Start now with them, or wait for more friends.', { n: match.playerCount })

@@ -240,6 +240,52 @@ export class MatchService {
     return dto;
   }
 
+  /**
+   * "Play another one": the first player to ask opens a new room with the same game, stake and
+   * seats and links it to the finished one; everyone else who asks joins that room. The other
+   * people from the last game get a notification with a one-tap link.
+   */
+  async rematch(user: UserRecord, matchId: string): Promise<{ match: MatchDto; created: boolean; otherUserIds: string[] }> {
+    const old = await this.repo.find(matchId);
+    if (!old) throw notFound('Match');
+    const before = await this.repo.players(matchId, true);
+    if (!before.some((p) => p.user_id === user.id)) throw new AppError('FORBIDDEN', 'Only players from this game can start the next one.');
+    if (!isTerminal(old.status) || old.status === 'DISPUTED') throw invalidState('This game has not finished yet.');
+    const others = before.filter((p) => p.user_id !== user.id).map((p) => p.user_id);
+
+    const joinExisting = async (nextId: string): Promise<{ match: MatchDto; created: boolean; otherUserIds: string[] }> => {
+      const next = await this.repo.find(nextId);
+      const seated = next ? (await this.repo.players(nextId)).some((p) => p.user_id === user.id) : false;
+      if (next && seated) return { match: await this.get(nextId, user.id), created: false, otherUserIds: others };
+      if (!next || next.status !== 'WAITING_FOR_OPPONENT') throw invalidState('The next game has already started. Open a new room from the game page.');
+      return { match: await this.join(user, nextId), created: false, otherUserIds: others };
+    };
+    if (old.rematch_match_id) return joinExisting(old.rematch_match_id);
+
+    const { match } = await this.create(user, { gameId: old.game_id, stakeUnits: old.stake_units, visibility: old.visibility, maxPlayers: old.max_players, mode: 'ROOM' }, `rematch:${matchId}`);
+    const linked = await this.db.prepare('UPDATE matches SET rematch_match_id = ? WHERE id = ? AND rematch_match_id IS NULL').bind(match.id, matchId).run();
+    if ((linked.meta?.changes ?? 0) === 0) {
+      // someone else asked at the same moment: give this room back and sit at theirs
+      if (match.status === 'WAITING_FOR_OPPONENT') await this.leave(user, match.id).catch(() => undefined);
+      const fresh = await this.repo.find(matchId);
+      if (fresh?.rematch_match_id && fresh.rematch_match_id !== match.id) return joinExisting(fresh.rematch_match_id);
+    }
+    await this.recordEvent(matchId, 'REMATCH_OPENED', { matchId: match.id, by: user.playerNumber }, 'PLAYER', user.id);
+    this.publisher.publish(`match:${matchId}`, { type: 'match.updated', data: { rematchMatchId: match.id } });
+    // 🤖 bots (usernames bot_*) need no notification; BotService seats them
+    const people = before.filter((p) => p.user_id !== user.id && !p.username.startsWith('bot_')).map((p) => p.user_id);
+    for (const id of people) {
+      this.publisher.publish(`user:${id}`, { type: 'match.rematch', data: { matchId: match.id } });
+      await this.notifications.notifyPlayer(id, {
+        type: 'MATCH_REMATCH',
+        title: `${user.displayName} wants to play again`,
+        body: `${match.gameName} for ${formatTokens(match.stakeUnits)} each. Tap to join the next game.`,
+        link: `/matches/${match.id}`,
+      });
+    }
+    return { match, created: true, otherUserIds: others };
+  }
+
   async quickMatch(user: UserRecord, gameId: string, stakeUnits: number, clientKey: string): Promise<{ match: MatchDto; joined: boolean }> {
     const candidates = await this.repo.quickCandidates(gameId, stakeUnits, user.id);
     for (const c of candidates) {

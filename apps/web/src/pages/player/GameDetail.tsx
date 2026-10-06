@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { Bot, DoorOpen, KeyRound, Lock, Users, Zap } from 'lucide-react';
-import { computeMatchFee, formatMinor, parseTokenAmount, type GameDto, type MatchDto } from '@arena/shared';
+import { BOT_MODULE_KEYS, computeMatchFee, formatMinor, parseTokenAmount, type GameDto, type MatchDto } from '@arena/shared';
 import { useConfig } from '../../auth/AuthProvider';
 import { BackLink, GameArt } from '../../components/Common';
 import { AviatorGame } from '../../games/aviator/AviatorGame';
@@ -14,7 +14,7 @@ import { t } from '../../lib/i18n';
 
 type Mode = 'quick' | 'room' | 'code';
 
-const BOT_GAMES = ['ludo', 'call-bridge', 'twenty-nine'];
+const BOT_GAMES: readonly string[] = BOT_MODULE_KEYS;
 
 export default function GameDetailPage() {
   const { slug = '' } = useParams();

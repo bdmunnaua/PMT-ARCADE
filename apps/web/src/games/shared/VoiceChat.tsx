@@ -4,11 +4,15 @@
  *   - "Join voice" asks for the microphone; without it you can still listen.
  *   - 🎤 mutes / unmutes yourself; 🔇 next to a player mutes them for you only.
  *   - Bots never take part.
+ *   - Uses a TURN relay when the server has one (mobile networks often block direct audio),
+ *     reconnects a dropped link by itself, and rejoins automatically in the next game
+ *     ("Play another one") if you were talking in this one.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Headphones, Mic, MicOff, PhoneOff, Volume2, VolumeX } from 'lucide-react';
 import type { MatchPlayerDto } from '@arena/shared';
 import { Button, Card, CardBody, CardHeader } from '../../components/ui';
+import { get } from '../../lib/api';
 import { t } from '../../lib/i18n';
 import type { GameRoomConnection } from '../useGameRoom';
 
@@ -21,8 +25,25 @@ type Signal =
   | { kind: 'answer'; sdp: RTCSessionDescriptionInit }
   | { kind: 'ice'; candidate: RTCIceCandidateInit };
 
-const ICE: RTCConfiguration = { iceServers: [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] }] };
+const STUN: RTCIceServer[] = [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] }];
 const isBot = (p: MatchPlayerDto) => p.displayName.includes('(Bot)');
+/** remembered for this browser tab: you were in voice, so the next game joins voice by itself */
+const AUTO_KEY = 'arena.voice.auto';
+const remember = (on: boolean) => {
+  try {
+    if (on) sessionStorage.setItem(AUTO_KEY, '1');
+    else sessionStorage.removeItem(AUTO_KEY);
+  } catch {
+    /* storage blocked */
+  }
+};
+const wantsAuto = () => {
+  try {
+    return sessionStorage.getItem(AUTO_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
 
 export function VoiceChat({ room, players }: { room: GameRoomConnection; players: MatchPlayerDto[] }) {
   const me = players.find((p) => p.isYou);
@@ -34,6 +55,8 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const [inVoice, setInVoice] = useState<Record<number, { muted: boolean }>>({});
   const [silenced, setSilenced] = useState<Record<number, boolean>>({});
   const [error, setError] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
+  const ice = useRef<RTCIceServer[]>(STUN);
   const local = useRef<MediaStream | null>(null);
   const peers = useRef(new Map<number, RTCPeerConnection>());
   const audios = useRef(new Map<number, HTMLAudioElement>());
@@ -54,7 +77,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const newPeer = useCallback(
     (n: number) => {
       closePeer(n);
-      const pc = new RTCPeerConnection(ICE);
+      const pc = new RTCPeerConnection({ iceServers: ice.current });
       peers.current.set(n, pc);
       const stream = local.current;
       if (stream) for (const track of stream.getAudioTracks()) pc.addTrack(track, stream);
@@ -64,13 +87,21 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
         const a = audios.current.get(n);
         if (a) {
           a.srcObject = e.streams[0] ?? new MediaStream([e.track]);
-          void a.play().catch(() => undefined);
+          // phones (iPhone especially) may refuse to start sound without a tap
+          void a.play().then(() => setBlocked(false), () => setBlocked(true));
         }
+      };
+      // a dropped link (network change, phone screen off) is rebuilt by the player who started it
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState !== 'failed' || peers.current.get(n) !== pc) return;
+        closePeer(n);
+        if (joinedRef.current && myNumber && myNumber < n) void reconnect.current(n);
       };
       return pc;
     },
-    [closePeer, signal],
+    [closePeer, signal, myNumber],
   );
+  const reconnect = useRef<(n: number) => Promise<void>>(async () => undefined);
 
   /** the player with the lower number starts each pair's connection, so two never collide */
   const connect = useCallback(
@@ -82,6 +113,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     },
     [myNumber, newPeer, signal],
   );
+  reconnect.current = connect;
 
   const { onRtc } = room;
   useEffect(
@@ -123,6 +155,11 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const join = async () => {
     setError(null);
     try {
+      ice.current = (await get<{ iceServers: RTCIceServer[] }>('/api/realtime/ice')).iceServers;
+    } catch {
+      ice.current = STUN;
+    }
+    try {
       local.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       setHasMic(true);
       setMicOn(true);
@@ -133,7 +170,22 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     }
     joinedRef.current = true;
     setJoined(true);
+    remember(true);
     signal({ kind: 'join', muted: !local.current });
+  };
+
+  // you were talking in the last game: join this table's voice too (no new permission prompt)
+  const autoTried = useRef(false);
+  useEffect(() => {
+    if (autoTried.current || !wantsAuto() || joinedRef.current) return;
+    autoTried.current = true;
+    void join();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const unblock = () => {
+    for (const a of audios.current.values()) void a.play().catch(() => undefined);
+    setBlocked(false);
   };
 
   const leave = useCallback(() => {
@@ -146,6 +198,10 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     setJoined(false);
     setMicOn(false);
   }, [signal, closePeer]);
+  const leaveByHand = () => {
+    remember(false);
+    leave();
+  };
 
   // leave voice only when the panel really goes away (page closed / game over), not on re-renders
   const leaveRef = useRef(leave);
@@ -182,7 +238,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
                   {micOn ? t('Mic on') : t('Muted')}
                 </Button>
               )}
-              <Button size="sm" variant="ghost" icon={<PhoneOff className="size-4" />} onClick={leave}>
+              <Button size="sm" variant="ghost" icon={<PhoneOff className="size-4" />} onClick={leaveByHand}>
                 {t('Leave voice')}
               </Button>
             </div>
@@ -195,6 +251,11 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
       />
       <CardBody className="space-y-2">
         {error && <p className="text-xs text-amber-600">{error}</p>}
+        {joined && blocked && (
+          <Button size="sm" variant="secondary" icon={<Volume2 className="size-4" />} onClick={unblock} className="w-full">
+            {t('Tap to hear the other players')}
+          </Button>
+        )}
         <ul className="space-y-1.5">
           {others.map((p) => {
             const v = inVoice[p.playerNumber];

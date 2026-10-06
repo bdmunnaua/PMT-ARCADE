@@ -5,10 +5,13 @@
  * Flag fall: opponent wins — unless the opponent cannot possibly mate (then draw).
  */
 import { Chess } from 'chess.js';
-import type { GameModule, MatchOutcome, ModuleResult } from '@arena/shared';
+import type { GameModule, MatchOutcome, ModuleResult, RoomContext } from '@arena/shared';
+import { chessBotMove } from './bot';
 
 export const CHESS_BASE_MS = 5 * 60_000;
 export const CHESS_INCREMENT_MS = 3_000;
+/** a 🤖 bot "thinks" this long before it moves */
+export const CHESS_BOT_MS = 1_800;
 
 export interface ChessState {
   white: string;
@@ -21,6 +24,8 @@ export interface ChessState {
   fen: string;
   inCheck: boolean;
   result: { type: 'WIN'; winner: 'w' | 'b'; reason: string } | { type: 'DRAW'; reason: string } | null;
+  /** colours played by a 🤖 bot (absent in rooms created before bots existed) */
+  bots?: { w?: boolean; b?: boolean };
 }
 
 export function replay(moves: string[]): Chess {
@@ -67,7 +72,26 @@ function outcomeOf(s: ChessState): MatchOutcome | undefined {
 function finalize(s: ChessState): ModuleResult<ChessState> {
   if (s.result) return { state: { ...s, turnStartedAt: null }, timerAt: null, outcome: outcomeOf(s), persist: [{ type: 'CHESS_FINISHED', payload: { result: s.result, moves: s.moves } }] };
   const turn = s.moves.length % 2 === 0 ? 'w' : 'b';
-  return { state: s, timerAt: s.turnStartedAt! + s.clock[turn] };
+  const flag = s.turnStartedAt! + s.clock[turn];
+  // a bot's turn wakes the room after a short pause so the server can play it
+  return { state: s, timerAt: s.bots?.[turn] ? Math.min(flag, s.turnStartedAt! + CHESS_BOT_MS) : flag };
+}
+
+/** Plays one move for `color` (already checked to be on turn) and runs the clock. */
+function playMove(state: ChessState, color: 'w' | 'b', from: string, to: string, promotion: string | undefined, ctx: RoomContext): ModuleResult<ChessState> | null {
+  const spent = ctx.now - (state.turnStartedAt ?? ctx.now);
+  const game = board(state.moves);
+  let san: string;
+  try {
+    san = game.move({ from, to, promotion: promotion ?? 'q' }).san;
+  } catch {
+    return null;
+  }
+  const moves = [...state.moves, san];
+  live = { key: moves.join(' '), game };
+  const clock = { ...state.clock, [color]: state.clock[color] - spent + CHESS_INCREMENT_MS };
+  const next: ChessState = { ...state, moves, clock, turnStartedAt: ctx.now, drawOfferBy: state.drawOfferBy === color ? color : null, fen: game.fen(), inCheck: game.inCheck(), result: terminal(game) };
+  return { ...finalize(next), broadcast: [{ kind: 'move', san }] };
 }
 
 const colorOf = (s: ChessState, userId: string): 'w' | 'b' | null => (userId === s.white ? 'w' : userId === s.black ? 'b' : null);
@@ -83,7 +107,10 @@ export const chessModule: GameModule<ChessState> = {
   createRoom(ctx) {
     const [a, b] = [...ctx.players].sort((x, y) => x.seat - y.seat);
     const swap = ctx.random() < 0.5;
-    return { white: (swap ? b : a)!.userId, black: (swap ? a : b)!.userId, moves: [], clock: { w: CHESS_BASE_MS, b: CHESS_BASE_MS }, turnStartedAt: null, drawOfferBy: null, fen: START_FEN, inCheck: false, result: null };
+    const white = (swap ? b : a)!;
+    const black = (swap ? a : b)!;
+    const bots = white.isBot || black.isBot ? { ...(white.isBot ? { w: true } : {}), ...(black.isBot ? { b: true } : {}) } : undefined;
+    return { white: white.userId, black: black.userId, moves: [], clock: { w: CHESS_BASE_MS, b: CHESS_BASE_MS }, turnStartedAt: null, drawOfferBy: null, fen: START_FEN, inCheck: false, result: null, ...(bots ? { bots } : {}) };
   },
   joinRoom: (state) => ({ state }),
   startMatch: (state, ctx) => finalize({ ...state, turnStartedAt: ctx.now }),
@@ -103,24 +130,19 @@ export const chessModule: GameModule<ChessState> = {
     if (turn !== color) return { state, send: [{ userId, message: { error: 'Not your move' } }] };
     const spent = ctx.now - (state.turnStartedAt ?? ctx.now);
     if (spent >= state.clock[turn]) return chessModule.handleTimeout!(state, ctx);
-    const game = board(state.moves);
-    let san: string;
-    try {
-      san = game.move({ from: m.from ?? '', to: m.to ?? '', promotion: m.promotion ?? 'q' }).san;
-    } catch {
-      return { state, send: [{ userId, message: { error: 'Illegal move' } }] };
-    }
-    const moves = [...state.moves, san];
-    live = { key: moves.join(' '), game };
-    const clock = { ...state.clock, [turn]: state.clock[turn] - spent + CHESS_INCREMENT_MS };
-    const next: ChessState = { ...state, moves, clock, turnStartedAt: ctx.now, drawOfferBy: state.drawOfferBy === color ? color : null, fen: game.fen(), inCheck: game.inCheck(), result: terminal(game) };
-    return { ...finalize(next), broadcast: [{ kind: 'move', san }] };
+    return playMove(state, color, m.from ?? '', m.to ?? '', m.promotion, ctx) ?? { state, send: [{ userId, message: { error: 'Illegal move' } }] };
   },
 
   handleTimeout(state, ctx) {
     if (state.result || state.turnStartedAt === null) return { state, timerAt: null };
     const turn = state.moves.length % 2 === 0 ? 'w' : 'b';
     const left = state.clock[turn] - (ctx.now - state.turnStartedAt);
+    if (left > 0 && state.bots?.[turn]) {
+      // the bot's move; a draw offer from the human is simply declined by playing on
+      const pick = chessBotMove(state.moves, ctx.random);
+      const played = playMove({ ...state, drawOfferBy: null }, turn, pick.from, pick.to, pick.promotion, ctx);
+      if (played) return played;
+    }
     if (left > 0) return { state, timerAt: ctx.now + left };
     const other = turn === 'w' ? 'b' : 'w';
     const result: ChessState['result'] = canMate(board(state.moves), other) ? { type: 'WIN', winner: other, reason: 'time' } : { type: 'DRAW', reason: 'timeout vs insufficient material' };

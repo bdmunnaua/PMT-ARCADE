@@ -5,6 +5,10 @@ export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
 
 export const MAX_ACTIVE_MATCHES_PER_PLAYER = 3;
+/** live games that have a 🤖 bot player */
+export const BOT_MODULE_KEYS = ['ludo', 'call-bridge', 'twenty-nine', 'carrom', 'chess'] as const;
+/** a quick-match room with no opponent after this long gets a 🤖 bot (bot games only) */
+export const QUICK_MATCH_BOT_AFTER_MS = 25_000;
 export const MAX_SUPPORTED_PLAYERS_PER_MATCH = 16;
 
 /** Matches waiting this long for opponents are cancelled and refunded by the cron job. */

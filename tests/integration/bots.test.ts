@@ -44,14 +44,15 @@ describe('bots in stake games', () => {
     expect((await h.integrity()).status).toBe('PASS');
   });
 
-  it('only the host, only Ludo, only while waiting — and not without a bankroll', async () => {
+  it('only the host, only while waiting — and not without a bankroll', async () => {
     const m = await room();
     expect((await fill(m.id)).body.error?.code).toBe('GAME_UNAVAILABLE'); // bankroll empty
     await bankroll(TOKENS(10_000));
     const friend = await h.player('karim');
     expect((await fill(m.id, friend)).body.error?.code).toBe('FORBIDDEN');
-    const other = await room('game-06', TOKENS(10), 2);
-    expect((await fill(other.id)).body.error?.code).toBe('GAME_UNAVAILABLE');
+    // chess has a 🤖 bot too now
+    const chess = await room('game-06', TOKENS(10), 2);
+    expect((await fill(chess.id)).status).toBe(200);
     expect((await fill(m.id)).status).toBe(200);
     expect((await fill(m.id)).body.error?.code).toBe('INVALID_STATE_TRANSITION');
   });

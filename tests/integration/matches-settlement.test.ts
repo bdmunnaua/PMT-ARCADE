@@ -94,6 +94,29 @@ describe('matches, escrow and the 1% settlement engine', () => {
     expect((await h.integrity()).status).toBe('PASS');
   });
 
+  it('"play another one": the first ask opens the next room, the second joins it, both see the link', async () => {
+    const id = await readyMatch(TOKENS(500));
+    const s = h.services();
+    expect((await h.call('POST', `/api/matches/${id}/rematch`, { token: a.token })).body.error?.code).toBe('INVALID_STATE_TRANSITION'); // not finished
+    await s.settlement.settleMatch({ matchId: id, outcome: { type: 'WIN', winnerUserId: a.id }, source: 'GAME_SERVER', resultProof: 'test' });
+    const outsider = await h.player('zed');
+    expect((await h.call('POST', `/api/matches/${id}/rematch`, { token: outsider.token })).body.error?.code).toBe('FORBIDDEN');
+
+    const first = await h.call('POST', `/api/matches/${id}/rematch`, { token: b.token });
+    expect(first.status).toBe(200);
+    const next = first.body.data as { id: string; status: string; stakeUnits: number; maxPlayers: number };
+    expect(next).toMatchObject({ status: 'WAITING_FOR_OPPONENT', stakeUnits: TOKENS(500), maxPlayers: 2 });
+    // asking again is harmless; the old match now points to the new room
+    expect((await h.call('POST', `/api/matches/${id}/rematch`, { token: b.token })).body.data.id).toBe(next.id);
+    expect((await h.call('GET', `/api/matches/${id}`, { token: a.token })).body.data.rematchMatchId).toBe(next.id);
+    // the other player was told, and joins with one tap
+    const note = await h.db.prepare("SELECT COUNT(*) AS n FROM notifications WHERE type = 'MATCH_REMATCH' AND user_id = ?").bind(a.id).first<number>('n');
+    expect(note).toBe(1);
+    const second = await h.call('POST', `/api/matches/${id}/rematch`, { token: a.token });
+    expect(second.body.data).toMatchObject({ id: next.id, status: 'READY', playerCount: 2 });
+    expect((await h.integrity()).status).toBe('PASS');
+  });
+
   it('draw refunds both stakes with no fee', async () => {
     const id = await readyMatch();
     const s = h.services();

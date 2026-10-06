@@ -32,6 +32,7 @@ export interface MatchRow {
   started_at: number | null;
   ended_at: number | null;
   settled_at: number | null;
+  rematch_match_id?: string | null;
 }
 
 export interface MatchPlayerRow {
@@ -221,5 +222,6 @@ export function toMatchDto(m: MatchRow, players: MatchPlayerRow[], gameName: str
     createdAt: m.created_at,
     startedAt: m.started_at,
     endedAt: m.ended_at,
+    rematchMatchId: m.rematch_match_id ?? null,
   };
 }

@@ -43,7 +43,9 @@ export function AviatorGame({ game }: { game: GameDto }) {
     return subscribe(`crash:${game.id}`, (raw) => {
       const m = raw as unknown as Msg;
       if (m.serverNow) setOffset(m.serverNow - Date.now());
-      if (m.t === 'round' || m.t === 'crash') {
+      // 'hello' arrives on every (re)connection: messages may have been missed while offline
+      if (m.t === 'hello') void load();
+      else if (m.t === 'round' || m.t === 'crash') {
         if (m.t === 'crash') playSound('crash');
         void load();
         if (m.t === 'crash') wallet.reload();
@@ -54,6 +56,26 @@ export function AviatorGame({ game }: { game: GameDto }) {
 
   const round = state?.round ?? null;
   const flying = round?.phase === 'FLYING' && !!round.startedAt;
+
+  // Safety net: the live connection can drop for a moment (mobile data, a backgrounded tab) and a
+  // "take-off" or "crash" message is then lost. Re-check with the server whenever the screen could
+  // be stale, so a flight never keeps climbing after the real crash and rounds never seem to overlap.
+  useEffect(() => {
+    const check = () => {
+      const now = Date.now() + offset;
+      if (!round) return void load();
+      if (round.phase === 'FLYING') return void load();
+      if (round.phase === 'BETTING' && now > round.bettingEndsAt + 1500) return void load();
+      if (round.phase === 'CRASHED' && now > (round.crashedAt ?? now) + 6000) return void load();
+    };
+    const iv = setInterval(check, 4000);
+    const onVisible = () => document.visibilityState === 'visible' && void load();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(iv);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [round, offset, load]);
 
   // animation loop
   useEffect(() => {

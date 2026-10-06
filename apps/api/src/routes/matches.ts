@@ -43,6 +43,22 @@ export function matchRoutes(auth: MiddlewareHandler<AppEnv>) {
   /** host fills the empty seats with 🤖 bots, which starts the game */
   r.post('/:id/bots', rateLimit('match_join'), async (c) => ok(c, await c.get('services').bots.fill(c.get('user'), param(c, 'id'))));
 
+  /** "Play another one" after a finished game: opens (or joins) the next room for the same players. */
+  r.post('/:id/rematch', rateLimit('match_create'), async (c) => {
+    const s = c.get('services');
+    const user = c.get('user');
+    const res = await s.matches.rematch(user, param(c, 'id'));
+    // only bots were at the table with you: they sit down again straight away
+    if (res.created && res.otherUserIds.length > 0 && (await s.bots.botIds(res.otherUserIds)).size === res.otherUserIds.length) {
+      try {
+        return ok(c, await s.bots.fill(user, res.match.id));
+      } catch {
+        /* bots resting: the room stays open for friends */
+      }
+    }
+    return ok(c, res.match);
+  });
+
   r.post('/:id/disputes', rateLimit('dispute_create'), async (c) => {
     const input = await parseBody(c, createDisputeSchema);
     return ok(c, await c.get('services').disputes.create(c.get('user'), param(c, 'id'), input.category, input.description), 201);

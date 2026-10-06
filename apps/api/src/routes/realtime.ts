@@ -57,5 +57,32 @@ export function realtimeRoutes(auth: MiddlewareHandler<AppEnv>) {
     return ns.get(ns.idFromName(target)).fetch(new Request('https://do.internal/connect', { headers }));
   });
 
+  /**
+   * ICE servers for voice chat. STUN finds a direct path; on many mobile networks (carrier NAT)
+   * only a TURN relay works, so when a Cloudflare TURN key is configured each player gets
+   * short-lived relay credentials (never the key itself).
+   */
+  r.get('/realtime/ice', auth, requireUser, rateLimit('realtime_ticket'), async (c) => {
+    const stun = { urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] };
+    const { TURN_KEY_ID: id, TURN_KEY_API_TOKEN: token } = c.env;
+    if (id && token) {
+      try {
+        const res = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${encodeURIComponent(id)}/credentials/generate-ice-servers`, {
+          method: 'POST',
+          headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+          body: JSON.stringify({ ttl: 6 * 60 * 60 }),
+        });
+        if (res.ok) {
+          const body = (await res.json()) as { iceServers?: unknown };
+          const list = Array.isArray(body.iceServers) ? body.iceServers : body.iceServers ? [body.iceServers] : [];
+          if (list.length) return ok(c, { iceServers: [stun, ...list], relay: true });
+        } else console.warn('turn credentials failed', res.status);
+      } catch (e) {
+        console.warn('turn credentials error', e instanceof Error ? e.message : e);
+      }
+    }
+    return ok(c, { iceServers: [stun], relay: false });
+  });
+
   return r;
 }

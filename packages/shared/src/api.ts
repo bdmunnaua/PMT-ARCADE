@@ -191,6 +191,8 @@ export interface MatchDto {
   createdAt: number;
   startedAt: number | null;
   endedAt: number | null;
+  /** the next room the same players opened after this one ("Play another one") */
+  rematchMatchId: string | null;
 }
 
 /** What an invite link (pmtarcade.com/r/CODE) shows before the visitor signs in. Public. */

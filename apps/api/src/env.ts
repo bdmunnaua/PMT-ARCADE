@@ -38,6 +38,9 @@ export interface Env {
   /** private key of the SEPARATE payout hot wallet (never the main supply wallet) */
   PAYOUT_PRIVATE_KEY?: string;
   REALTIME_TICKET_SECRET?: string;
+  /** Cloudflare Realtime TURN key (voice chat relay for mobile networks); both optional */
+  TURN_KEY_ID?: string;
+  TURN_KEY_API_TOKEN?: string;
   INTERNAL_API_SECRET?: string;
 }
 
