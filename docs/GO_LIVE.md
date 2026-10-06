@@ -2,7 +2,7 @@
 
 The merged platform replaces the old arcade Worker **`pmt-arcade`** in place (same name, same
 routes). The old database `arcade` is not touched and stays as a backup.
-Run everything from the `token-arena` folder. Steps marked **(owner)** need you.
+Run everything from the `pmtarcade.com` folder. Steps marked **(owner)** need you.
 
 ## 0. Before
 - A fresh backup of the old database, taken just before going live (the earlier one is

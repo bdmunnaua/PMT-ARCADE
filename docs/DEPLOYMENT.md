@@ -2,7 +2,7 @@
 
 ## Topology (recommended)
 
-One Cloudflare Worker (`token-arena`) serves the web app's static assets, `/api/*`, `/internal/*`, the two Durable Object classes and the cron trigger. Run every command below from `platform/` unless noted.
+One Cloudflare Worker (`token-arena`) serves the web app's static assets, `/api/*`, `/internal/*`, the two Durable Object classes and the cron trigger. Run every command below from the `pmtarcade.com` folder unless noted. (The live Worker is named `pmt-arcade`; the `token-arena-*` names are the database names and stay as they are.)
 
 ## First deployment (EXTERNAL SETUP REQUIRED)
 

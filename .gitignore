@@ -20,3 +20,7 @@ scripts/.seed/
 .DS_Store
 Thumbs.db
 *.log
+
+# local only: database backups (player data) and personal notes — never commit
+backups/
+private/

@@ -46,12 +46,12 @@ platform/
 
 Install Node from <https://nodejs.org> (choose "LTS"). Restart your terminal afterwards.
 
-All commands below are run from the `token-arena` folder unless stated otherwise.
+All commands below are run from the `pmtarcade.com` folder unless stated otherwise.
 
 ## 2. Install dependencies
 
 ```bash
-cd token-arena
+cd pmtarcade.com
 ```
 ```bash
 npm install
