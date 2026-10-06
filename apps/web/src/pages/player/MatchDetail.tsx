@@ -176,15 +176,16 @@ function GameRoomPanel({ match, game }: { match: MatchDto; game: GameDto }) {
           </span>
         }
       />
+      {/* stays mounted while the game connection reconnects, so a short drop does not end the call */}
+      {match.visibility === 'PRIVATE' && (
+        <div className="border-b border-ink-100 p-3 dark:border-ink-800">
+          <VoiceChat room={room} players={match.players} />
+        </div>
+      )}
       <CardBody>
         {room.error && <Notice tone="danger">{room.error}</Notice>}
         <Client match={match} room={room} />
       </CardBody>
-      {match.visibility === 'PRIVATE' && room.status === 'open' && (
-        <div className="border-t border-ink-100 p-3 dark:border-ink-800">
-          <VoiceChat room={room} players={match.players} />
-        </div>
-      )}
     </Card>
   );
 }

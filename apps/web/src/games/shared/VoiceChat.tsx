@@ -17,9 +17,11 @@ import { inAppBrowser, openInChromeHref } from '../../lib/invite';
 import { t } from '../../lib/i18n';
 import type { GameRoomConnection } from '../useGameRoom';
 
+/** `sid` identifies one "Join voice" on one device; a new sid means the player's old link is dead */
 type Signal =
-  | { kind: 'join'; muted?: boolean }
-  | { kind: 'here'; muted: boolean }
+  | { kind: 'join'; muted?: boolean; sid?: string }
+  | { kind: 'here'; muted: boolean; sid?: string }
+  | { kind: 'restart' }
   | { kind: 'leave' }
   | { kind: 'mute'; muted: boolean }
   | { kind: 'offer'; sdp: RTCSessionDescriptionInit }
@@ -28,6 +30,9 @@ type Signal =
 
 const STUN: RTCIceServer[] = [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] }];
 const isBot = (p: MatchPlayerDto) => p.displayName.includes('(Bot)');
+type LinkState = 'connecting' | 'connected' | 'failed';
+/** a link that has not connected after this long is rebuilt */
+const LINK_TIMEOUT_MS = 12_000;
 /** remembered for this browser tab: you were in voice, so the next game joins voice by itself */
 const AUTO_KEY = 'arena.voice.auto';
 const remember = (on: boolean) => {
@@ -54,6 +59,17 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const [micOn, setMicOn] = useState(false);
   const [hasMic, setHasMic] = useState(true);
   const [inVoice, setInVoice] = useState<Record<number, { muted: boolean }>>({});
+  const [links, setLinks] = useState<Record<number, LinkState>>({});
+  const setLink = useCallback(
+    (n: number, st: LinkState | null) =>
+      setLinks((l) => {
+        const next = { ...l };
+        if (st) next[n] = st;
+        else delete next[n];
+        return next;
+      }),
+    [],
+  );
   const [silenced, setSilenced] = useState<Record<number, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
@@ -81,6 +97,12 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const queue = useRef<Promise<void>>(Promise.resolve());
   const audios = useRef(new Map<number, HTMLAudioElement>());
   const joinedRef = useRef(false);
+  const sid = useRef('');
+  const remoteSid = useRef(new Map<number, string>());
+  /** per player: when the current link was started and how often it was rebuilt in a row */
+  const linkStarted = useRef(new Map<number, number>());
+  const rebuilds = useRef(new Map<number, number>());
+  const disconnectTimers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
 
   // the room object changes on every update; keep the latest in a ref so callbacks stay stable
   const roomRef = useRef(room);
@@ -91,6 +113,9 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     peers.current.get(n)?.close();
     peers.current.delete(n);
     pendingIce.current.delete(n);
+    linkStarted.current.delete(n);
+    clearTimeout(disconnectTimers.current.get(n));
+    disconnectTimers.current.delete(n);
     const a = audios.current.get(n);
     if (a) a.srcObject = null;
   }, []);
@@ -112,17 +137,32 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
           void a.play().then(() => setBlocked(false), () => setBlocked(true));
         }
       };
-      // a dropped link (network change, phone screen off) is rebuilt by the player who started it
+      linkStarted.current.set(n, Date.now());
+      setLink(n, 'connecting');
+      // a dropped link (network change, phone screen off) is started again
       pc.onconnectionstatechange = () => {
-        if (pc.connectionState !== 'failed' || peers.current.get(n) !== pc) return;
-        closePeer(n);
-        if (joinedRef.current && myNumber && myNumber < n) void reconnect.current(n);
+        if (peers.current.get(n) !== pc) return;
+        const st = pc.connectionState;
+        clearTimeout(disconnectTimers.current.get(n));
+        if (st === 'connected') {
+          setLink(n, 'connected');
+          linkStarted.current.delete(n);
+          rebuilds.current.set(n, 0);
+        } else if (st === 'failed') rebuild.current(n);
+        else if (st === 'disconnected') {
+          // often comes back by itself within a few seconds; if not, start the link again
+          disconnectTimers.current.set(
+            n,
+            setTimeout(() => peers.current.get(n) === pc && pc.connectionState !== 'connected' && rebuild.current(n), 5000),
+          );
+        }
       };
       return pc;
     },
-    [closePeer, signal, myNumber],
+    [closePeer, signal, setLink],
   );
-  const reconnect = useRef<(n: number) => Promise<void>>(async () => undefined);
+  /** throws away the link to player n and makes a new one (the starter does it; the other side asks for it) */
+  const rebuild = useRef<(n: number) => void>(() => undefined);
 
   /** the player with the lower number starts each pair's connection, so two never collide */
   const connect = useCallback(
@@ -134,7 +174,34 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     },
     [myNumber, newPeer, signal],
   );
-  reconnect.current = connect;
+  rebuild.current = (n: number) => {
+    if (!joinedRef.current) return;
+    const tries = (rebuilds.current.get(n) ?? 0) + 1;
+    rebuilds.current.set(n, tries);
+    closePeer(n);
+    if (tries > 6) {
+      setLink(n, 'failed');
+      return;
+    }
+    setLink(n, 'connecting');
+    if (myNumber && myNumber < n) void connect(n).catch(() => undefined);
+    else {
+      signal({ kind: 'restart' }, n);
+      // waiting for their new offer counts as a link being made (the watchdog asks again if it never comes)
+      linkStarted.current.set(n, Date.now());
+    }
+  };
+
+  // watchdog: a link that never connects (lost message, blocked path) is started again
+  useEffect(() => {
+    if (!joined) return;
+    const id = setInterval(() => {
+      for (const [n, at] of [...linkStarted.current]) {
+        if (Date.now() - at > LINK_TIMEOUT_MS && peers.current.get(n)?.connectionState !== 'connected') rebuild.current(n);
+      }
+    }, 3000);
+    return () => clearInterval(id);
+  }, [joined]);
 
   /** applies the remote offer/answer, then any network paths that were waiting for it */
   const applyRemote = useCallback(async (from: number, pc: RTCPeerConnection, sdp: RTCSessionDescriptionInit) => {
@@ -157,18 +224,31 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const handle = (from: number, s: Signal) => handleRef.current(from, s);
   handleRef.current = async (from: number, s: Signal) => {
         try {
-          if (s.kind === 'join') {
+          if (s.kind === 'join' || s.kind === 'here') {
             setInVoice((v) => ({ ...v, [from]: { muted: s.muted ?? false } }));
-            if (joinedRef.current) {
-              signal({ kind: 'here', muted: !(local.current?.getAudioTracks()[0]?.enabled ?? false) }, from);
+            // a new "Join voice" on their side (page reloaded, rejoined): the old link is dead
+            const known = remoteSid.current.get(from);
+            if (s.sid && known && known !== s.sid) {
+              closePeer(from);
+              rebuilds.current.set(from, 0);
+            }
+            if (s.sid) remoteSid.current.set(from, s.sid);
+            if (!joinedRef.current) return;
+            if (s.kind === 'join') signal({ kind: 'here', muted: !(local.current?.getAudioTracks()[0]?.enabled ?? false), sid: sid.current }, from);
+            const pc = peers.current.get(from);
+            if (pc && (pc.connectionState === 'failed' || pc.connectionState === 'closed')) closePeer(from);
+            if (myNumber && myNumber < from) await connect(from);
+            else if (!peers.current.has(from)) linkStarted.current.set(from, Date.now());
+          } else if (s.kind === 'restart') {
+            if (joinedRef.current && myNumber && myNumber < from) {
+              closePeer(from);
               await connect(from);
             }
-          } else if (s.kind === 'here') {
-            setInVoice((v) => ({ ...v, [from]: { muted: s.muted } }));
-            await connect(from);
           } else if (s.kind === 'mute') setInVoice((v) => ({ ...v, [from]: { muted: s.muted } }));
           else if (s.kind === 'leave') {
             closePeer(from);
+            setLink(from, null);
+            remoteSid.current.delete(from);
             setInVoice((v) => {
               const next = { ...v };
               delete next[from];
@@ -219,11 +299,19 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
       else if (name === 'NotReadableError' || name === 'AbortError') setError(t('Your microphone is being used by another app (a call?). Close it, then tap "Try the microphone again".'));
       else setError(t('No microphone access — you can still listen. Allow the microphone in your browser to talk.'));
     }
+    sid.current = Math.random().toString(36).slice(2, 10);
+    rebuilds.current.clear();
     joinedRef.current = true;
     setJoined(true);
     remember(true);
-    signal({ kind: 'join', muted: !local.current });
+    signal({ kind: 'join', muted: !local.current, sid: sid.current });
   };
+
+  // the game connection came back after a drop: say hello again so missed links are made
+  const { openCount } = room;
+  useEffect(() => {
+    if (openCount > 1 && joinedRef.current) signal({ kind: 'join', muted: !(local.current?.getAudioTracks()[0]?.enabled ?? false), sid: sid.current });
+  }, [openCount, signal]);
 
   // you were talking in the last game: join this table's voice too (no new permission prompt)
   const autoTried = useRef(false);
@@ -244,8 +332,10 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     joinedRef.current = false;
     signal({ kind: 'leave' });
     for (const n of [...peers.current.keys()]) closePeer(n);
+    linkStarted.current.clear();
     local.current?.getTracks().forEach((tr) => tr.stop());
     local.current = null;
+    setLinks({});
     setJoined(false);
     setMicOn(false);
   }, [signal, closePeer]);
@@ -276,6 +366,15 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     setSilenced({ ...silenced, [n]: next });
     const a = audios.current.get(n);
     if (a) a.muted = next;
+  };
+
+  const talkers = others.filter((p) => inVoice[p.playerNumber]).map((p) => p.displayName || p.username);
+  const linkLabel = (n: number) => {
+    const st = links[n];
+    if (!joined || !inVoice[n]) return null;
+    if (st === 'connected') return null;
+    if (st === 'failed') return t('could not connect — tap Leave voice, then Join voice');
+    return t('connecting…');
   };
 
   if (!me || others.length === 0) return null;
@@ -315,10 +414,21 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
             )}
           </div>
         )}
+        {supported && !joined && talkers.length > 0 && (
+          <button type="button" onClick={join} className="flex w-full items-center gap-2 rounded-xl bg-emerald-50 p-3 text-left text-sm font-semibold text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200">
+            <Mic className="size-4 shrink-0" />
+            {t('{names} is in voice — tap here to talk', { names: talkers.join(', ') })}
+          </button>
+        )}
         {supported && !joined && (
           <p className="text-xs text-ink-500">{t('Tap "Join voice". Your browser will ask to use the microphone — tap Allow.')}</p>
         )}
         {error && <p className="text-xs text-amber-600">{error}</p>}
+        {error && inApp && openInChromeHref() && (
+          <a href={openInChromeHref()!} className="inline-flex rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white">
+            {t('Open in Chrome to continue')}
+          </a>
+        )}
         {supported && denied && (
           <div className="space-y-1 rounded-xl bg-ink-100 p-3 text-xs dark:bg-ink-800">
             <p className="font-semibold">{t('To talk, allow the microphone for pmtarcade.com:')}</p>
@@ -346,6 +456,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
                   <span className={`size-2.5 rounded-full ${v ? 'bg-emerald-500' : 'bg-ink-300 dark:bg-ink-600'}`} />
                   {p.displayName || p.username}
                   <span className="text-xs text-ink-500">{v ? (v.muted ? t('muted') : t('in voice')) : t('not in voice')}</span>
+                  {linkLabel(p.playerNumber) && <span className={`text-xs ${links[p.playerNumber] === 'failed' ? 'text-rose-500' : 'text-amber-600'}`}>· {linkLabel(p.playerNumber)}</span>}
                 </span>
                 {joined && v && (
                   <button type="button" onClick={() => toggleSilence(p.playerNumber)} className="grid size-8 place-items-center rounded-lg hover:bg-ink-100 dark:hover:bg-ink-800" aria-label={silenced[p.playerNumber] ? t('Unmute player') : t('Mute player')} title={silenced[p.playerNumber] ? t('Unmute player') : t('Mute player')}>

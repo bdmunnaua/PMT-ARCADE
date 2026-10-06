@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ClientToRoomMessage, RoomToClientMessage } from '@arena/shared';
-import { post, wsUrl } from '../lib/api';
+import { ApiError, post, wsUrl } from '../lib/api';
 
 export interface GameRoomConnection {
   status: 'connecting' | 'open' | 'closed' | 'error';
@@ -18,6 +18,8 @@ export interface GameRoomConnection {
   send: (m: ClientToRoomMessage) => void;
   /** voice chat signalling from other players at the table */
   onRtc: (fn: (from: number, data: unknown) => void) => () => void;
+  /** goes up by one every time the room connection (re)opens */
+  openCount: number;
 }
 
 /** Connects to the match's GameRoom Durable Object; reconnects automatically while mounted. */
@@ -31,7 +33,10 @@ export function useGameRoom(matchId: string, enabled: boolean): GameRoomConnecti
   const [events, setEvents] = useState<unknown[]>([]);
   const [serverOffset, setServerOffset] = useState(0);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [openCount, setOpenCount] = useState(0);
   const ws = useRef<WebSocket | null>(null);
+  /** voice messages written while the connection was down; sent as soon as it is back */
+  const outbox = useRef<{ at: number; text: string }[]>([]);
   const rtcListeners = useRef(new Set<(from: number, data: unknown) => void>());
 
   useEffect(() => {
@@ -49,6 +54,10 @@ export function useGameRoom(matchId: string, enabled: boolean): GameRoomConnecti
         sock.onopen = () => {
           attempt = 0;
           setStatus('open');
+          setOpenCount((n) => n + 1);
+          const fresh = outbox.current.filter((m) => Date.now() - m.at < 20_000);
+          outbox.current = [];
+          for (const m of fresh) sock.send(m.text);
         };
         sock.onmessage = (ev) => {
           const m = JSON.parse(String(ev.data)) as RoomToClientMessage;
@@ -68,13 +77,18 @@ export function useGameRoom(matchId: string, enabled: boolean): GameRoomConnecti
           else if (m.t === 'error') setError(m.message);
           else if (m.t === 'rtc') for (const fn of rtcListeners.current) fn(m.from, m.data);
         };
-        sock.onclose = () => {
+        sock.onclose = (ev) => {
           setStatus('closed');
-          if (!closed && attempt < 6) timer = setTimeout(connect, Math.min(15_000, 1000 * 2 ** attempt++));
+          // 1011 = the room itself is gone (game over / cancelled): nothing to reconnect to
+          if (ev.code === 1011) return;
+          // phones drop the connection often (screen off, Wi-Fi ↔ mobile data): keep retrying
+          if (!closed) timer = setTimeout(connect, Math.min(10_000, 1000 * 2 ** Math.min(attempt++, 4)));
         };
       } catch (e) {
         setStatus('error');
         setError(e instanceof Error ? e.message : 'Could not connect to the game room.');
+        const refused = e instanceof ApiError && (e.status === 403 || e.status === 404);
+        if (!closed && !refused) timer = setTimeout(connect, Math.min(10_000, 1000 * 2 ** Math.min(attempt++, 4)));
       }
     };
     void connect();
@@ -87,7 +101,9 @@ export function useGameRoom(matchId: string, enabled: boolean): GameRoomConnecti
 
   const send = useCallback((m: ClientToRoomMessage) => {
     setLastError(null);
-    if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify(m));
+    const text = JSON.stringify(m);
+    if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(text);
+    else if (m.t === 'rtc') outbox.current = [...outbox.current.slice(-199), { at: Date.now(), text }];
   }, []);
 
   const onRtc = useCallback((fn: (from: number, data: unknown) => void) => {
@@ -97,5 +113,5 @@ export function useGameRoom(matchId: string, enabled: boolean): GameRoomConnecti
     };
   }, []);
 
-  return { status, error, view, presence, reconnectDeadline: deadline, result, events, serverOffset, lastError, send, onRtc };
+  return { status, error, view, presence, reconnectDeadline: deadline, result, events, serverOffset, lastError, send, onRtc, openCount };
 }
