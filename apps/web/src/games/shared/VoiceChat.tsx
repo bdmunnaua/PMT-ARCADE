@@ -13,6 +13,7 @@ import { Headphones, Mic, MicOff, PhoneOff, Volume2, VolumeX } from 'lucide-reac
 import type { MatchPlayerDto } from '@arena/shared';
 import { Button, Card, CardBody, CardHeader } from '../../components/ui';
 import { get } from '../../lib/api';
+import { inAppBrowser, openInChromeHref } from '../../lib/invite';
 import { t } from '../../lib/i18n';
 import type { GameRoomConnection } from '../useGameRoom';
 
@@ -56,9 +57,28 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const [silenced, setSilenced] = useState<Record<number, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
+  /** the browser already remembers "block" for the microphone on this site */
+  const [denied, setDenied] = useState(false);
+  const inApp = inAppBrowser();
+  const supported = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof RTCPeerConnection !== 'undefined';
+
+  useEffect(() => {
+    // not every browser can report this (Safari on older iPhones cannot) — then we simply ask on "Join voice"
+    navigator.permissions
+      ?.query({ name: 'microphone' as PermissionName })
+      .then((st) => {
+        setDenied(st.state === 'denied');
+        st.onchange = () => setDenied(st.state === 'denied');
+      })
+      .catch(() => undefined);
+  }, []);
   const ice = useRef<RTCIceServer[]>(STUN);
   const local = useRef<MediaStream | null>(null);
   const peers = useRef(new Map<number, RTCPeerConnection>());
+  /** network paths (ICE candidates) that arrived before the offer/answer was applied */
+  const pendingIce = useRef(new Map<number, RTCIceCandidateInit[]>());
+  /** voice messages are handled strictly one after another, in arrival order */
+  const queue = useRef<Promise<void>>(Promise.resolve());
   const audios = useRef(new Map<number, HTMLAudioElement>());
   const joinedRef = useRef(false);
 
@@ -70,6 +90,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const closePeer = useCallback((n: number) => {
     peers.current.get(n)?.close();
     peers.current.delete(n);
+    pendingIce.current.delete(n);
     const a = audios.current.get(n);
     if (a) a.srcObject = null;
   }, []);
@@ -115,11 +136,26 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   );
   reconnect.current = connect;
 
+  /** applies the remote offer/answer, then any network paths that were waiting for it */
+  const applyRemote = useCallback(async (from: number, pc: RTCPeerConnection, sdp: RTCSessionDescriptionInit) => {
+    await pc.setRemoteDescription(sdp);
+    const waiting = pendingIce.current.get(from) ?? [];
+    pendingIce.current.delete(from);
+    for (const c of waiting) await pc.addIceCandidate(c).catch(() => undefined);
+  }, []);
+
   const { onRtc } = room;
   useEffect(
     () =>
-      onRtc(async (from, raw) => {
-        const s = raw as Signal;
+      onRtc((from, raw) => {
+        // chain every message so an offer is fully applied before its network paths are added
+        queue.current = queue.current.then(() => handle(from, raw as Signal)).catch(() => undefined);
+      }),
+    [onRtc],
+  );
+  const handleRef = useRef<(from: number, s: Signal) => Promise<void>>(async () => undefined);
+  const handle = (from: number, s: Signal) => handleRef.current(from, s);
+  handleRef.current = async (from: number, s: Signal) => {
         try {
           if (s.kind === 'join') {
             setInVoice((v) => ({ ...v, [from]: { muted: s.muted ?? false } }));
@@ -139,18 +175,25 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
               return next;
             });
           } else if (s.kind === 'offer' && joinedRef.current) {
+            const early = pendingIce.current.get(from);
             const pc = newPeer(from);
-            await pc.setRemoteDescription(s.sdp);
+            if (early) pendingIce.current.set(from, early);
+            await applyRemote(from, pc, s.sdp);
             await pc.setLocalDescription(await pc.createAnswer());
             signal({ kind: 'answer', sdp: pc.localDescription!.toJSON() }, from);
-          } else if (s.kind === 'answer') await peers.current.get(from)?.setRemoteDescription(s.sdp);
-          else if (s.kind === 'ice') await peers.current.get(from)?.addIceCandidate(s.candidate);
+          } else if (s.kind === 'answer') {
+            const pc = peers.current.get(from);
+            if (pc && pc.signalingState === 'have-local-offer') await applyRemote(from, pc, s.sdp);
+          } else if (s.kind === 'ice') {
+            const pc = peers.current.get(from);
+            // too early (no offer/answer applied yet, or the offer is still on its way): keep it for later
+            if (!pc || !pc.remoteDescription) pendingIce.current.set(from, [...(pendingIce.current.get(from) ?? []), s.candidate]);
+            else await pc.addIceCandidate(s.candidate).catch(() => undefined);
+          }
         } catch {
-          // a broken connection only affects that one player; they can rejoin
+          // a broken connection only affects that one player; the link rebuilds or they rejoin
         }
-      }),
-    [onRtc, signal, connect, newPeer, closePeer],
-  );
+  };
 
   const join = async () => {
     setError(null);
@@ -160,13 +203,21 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
       ice.current = STUN;
     }
     try {
+      // this is where the browser shows "Allow pmtarcade.com to use your microphone?"
       local.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       setHasMic(true);
       setMicOn(true);
-    } catch {
+      setDenied(false);
+    } catch (e) {
       local.current = null;
       setHasMic(false);
-      setError(t('No microphone access — you can still listen. Allow the microphone in your browser to talk.'));
+      const name = (e as { name?: string })?.name ?? '';
+      if (name === 'NotAllowedError' || name === 'SecurityError') {
+        setDenied(true);
+        setError(t('The microphone was not allowed — you can still listen.'));
+      } else if (name === 'NotFoundError' || name === 'OverconstrainedError') setError(t('No microphone was found on this device — you can still listen.'));
+      else if (name === 'NotReadableError' || name === 'AbortError') setError(t('Your microphone is being used by another app (a call?). Close it, then tap "Try the microphone again".'));
+      else setError(t('No microphone access — you can still listen. Allow the microphone in your browser to talk.'));
     }
     joinedRef.current = true;
     setJoined(true);
@@ -201,6 +252,10 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const leaveByHand = () => {
     remember(false);
     leave();
+  };
+  const retryMic = () => {
+    leave();
+    void join();
   };
 
   // leave voice only when the panel really goes away (page closed / game over), not on re-renders
@@ -242,15 +297,41 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
                 {t('Leave voice')}
               </Button>
             </div>
-          ) : (
+          ) : supported ? (
             <Button size="sm" icon={<Mic className="size-4" />} onClick={join}>
               {t('Join voice')}
             </Button>
-          )
+          ) : null
         }
       />
       <CardBody className="space-y-2">
+        {!supported && (
+          <div className="space-y-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+            <p>{inApp ? t('Voice chat does not work inside {app}. Open the game in Chrome or Safari to talk.', { app: inApp }) : t('This browser cannot use voice chat. Use Chrome, Safari, Edge or Firefox.')}</p>
+            {inApp && openInChromeHref() && (
+              <a href={openInChromeHref()!} className="inline-flex rounded-lg bg-brand-600 px-3 py-1.5 font-semibold text-white">
+                {t('Open in Chrome to continue')}
+              </a>
+            )}
+          </div>
+        )}
+        {supported && !joined && (
+          <p className="text-xs text-ink-500">{t('Tap "Join voice". Your browser will ask to use the microphone — tap Allow.')}</p>
+        )}
         {error && <p className="text-xs text-amber-600">{error}</p>}
+        {supported && denied && (
+          <div className="space-y-1 rounded-xl bg-ink-100 p-3 text-xs dark:bg-ink-800">
+            <p className="font-semibold">{t('To talk, allow the microphone for pmtarcade.com:')}</p>
+            <p>{t('Phone (Chrome): tap the icon left of pmtarcade.com in the address bar → Permissions → Microphone → Allow.')}</p>
+            <p>{t('iPhone (Safari): tap "aA" in the address bar → Website Settings → Microphone → Allow.')}</p>
+            <p>{t('Laptop: click the icon left of the address → Microphone → Allow, then reload the page.')}</p>
+          </div>
+        )}
+        {joined && !hasMic && (
+          <Button size="sm" variant="secondary" icon={<Mic className="size-4" />} onClick={retryMic} className="w-full">
+            {t('Try the microphone again')}
+          </Button>
+        )}
         {joined && blocked && (
           <Button size="sm" variant="secondary" icon={<Volume2 className="size-4" />} onClick={unblock} className="w-full">
             {t('Tap to hear the other players')}
