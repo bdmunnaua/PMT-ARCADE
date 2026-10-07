@@ -778,6 +778,7 @@ export const BN: Record<string, string> = {
   'not in voice': 'ভয়েসে নেই',
   '{names} is in voice — tap here to talk': '{names} ভয়েসে আছে — কথা বলতে এখানে চাপুন',
   'connecting…': 'সংযোগ হচ্ছে…',
+  'no microphone — cannot be heard': 'মাইক্রোফোন নেই — তার কথা শোনা যাবে না',
   'Not allowed yet — tap "Allow microphone"': 'এখনও অনুমতি দেওয়া হয়নি — "মাইক্রোফোনের অনুমতি দিন" চাপুন',
   'Tap "Allow microphone" to check': 'দেখতে "মাইক্রোফোনের অনুমতি দিন" চাপুন',
   'Allow microphone': 'মাইক্রোফোনের অনুমতি দিন',

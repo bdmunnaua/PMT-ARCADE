@@ -94,7 +94,11 @@ const ERROR_TEXT: Record<string, string> = {
   AbortError: 'Another app (a phone or WhatsApp call?) is using the microphone. Close it and try again.',
 };
 
-export function MicCheck({ compact = false }: { compact?: boolean }) {
+/**
+ * `onAllowed`: used inside voice chat — once the microphone is allowed it is handed straight to the
+ * call (no 10 s test that would keep the microphone busy).
+ */
+export function MicCheck({ compact = false, onAllowed }: { compact?: boolean; onAllowed?: () => void }) {
   const [perm, setPerm] = useState<Permission>('unknown');
   const [testing, setTesting] = useState(false);
   const [level, setLevel] = useState(0);
@@ -102,6 +106,8 @@ export function MicCheck({ compact = false }: { compact?: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [beeped, setBeeped] = useState(false);
   const stop = useRef<() => void>(() => undefined);
+  const allowedRef = useRef(onAllowed);
+  allowedRef.current = onAllowed;
   const inApp = inAppBrowser();
   const supported = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
@@ -109,7 +115,11 @@ export function MicCheck({ compact = false }: { compact?: boolean }) {
     try {
       const st = await navigator.permissions.query({ name: 'microphone' as PermissionName });
       setPerm(st.state as Permission);
-      st.onchange = () => setPerm(st.state as Permission);
+      st.onchange = () => {
+        setPerm(st.state as Permission);
+        // allowed in the browser settings while in voice: hand the microphone to the call
+        if (st.state === 'granted') allowedRef.current?.();
+      };
     } catch {
       setPerm('unknown'); // older Safari cannot tell before asking
     }
@@ -135,6 +145,12 @@ export function MicCheck({ compact = false }: { compact?: boolean }) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       setPerm('granted');
+      if (onAllowed) {
+        stream.getTracks().forEach((tr) => tr.stop());
+        void ctx?.close().catch(() => undefined);
+        onAllowed();
+        return;
+      }
       setTesting(true);
       if (!ctx) ctx = new AudioContext();
       const audio = ctx;

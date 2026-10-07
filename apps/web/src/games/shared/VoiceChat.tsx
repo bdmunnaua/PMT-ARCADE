@@ -20,8 +20,8 @@ import { MicCheck } from './MicCheck';
 
 /** `sid` identifies one "Join voice" on one device; a new sid means the player's old link is dead */
 type Signal =
-  | { kind: 'join'; muted?: boolean; sid?: string }
-  | { kind: 'here'; muted: boolean; sid?: string }
+  | { kind: 'join'; muted?: boolean; noMic?: boolean; sid?: string }
+  | { kind: 'here'; muted: boolean; noMic?: boolean; sid?: string }
   | { kind: 'restart' }
   | { kind: 'who' }
   | { kind: 'leave' }
@@ -105,7 +105,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const [joined, setJoined] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [hasMic, setHasMic] = useState(true);
-  const [inVoice, setInVoice] = useState<Record<number, { muted: boolean }>>({});
+  const [inVoice, setInVoice] = useState<Record<number, { muted: boolean; noMic?: boolean }>>({});
   const [links, setLinks] = useState<Record<number, LinkState>>({});
   const setLink = useCallback(
     (n: number, st: LinkState | null) =>
@@ -169,6 +169,8 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const roomRef = useRef(room);
   roomRef.current = room;
   const signal = useCallback((data: Signal, to?: number) => roomRef.current.send({ t: 'rtc', to, data }), []);
+  /** my microphone state, as the others should see it */
+  const myVoice = () => ({ muted: !(local.current?.getAudioTracks()[0]?.enabled ?? false), noMic: !local.current });
 
   const closePeer = useCallback((n: number) => {
     peers.current.get(n)?.close();
@@ -295,9 +297,9 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   handleRef.current = async (from: number, s: Signal) => {
         try {
           if (s.kind === 'who') {
-            if (joinedRef.current) signal({ kind: 'here', muted: !(local.current?.getAudioTracks()[0]?.enabled ?? false), sid: sid.current }, from);
+            if (joinedRef.current) signal({ kind: 'here', ...myVoice(), sid: sid.current }, from);
           } else if (s.kind === 'join' || s.kind === 'here') {
-            setInVoice((v) => ({ ...v, [from]: { muted: s.muted ?? false } }));
+            setInVoice((v) => ({ ...v, [from]: { muted: s.muted ?? false, noMic: !!s.noMic } }));
             // a new "Join voice" on their side (page reloaded, rejoined): the old link is dead
             const known = remoteSid.current.get(from);
             if (s.sid && known && known !== s.sid) {
@@ -306,7 +308,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
             }
             if (s.sid) remoteSid.current.set(from, s.sid);
             if (!joinedRef.current) return;
-            if (s.kind === 'join') signal({ kind: 'here', muted: !(local.current?.getAudioTracks()[0]?.enabled ?? false), sid: sid.current }, from);
+            if (s.kind === 'join') signal({ kind: 'here', ...myVoice(), sid: sid.current }, from);
             const pc = peers.current.get(from);
             if (pc && (pc.connectionState === 'failed' || pc.connectionState === 'closed')) closePeer(from);
             if (myNumber && myNumber < from) await connect(from);
@@ -316,7 +318,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
               closePeer(from);
               await connect(from);
             }
-          } else if (s.kind === 'mute') setInVoice((v) => ({ ...v, [from]: { muted: s.muted } }));
+          } else if (s.kind === 'mute') setInVoice((v) => ({ ...v, [from]: { ...v[from], muted: s.muted } }));
           else if (s.kind === 'leave') {
             closePeer(from);
             setLink(from, null);
@@ -385,14 +387,14 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     joinedRef.current = true;
     setJoined(true);
     remember(true);
-    signal({ kind: 'join', muted: !local.current, sid: sid.current });
+    signal({ kind: 'join', ...myVoice(), sid: sid.current });
   };
 
   // the game connection (re)opened: ask who is talking; if we are in voice, say hello again so missed links are made
   const { openCount } = room;
   useEffect(() => {
     if (openCount < 1) return;
-    if (joinedRef.current) signal({ kind: 'join', muted: !(local.current?.getAudioTracks()[0]?.enabled ?? false), sid: sid.current });
+    if (joinedRef.current) signal({ kind: 'join', ...myVoice(), sid: sid.current });
     else signal({ kind: 'who' });
   }, [openCount, signal]);
 
@@ -542,7 +544,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
           {showMic || denied || (error && !hasMic) ? t('Microphone permission & test') : t('Check microphone permission')}
         </button>
         {/* not allowed yet: the "Allow microphone" button is shown right away, no need to look for it */}
-        {(showMic || denied || (joined && !hasMic) || (!joined && micAllowed === false)) && <MicCheck compact />}
+        {(showMic || denied || (joined && !hasMic) || (!joined && micAllowed === false)) && <MicCheck compact onAllowed={joined && !hasMic ? retryMic : undefined} />}
         {joined && !hasMic && (
           <Button size="sm" variant="secondary" icon={<Mic className="size-4" />} onClick={retryMic} className="w-full">
             {t('Try the microphone again')}
@@ -561,7 +563,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
                 <span className="flex items-center gap-2">
                   <span className={`size-2.5 rounded-full ${v ? 'bg-emerald-500' : 'bg-ink-300 dark:bg-ink-600'}`} />
                   {p.displayName || p.username}
-                  <span className="text-xs text-ink-500">{v ? (v.muted ? t('muted') : t('in voice')) : t('not in voice')}</span>
+                  <span className="text-xs text-ink-500">{v ? (v.noMic ? t('no microphone — cannot be heard') : v.muted ? t('muted') : t('in voice')) : t('not in voice')}</span>
                   {linkLabel(p.playerNumber) && <span className={`text-xs ${links[p.playerNumber] === 'failed' ? 'text-rose-500' : 'text-amber-600'}`}>· {linkLabel(p.playerNumber)}</span>}
                 </span>
                 {joined && v && (
