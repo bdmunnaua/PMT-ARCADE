@@ -36,6 +36,28 @@ type LinkState = 'connecting' | 'connected' | 'failed';
 /** a link that has not connected after this long is rebuilt */
 const LINK_TIMEOUT_MS = 12_000;
 
+const isPhone = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+/** how loud the other players are played: phones default to "Loud" (call audio is quiet on phones) */
+const VOLUME_LEVELS = [
+  { key: 'normal', gain: 1, label: 'Normal' },
+  { key: 'loud', gain: 2.2, label: 'Loud' },
+  { key: 'max', gain: 3.5, label: 'Extra loud' },
+] as const;
+type VolumeKey = (typeof VOLUME_LEVELS)[number]['key'];
+const VOLUME_KEY = 'arena.voice.volume';
+const savedVolume = (): VolumeKey => {
+  try {
+    const v = localStorage.getItem(VOLUME_KEY);
+    if (v === 'normal' || v === 'loud' || v === 'max') return v;
+  } catch {
+    /* storage blocked */
+  }
+  return isPhone ? 'loud' : 'normal';
+};
+const canPickOutput = typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
+/** a headset/earphones/bluetooth output, if one is connected */
+const isHeadset = (d: MediaDeviceInfo) => /head|ear|bluetooth|bt|airpods|wired|usb/i.test(d.label);
+
 /** what the voice check shows for one link */
 interface LinkCheck {
   state: string;
@@ -142,6 +164,48 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
       .catch(() => undefined);
   }, []);
   const ice = useRef<RTCIceServer[]>(STUN);
+  // ---- playback: the other players' voices go through a volume booster, to the chosen speaker
+  const [volume, setVolume] = useState<VolumeKey>(savedVolume);
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
+  const [outputs, setOutputs] = useState<MediaDeviceInfo[]>([]);
+  const [output, setOutput] = useState('');
+  /** created on the "Join voice" tap (phones only allow sound processing that starts with a tap) */
+  const audioCtx = useRef<AudioContext | null>(null);
+  const gains = useRef(new Map<number, { gain: GainNode; source: MediaStreamAudioSourceNode }>());
+  const silencedRef = useRef<Record<number, boolean>>({});
+  /** players whose voice goes through the booster (their <audio> element stays muted) */
+  const [boosted, setBoosted] = useState<Record<number, boolean>>({});
+  /**
+   * Plays player n louder than a normal call, through the volume booster. The <audio> element then
+   * stays muted but must keep playing, or Chrome delivers no sound to the booster.
+   */
+  const boost = useRef((n: number, stream: MediaStream) => {
+    const ctx = audioCtx.current;
+    if (!ctx || gains.current.has(n) || !stream.getAudioTracks().length) return;
+    try {
+      const source = ctx.createMediaStreamSource(stream);
+      const gain = ctx.createGain();
+      gain.gain.value = silencedRef.current[n] ? 0 : (VOLUME_LEVELS.find((v) => v.key === volumeRef.current)?.gain ?? 1);
+      source.connect(gain).connect(ctx.destination);
+      gains.current.set(n, { gain, source });
+      const el = audios.current.get(n);
+      if (el) el.muted = true;
+      setBoosted((b) => ({ ...b, [n]: true }));
+      void ctx.resume().catch(() => undefined);
+    } catch {
+      /* this browser cannot boost a call: plain playback */
+    }
+  });
+  /** phones cancel echo for all sound; laptops only for plain call sound, so they boost only when asked */
+  const startBooster = () => {
+    if (audioCtx.current) return;
+    try {
+      audioCtx.current = new AudioContext();
+    } catch {
+      audioCtx.current = null;
+    }
+  };
   const [relay, setRelay] = useState<boolean | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
   const [showCheck, setShowCheck] = useState(false);
@@ -179,6 +243,13 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     linkStarted.current.delete(n);
     clearTimeout(disconnectTimers.current.get(n));
     disconnectTimers.current.delete(n);
+    const g = gains.current.get(n);
+    if (g) {
+      g.source.disconnect();
+      g.gain.disconnect();
+      gains.current.delete(n);
+      setBoosted((b) => ({ ...b, [n]: false }));
+    }
     const a = audios.current.get(n);
     if (a) a.srcObject = null;
   }, []);
@@ -201,7 +272,9 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
       pc.ontrack = (e) => {
         const a = audios.current.get(n);
         if (a) {
-          a.srcObject = e.streams[0] ?? new MediaStream([e.track]);
+          const stream = e.streams[0] ?? new MediaStream([e.track]);
+          a.srcObject = stream;
+          boost.current(n, stream);
           // phones (iPhone especially) may refuse to start sound without a tap
           const start = () => void a.play().then(() => setBlocked(false), () => setBlocked(true));
           start();
@@ -351,6 +424,15 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
 
   const join = async () => {
     setError(null);
+    // iPhone: a voice call session (microphone + sound together)
+    try {
+      const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+      if (session) session.type = 'play-and-record';
+    } catch {
+      /* not supported */
+    }
+    if (isPhone || volumeRef.current !== 'normal') startBooster();
+    void audioCtx.current?.resume().catch(() => undefined);
     ice.current = STUN;
     setRelay(false);
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -370,6 +452,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
       setMicOn(true);
       setDenied(false);
       setMicError(null);
+      void loadOutputs();
     } catch (e) {
       local.current = null;
       setHasMic(false);
@@ -427,8 +510,53 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   }, []);
 
   const unblock = () => {
+    void audioCtx.current?.resume().catch(() => undefined);
     for (const a of audios.current.values()) void a.play().catch(() => undefined);
     setBlocked(false);
+  };
+
+  /** speakers this device can play to (laptops, some phones); a phone without earphones uses its loudspeaker */
+  const loadOutputs = async () => {
+    if (!canPickOutput) return;
+    try {
+      const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audiooutput' && d.deviceId);
+      setOutputs(list);
+      // earphones connected → use them; otherwise prefer the loudspeaker
+      const pick = list.find(isHeadset) ?? list.find((d) => /speaker/i.test(d.label)) ?? list.find((d) => d.deviceId === 'default');
+      if (pick) applyOutput(pick.deviceId);
+    } catch {
+      /* not allowed */
+    }
+  };
+  const applyOutput = (id: string) => {
+    setOutput(id);
+    const ctx = audioCtx.current as (AudioContext & { setSinkId?: (id: string) => Promise<void> }) | null;
+    if (ctx?.setSinkId) void ctx.setSinkId(id).catch(() => undefined);
+    for (const a of audios.current.values()) void (a as HTMLAudioElement & { setSinkId: (id: string) => Promise<void> }).setSinkId(id).catch(() => undefined);
+  };
+  useEffect(() => {
+    if (!joined || !canPickOutput) return;
+    const onChange = () => void loadOutputs();
+    navigator.mediaDevices.addEventListener?.('devicechange', onChange);
+    return () => navigator.mediaDevices.removeEventListener?.('devicechange', onChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joined]);
+
+  const changeVolume = (key: VolumeKey) => {
+    setVolume(key);
+    try {
+      localStorage.setItem(VOLUME_KEY, key);
+    } catch {
+      /* storage blocked */
+    }
+    volumeRef.current = key;
+    const gain = VOLUME_LEVELS.find((v) => v.key === key)?.gain ?? 1;
+    if (key !== 'normal' && !audioCtx.current) {
+      startBooster();
+      for (const [n, a] of audios.current) if (a.srcObject instanceof MediaStream) boost.current(n, a.srcObject);
+    }
+    for (const [n, g] of gains.current) g.gain.gain.value = silencedRef.current[n] ? 0 : gain;
+    void audioCtx.current?.resume().catch(() => undefined);
   };
 
   const leave = useCallback(() => {
@@ -455,7 +583,13 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   // leave voice only when the panel really goes away (page closed / game over), not on re-renders
   const leaveRef = useRef(leave);
   leaveRef.current = leave;
-  useEffect(() => () => leaveRef.current(), []);
+  useEffect(
+    () => () => {
+      leaveRef.current();
+      void audioCtx.current?.close().catch(() => undefined);
+    },
+    [],
+  );
 
   const toggleMic = () => {
     const track = local.current?.getAudioTracks()[0];
@@ -468,8 +602,11 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const toggleSilence = (n: number) => {
     const next = !silenced[n];
     setSilenced({ ...silenced, [n]: next });
+    silencedRef.current = { ...silencedRef.current, [n]: next };
+    const g = gains.current.get(n);
+    if (g) g.gain.gain.value = next ? 0 : (VOLUME_LEVELS.find((v) => v.key === volumeRef.current)?.gain ?? 1);
     const a = audios.current.get(n);
-    if (a) a.muted = next;
+    if (a && !g) a.muted = next;
   };
 
   const talkers = others.filter((p) => inVoice[p.playerNumber]).map((p) => p.displayName || p.username);
@@ -550,6 +687,34 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
             {t('Try the microphone again')}
           </Button>
         )}
+        {joined && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Volume2 className="size-4 text-ink-500" />
+            <span className="text-ink-500">{t('Volume')}:</span>
+            {VOLUME_LEVELS.map((v) => (
+              <button
+                key={v.key}
+                type="button"
+                onClick={() => changeVolume(v.key)}
+                className={`rounded-lg px-2.5 py-1 font-semibold ${volume === v.key ? 'bg-brand-600 text-white' : 'bg-ink-100 dark:bg-ink-800'}`}
+              >
+                {t(v.label)}
+              </button>
+            ))}
+            {outputs.length > 1 && (
+              <select value={output} onChange={(e) => applyOutput(e.target.value)} className="rounded-lg bg-ink-100 px-2 py-1 dark:bg-ink-800" aria-label={t('Sound comes from')}>
+                {outputs.map((d) => (
+                  <option key={d.deviceId} value={d.deviceId}>
+                    {d.label || t('Speaker')}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
+        {joined && isPhone && (
+          <p className="text-xs text-ink-500">{t('Too quiet? Press the volume-up button on the side of your phone while someone talks, and take out earphones to use the loudspeaker.')}</p>
+        )}
         {joined && blocked && (
           <Button size="sm" variant="secondary" icon={<Volume2 className="size-4" />} onClick={unblock} className="w-full">
             {t('Tap to hear the other players')}
@@ -578,7 +743,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
                   }}
                   autoPlay
                   playsInline
-                  muted={!!silenced[p.playerNumber]}
+                  muted={!!silenced[p.playerNumber] || !!boosted[p.playerNumber]}
                 />
               </li>
             );

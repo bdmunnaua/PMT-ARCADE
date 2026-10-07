@@ -18,6 +18,49 @@ type Permission = 'granted' | 'prompt' | 'denied' | 'unknown';
  */
 const hasPermissionElement = typeof window !== 'undefined' && 'HTMLPermissionElement' in window;
 
+/** where the site-settings icon is on this browser: Safari on iPhone keeps the address bar at the bottom */
+function iconSpot(): 'top' | 'bottom' {
+  const ua = navigator.userAgent;
+  const iOS = /iPhone|iPod/i.test(ua);
+  const safari = iOS && !/CriOS|FxiOS|EdgiOS/i.test(ua);
+  return safari ? 'bottom' : 'top';
+}
+
+/**
+ * Websites are not allowed to open the browser's settings, so this shows exactly where to tap:
+ * a big arrow pointing at the icon next to the address, and the steps for this phone.
+ */
+function PermissionGuide({ onClose }: { onClose: () => void }) {
+  const spot = iconSpot();
+  const steps = unblockSteps();
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/80 text-white" onClick={onClose} role="dialog" aria-modal="true">
+      <div className={`absolute left-3 flex flex-col items-start ${spot === 'top' ? 'top-1' : 'bottom-1 flex-col-reverse'}`}>
+        <span className={`animate-bounce text-6xl leading-none ${spot === 'top' ? '' : 'rotate-180'}`} aria-hidden>
+          ⬆
+        </span>
+        <span className="mt-1 mb-1 rounded-lg bg-white px-3 py-1.5 text-sm font-bold text-ink-900">
+          {spot === 'top' ? t('Tap the icon here, next to pmtarcade.com') : t('Tap "aA" here, next to the address')}
+        </span>
+      </div>
+      <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 space-y-3 rounded-2xl bg-ink-900 p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <p className="text-base font-bold">{t('Allow the microphone for pmtarcade.com')}</p>
+        <ol className="list-decimal space-y-2 pl-5 text-sm">
+          {steps.map((x) => (
+            <li key={x}>{x}</li>
+          ))}
+        </ol>
+        <div className="flex gap-2">
+          <Button onClick={() => window.location.reload()}>{t('Done — reload the page')}</Button>
+          <Button variant="secondary" onClick={onClose}>
+            {t('Close')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BrowserPermissionButton({ onChange }: { onChange: () => void }) {
   const ref = useRef<HTMLElement | null>(null);
   useEffect(() => {
@@ -105,6 +148,7 @@ export function MicCheck({ compact = false, onAllowed }: { compact?: boolean; on
   const [heardVoice, setHeardVoice] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [beeped, setBeeped] = useState(false);
+  const [guide, setGuide] = useState(false);
   const stop = useRef<() => void>(() => undefined);
   const allowedRef = useRef(onAllowed);
   allowedRef.current = onAllowed;
@@ -181,7 +225,22 @@ export function MicCheck({ compact = false, onAllowed }: { compact?: boolean; on
     } catch (e) {
       void ctx?.close().catch(() => undefined);
       const name = (e as { name?: string })?.name ?? '';
-      if (name === 'NotAllowedError' || name === 'SecurityError') setPerm('denied');
+      if (name === 'NotAllowedError' || name === 'SecurityError') {
+        // closing the question also ends here; only a real "Block" needs the browser settings
+        let state: string = 'denied';
+        try {
+          state = (await navigator.permissions.query({ name: 'microphone' as PermissionName })).state;
+        } catch {
+          /* Safari cannot tell */
+        }
+        if (state === 'denied') {
+          setPerm('denied');
+          setGuide(true);
+        } else {
+          setError(t('You closed the question without choosing. Tap "Allow microphone" again and choose Allow.'));
+          return;
+        }
+      }
       setError(t(ERROR_TEXT[name] ?? 'The microphone could not be opened ({name}).', { name: name || 'error' }));
     }
   };
@@ -240,6 +299,11 @@ export function MicCheck({ compact = false, onAllowed }: { compact?: boolean; on
               <Button icon={<Mic className="size-5" />} onClick={test} disabled={testing} className="w-full justify-center py-3 text-base">
                 {t('Allow microphone')}
               </Button>
+              {perm === 'denied' && (
+                <Button variant="secondary" onClick={() => setGuide(true)} className="w-full justify-center">
+                  {t('Open the browser permission — show me where')}
+                </Button>
+              )}
               {perm === 'denied' && hasPermissionElement && (
                 <div className="space-y-1 text-center">
                   <p className="text-xs text-ink-500">{t('Blocked before? Tap this browser button to allow it again:')}</p>
@@ -284,6 +348,7 @@ export function MicCheck({ compact = false, onAllowed }: { compact?: boolean; on
               {t('Reload the page')}
             </Button>
           )}
+          {guide && <PermissionGuide onClose={() => setGuide(false)} />}
         </>
       )}
     </div>
