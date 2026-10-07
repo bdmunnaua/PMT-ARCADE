@@ -3,13 +3,35 @@
  * for pmtarcade.com, lets the player test it (a bar moves when they speak) and the speaker
  * (a short tone), and shows how to unblock it for this exact phone / browser.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { createElement, useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Mic, RefreshCw, Volume2, XCircle } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { inAppBrowser, openInChromeHref } from '../../lib/invite';
 import { t } from '../../lib/i18n';
 
 type Permission = 'granted' | 'prompt' | 'denied' | 'unknown';
+
+/**
+ * Chrome's own permission button (<permission type="microphone">). Unlike a normal button it can
+ * turn the microphone back on even after "Block" was chosen, without opening any settings.
+ * Only shown where the browser supports it.
+ */
+const hasPermissionElement = typeof window !== 'undefined' && 'HTMLPermissionElement' in window;
+
+function BrowserPermissionButton({ onChange }: { onChange: () => void }) {
+  const ref = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.addEventListener('promptaction', onChange);
+    el.addEventListener('promptdismiss', onChange);
+    return () => {
+      el.removeEventListener('promptaction', onChange);
+      el.removeEventListener('promptdismiss', onChange);
+    };
+  }, [onChange]);
+  return createElement('permission', { ref, type: 'microphone', style: { fontSize: '16px', padding: '10px 16px', borderRadius: '12px' } });
+}
 
 /** which unblock steps fit this device */
 function deviceKind(): 'android-chrome' | 'samsung' | 'iphone' | 'desktop-chrome' | 'edge' | 'firefox' | 'safari-mac' | 'other' {
@@ -175,8 +197,9 @@ export function MicCheck({ compact = false }: { compact?: boolean }) {
       : perm === 'denied'
         ? { icon: <XCircle className="size-4 text-rose-500" />, text: t('Microphone blocked for pmtarcade.com') }
         : perm === 'prompt'
-          ? { icon: <Mic className="size-4 text-amber-500" />, text: t('Not asked yet — tap "Test microphone" and then Allow') }
-          : { icon: <Mic className="size-4 text-ink-400" />, text: t('Tap "Test microphone" to check') };
+          ? { icon: <Mic className="size-4 text-amber-500" />, text: t('Not allowed yet — tap "Allow microphone"') }
+          : { icon: <Mic className="size-4 text-ink-400" />, text: t('Tap "Allow microphone" to check') };
+  const allowed = perm === 'granted';
 
   return (
     <div className={`space-y-2 rounded-xl border border-ink-100 p-3 text-sm dark:border-ink-800 ${compact ? '' : 'bg-ink-50 dark:bg-ink-900'}`}>
@@ -195,10 +218,26 @@ export function MicCheck({ compact = false }: { compact?: boolean }) {
             {status.icon}
             {status.text}
           </p>
+          {!allowed && (
+            <div className="space-y-2">
+              {/* one big tap: the browser then shows its own "Allow microphone?" question */}
+              <Button icon={<Mic className="size-5" />} onClick={test} disabled={testing} className="w-full justify-center py-3 text-base">
+                {t('Allow microphone')}
+              </Button>
+              {perm === 'denied' && hasPermissionElement && (
+                <div className="space-y-1 text-center">
+                  <p className="text-xs text-ink-500">{t('Blocked before? Tap this browser button to allow it again:')}</p>
+                  <BrowserPermissionButton onChange={() => void readPermission()} />
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" icon={<Mic className="size-4" />} onClick={test} disabled={testing}>
-              {testing ? t('Speak now…') : t('Test microphone')}
-            </Button>
+            {allowed && (
+              <Button size="sm" icon={<Mic className="size-4" />} onClick={test} disabled={testing}>
+                {testing ? t('Speak now…') : t('Test microphone')}
+              </Button>
+            )}
             <Button size="sm" variant="secondary" icon={<Volume2 className="size-4" />} onClick={beep}>
               {t('Test speaker')}
             </Button>

@@ -122,6 +122,8 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const [blocked, setBlocked] = useState(false);
   /** the browser already remembers "block" for the microphone on this site */
   const [denied, setDenied] = useState(false);
+  /** null = this browser cannot tell before asking */
+  const [micAllowed, setMicAllowed] = useState<boolean | null>(null);
   const inApp = inAppBrowser();
   const supported = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof RTCPeerConnection !== 'undefined';
 
@@ -131,7 +133,11 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
       ?.query({ name: 'microphone' as PermissionName })
       .then((st) => {
         setDenied(st.state === 'denied');
-        st.onchange = () => setDenied(st.state === 'denied');
+        setMicAllowed(st.state === 'granted');
+        st.onchange = () => {
+          setDenied(st.state === 'denied');
+          setMicAllowed(st.state === 'granted');
+        };
       })
       .catch(() => undefined);
   }, []);
@@ -535,7 +541,8 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
         <button type="button" onClick={() => setShowMic(!showMic)} className="text-xs font-semibold text-brand-600 underline">
           {showMic || denied || (error && !hasMic) ? t('Microphone permission & test') : t('Check microphone permission')}
         </button>
-        {(showMic || denied || (joined && !hasMic)) && <MicCheck compact />}
+        {/* not allowed yet: the "Allow microphone" button is shown right away, no need to look for it */}
+        {(showMic || denied || (joined && !hasMic) || (!joined && micAllowed === false)) && <MicCheck compact />}
         {joined && !hasMic && (
           <Button size="sm" variant="secondary" icon={<Mic className="size-4" />} onClick={retryMic} className="w-full">
             {t('Try the microphone again')}
