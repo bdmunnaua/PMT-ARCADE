@@ -778,6 +778,7 @@ export const BN: Record<string, string> = {
   'not in voice': 'ভয়েসে নেই',
   '{names} is in voice — tap here to talk': '{names} ভয়েসে আছে — কথা বলতে এখানে চাপুন',
   'connecting…': 'সংযোগ হচ্ছে…',
+  'Voice chat works with real players only — bots cannot talk. Share the room code with a friend to talk while you play.': 'ভয়েস চ্যাট শুধু আসল খেলোয়াড়দের সাথে চলে — বট কথা বলে না। খেলার সময় কথা বলতে বন্ধুকে রুম কোড পাঠান।',
   'Hide voice check': 'ভয়েস চেক লুকান',
   'Voice check (if you cannot hear)': 'ভয়েস চেক (শুনতে না পেলে)',
   'Microphone': 'মাইক্রোফোন',

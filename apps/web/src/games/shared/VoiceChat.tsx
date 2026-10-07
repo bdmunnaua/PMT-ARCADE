@@ -471,7 +471,14 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     return t('connecting…');
   };
 
-  if (!me || others.length === 0) return null;
+  if (!me) return null;
+  if (others.length === 0)
+    return (
+      <p className="flex items-center gap-2 text-xs text-ink-500">
+        <Headphones className="size-4 shrink-0" />
+        {t('Voice chat works with real players only — bots cannot talk. Share the room code with a friend to talk while you play.')}
+      </p>
+    );
   return (
     <Card>
       <CardHeader
