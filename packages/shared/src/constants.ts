@@ -55,7 +55,9 @@ export const DEFAULT_RATE_LIMITS = {
   match_join: { limit: 40, windowSec: 600 },
   dispute_create: { limit: 5, windowSec: 3600 },
   admin_finance: { limit: 60, windowSec: 60 },
-  realtime_ticket: { limit: 60, windowSec: 60 },
+  realtime_ticket: { limit: 120, windowSec: 60 },
+  voice_ice: { limit: 60, windowSec: 600 },
+  voice_report: { limit: 30, windowSec: 600 },
   crash_bet: { limit: 30, windowSec: 60 },
   crash_cashout: { limit: 60, windowSec: 60 },
 } as const satisfies Record<string, RateLimitRule>;

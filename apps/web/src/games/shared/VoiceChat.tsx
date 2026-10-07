@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Headphones, Mic, MicOff, PhoneOff, Volume2, VolumeX } from 'lucide-react';
 import type { MatchPlayerDto } from '@arena/shared';
 import { Button, Card, CardBody, CardHeader } from '../../components/ui';
-import { get } from '../../lib/api';
+import { get, post } from '../../lib/api';
 import { inAppBrowser, openInChromeHref } from '../../lib/invite';
 import { t } from '../../lib/i18n';
 import type { GameRoomConnection } from '../useGameRoom';
@@ -22,6 +22,7 @@ type Signal =
   | { kind: 'join'; muted?: boolean; sid?: string }
   | { kind: 'here'; muted: boolean; sid?: string }
   | { kind: 'restart' }
+  | { kind: 'who' }
   | { kind: 'leave' }
   | { kind: 'mute'; muted: boolean }
   | { kind: 'offer'; sdp: RTCSessionDescriptionInit }
@@ -33,6 +34,51 @@ const isBot = (p: MatchPlayerDto) => p.displayName.includes('(Bot)');
 type LinkState = 'connecting' | 'connected' | 'failed';
 /** a link that has not connected after this long is rebuilt */
 const LINK_TIMEOUT_MS = 12_000;
+
+/** what the voice check shows for one link */
+interface LinkCheck {
+  state: string;
+  ice: string;
+  /** kinds of network paths this phone found: host = same Wi-Fi, srflx = internet, relay = Cloudflare relay */
+  found: string[];
+  /** the path in use, e.g. "relay/udp → srflx" */
+  path: string | null;
+  heardKb: number;
+  sentKb: number;
+  playing: boolean;
+}
+
+async function checkLink(pc: RTCPeerConnection, found: Set<string>, audio: HTMLAudioElement | undefined): Promise<LinkCheck> {
+  let path: string | null = null;
+  let heard = 0;
+  let sent = 0;
+  try {
+    const stats = await pc.getStats();
+    const byId = new Map<string, Record<string, unknown>>();
+    stats.forEach((x: Record<string, unknown>) => byId.set(x.id as string, x));
+    stats.forEach((x: Record<string, unknown>) => {
+      if (x.type === 'inbound-rtp' && x.kind === 'audio') heard += Number(x.bytesReceived ?? 0);
+      if (x.type === 'outbound-rtp' && x.kind === 'audio') sent += Number(x.bytesSent ?? 0);
+      if (x.type === 'transport' && x.selectedCandidatePairId) {
+        const pair = byId.get(x.selectedCandidatePairId as string);
+        const l = pair && byId.get(pair.localCandidateId as string);
+        const r = pair && byId.get(pair.remoteCandidateId as string);
+        if (l && r) path = `${l.candidateType}/${l.protocol} → ${r.candidateType}`;
+      }
+    });
+  } catch {
+    /* stats not available */
+  }
+  return {
+    state: pc.connectionState,
+    ice: pc.iceConnectionState,
+    found: [...found],
+    path,
+    heardKb: Math.round(heard / 1024),
+    sentKb: Math.round(sent / 1024),
+    playing: !!audio && !!audio.srcObject && !audio.paused,
+  };
+}
 /** remembered for this browser tab: you were in voice, so the next game joins voice by itself */
 const AUTO_KEY = 'arena.voice.auto';
 const remember = (on: boolean) => {
@@ -89,6 +135,13 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
       .catch(() => undefined);
   }, []);
   const ice = useRef<RTCIceServer[]>(STUN);
+  const [relay, setRelay] = useState<boolean | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
+  const [showCheck, setShowCheck] = useState(false);
+  const [checks, setChecks] = useState<Record<number, LinkCheck>>({});
+  /** path kinds found per link, for the voice check */
+  const found = useRef(new Map<number, Set<string>>());
+  const reported = useRef(new Set<string>());
   const local = useRef<MediaStream | null>(null);
   const peers = useRef(new Map<number, RTCPeerConnection>());
   /** network paths (ICE candidates) that arrived before the offer/answer was applied */
@@ -128,13 +181,22 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
       const stream = local.current;
       if (stream) for (const track of stream.getAudioTracks()) pc.addTrack(track, stream);
       else pc.addTransceiver('audio', { direction: 'recvonly' });
-      pc.onicecandidate = (e) => e.candidate && signal({ kind: 'ice', candidate: e.candidate.toJSON() }, n);
+      const kinds = new Set<string>();
+      found.current.set(n, kinds);
+      pc.onicecandidate = (e) => {
+        if (!e.candidate) return;
+        if (e.candidate.type) kinds.add(`${e.candidate.type}/${e.candidate.protocol ?? ''}`);
+        signal({ kind: 'ice', candidate: e.candidate.toJSON() }, n);
+      };
       pc.ontrack = (e) => {
         const a = audios.current.get(n);
         if (a) {
           a.srcObject = e.streams[0] ?? new MediaStream([e.track]);
           // phones (iPhone especially) may refuse to start sound without a tap
-          void a.play().then(() => setBlocked(false), () => setBlocked(true));
+          const start = () => void a.play().then(() => setBlocked(false), () => setBlocked(true));
+          start();
+          // sound starts flowing only once the link is up: make sure the player is really playing then
+          e.track.onunmute = start;
         }
       };
       linkStarted.current.set(n, Date.now());
@@ -224,7 +286,9 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const handle = (from: number, s: Signal) => handleRef.current(from, s);
   handleRef.current = async (from: number, s: Signal) => {
         try {
-          if (s.kind === 'join' || s.kind === 'here') {
+          if (s.kind === 'who') {
+            if (joinedRef.current) signal({ kind: 'here', muted: !(local.current?.getAudioTracks()[0]?.enabled ?? false), sid: sid.current }, from);
+          } else if (s.kind === 'join' || s.kind === 'here') {
             setInVoice((v) => ({ ...v, [from]: { muted: s.muted ?? false } }));
             // a new "Join voice" on their side (page reloaded, rejoined): the old link is dead
             const known = remoteSid.current.get(from);
@@ -277,10 +341,17 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
 
   const join = async () => {
     setError(null);
-    try {
-      ice.current = (await get<{ iceServers: RTCIceServer[] }>('/api/realtime/ice')).iceServers;
-    } catch {
-      ice.current = STUN;
+    ice.current = STUN;
+    setRelay(false);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const r = await get<{ iceServers: RTCIceServer[]; relay?: boolean }>('/api/realtime/ice');
+        ice.current = r.iceServers;
+        setRelay(!!r.relay);
+        break;
+      } catch {
+        await new Promise((ok) => setTimeout(ok, 800));
+      }
     }
     try {
       // this is where the browser shows "Allow pmtarcade.com to use your microphone?"
@@ -288,10 +359,12 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
       setHasMic(true);
       setMicOn(true);
       setDenied(false);
+      setMicError(null);
     } catch (e) {
       local.current = null;
       setHasMic(false);
       const name = (e as { name?: string })?.name ?? '';
+      setMicError(name || 'error');
       if (name === 'NotAllowedError' || name === 'SecurityError') {
         setDenied(true);
         setError(t('The microphone was not allowed — you can still listen.'));
@@ -307,11 +380,32 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
     signal({ kind: 'join', muted: !local.current, sid: sid.current });
   };
 
-  // the game connection came back after a drop: say hello again so missed links are made
+  // the game connection (re)opened: ask who is talking; if we are in voice, say hello again so missed links are made
   const { openCount } = room;
   useEffect(() => {
-    if (openCount > 1 && joinedRef.current) signal({ kind: 'join', muted: !(local.current?.getAudioTracks()[0]?.enabled ?? false), sid: sid.current });
+    if (openCount < 1) return;
+    if (joinedRef.current) signal({ kind: 'join', muted: !(local.current?.getAudioTracks()[0]?.enabled ?? false), sid: sid.current });
+    else signal({ kind: 'who' });
   }, [openCount, signal]);
+
+  // voice check: refreshed every 2 s while in voice; each link's outcome is also logged once on the server
+  useEffect(() => {
+    if (!joined) return;
+    const tick = async () => {
+      const next: Record<number, LinkCheck> = {};
+      for (const [n, pc] of peers.current) next[n] = await checkLink(pc, found.current.get(n) ?? new Set(), audios.current.get(n));
+      setChecks(next);
+      for (const [n, c] of Object.entries(next)) {
+        const outcome = c.state === 'connected' && c.heardKb > 0 ? 'ok' : c.state === 'failed' ? 'failed' : null;
+        const key = `${sid.current}:${n}:${outcome}`;
+        if (!outcome || reported.current.has(key)) continue;
+        reported.current.add(key);
+        void post('/api/realtime/voice-report', { outcome, to: Number(n), relay, mic: micError ?? 'ok', ua: navigator.userAgent.slice(0, 160), ...c }).catch(() => undefined);
+      }
+    };
+    const id = setInterval(() => void tick(), 2000);
+    return () => clearInterval(id);
+  }, [joined, relay, micError]);
 
   // you were talking in the last game: join this table's voice too (no new permission prompt)
   const autoTried = useRef(false);
@@ -476,6 +570,27 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
             );
           })}
         </ul>
+        {joined && (
+          <button type="button" onClick={() => setShowCheck(!showCheck)} className="text-xs font-semibold text-brand-600 underline">
+            {showCheck ? t('Hide voice check') : t('Voice check (if you cannot hear)')}
+          </button>
+        )}
+        {joined && showCheck && (
+          <div className="space-y-1 rounded-xl bg-ink-100 p-3 font-mono text-[11px] leading-relaxed dark:bg-ink-800">
+            <p>
+              {t('Microphone')}: {micError ? `✗ ${micError}` : micOn ? '✓' : t('muted')} · {t('Relay')}: {relay ? '✓' : '✗'} · {t('Game connection')}: {room.status}
+            </p>
+            {others.filter((p) => inVoice[p.playerNumber]).map((p) => {
+              const c = checks[p.playerNumber];
+              return (
+                <p key={p.playerNumber}>
+                  {p.displayName || p.username}: {c ? `${c.state} (${c.ice}) · ${c.path ?? '—'} · ${t('heard')} ${c.heardKb} KB · ${t('sent')} ${c.sentKb} KB · ${c.playing ? '🔊' : '🔇'} · ${c.found.join(' ') || '—'}` : t('no link yet')}
+                </p>
+              );
+            })}
+            <p className="font-sans text-ink-500">{t('Take a screenshot of this box and send it to support if voice does not work.')}</p>
+          </div>
+        )}
       </CardBody>
     </Card>
   );

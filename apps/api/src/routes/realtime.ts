@@ -62,7 +62,7 @@ export function realtimeRoutes(auth: MiddlewareHandler<AppEnv>) {
    * only a TURN relay works, so when a Cloudflare TURN key is configured each player gets
    * short-lived relay credentials (never the key itself).
    */
-  r.get('/realtime/ice', auth, requireUser, rateLimit('realtime_ticket'), async (c) => {
+  r.get('/realtime/ice', auth, requireUser, rateLimit('voice_ice'), async (c) => {
     const stun = { urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] };
     const { TURN_KEY_ID: id, TURN_KEY_API_TOKEN: token } = c.env;
     if (id && token) {
@@ -82,6 +82,17 @@ export function realtimeRoutes(auth: MiddlewareHandler<AppEnv>) {
       }
     }
     return ok(c, { iceServers: [stun], relay: false });
+  });
+
+  /**
+   * Voice check results from a player's browser (how each link connected or why it failed).
+   * Only written to the Worker log (Cloudflare → Workers → pmt-arcade → Logs), never stored.
+   */
+  r.post('/realtime/voice-report', auth, requireUser, rateLimit('voice_report'), async (c) => {
+    const body = (await c.req.json().catch(() => null)) as unknown;
+    const text = JSON.stringify(body ?? null).slice(0, 4000);
+    console.log('voice-report', c.get('user').playerNumber, text);
+    return ok(c, { logged: true });
   });
 
   return r;
