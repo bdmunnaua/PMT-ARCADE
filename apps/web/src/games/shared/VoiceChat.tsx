@@ -16,6 +16,7 @@ import { get, post } from '../../lib/api';
 import { inAppBrowser, openInChromeHref } from '../../lib/invite';
 import { t } from '../../lib/i18n';
 import type { GameRoomConnection } from '../useGameRoom';
+import { MicCheck } from './MicCheck';
 
 /** `sid` identifies one "Join voice" on one device; a new sid means the player's old link is dead */
 type Signal =
@@ -138,6 +139,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   const [relay, setRelay] = useState<boolean | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
   const [showCheck, setShowCheck] = useState(false);
+  const [showMic, setShowMic] = useState(false);
   const [checks, setChecks] = useState<Record<number, LinkCheck>>({});
   /** path kinds found per link, for the voice check */
   const found = useRef(new Map<number, Set<string>>());
@@ -530,14 +532,10 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
             {t('Open in Chrome to continue')}
           </a>
         )}
-        {supported && denied && (
-          <div className="space-y-1 rounded-xl bg-ink-100 p-3 text-xs dark:bg-ink-800">
-            <p className="font-semibold">{t('To talk, allow the microphone for pmtarcade.com:')}</p>
-            <p>{t('Phone (Chrome): tap the icon left of pmtarcade.com in the address bar → Permissions → Microphone → Allow.')}</p>
-            <p>{t('iPhone (Safari): tap "aA" in the address bar → Website Settings → Microphone → Allow.')}</p>
-            <p>{t('Laptop: click the icon left of the address → Microphone → Allow, then reload the page.')}</p>
-          </div>
-        )}
+        <button type="button" onClick={() => setShowMic(!showMic)} className="text-xs font-semibold text-brand-600 underline">
+          {showMic || denied || (error && !hasMic) ? t('Microphone permission & test') : t('Check microphone permission')}
+        </button>
+        {(showMic || denied || (joined && !hasMic)) && <MicCheck compact />}
         {joined && !hasMic && (
           <Button size="sm" variant="secondary" icon={<Mic className="size-4" />} onClick={retryMic} className="w-full">
             {t('Try the microphone again')}

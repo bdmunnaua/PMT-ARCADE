@@ -8,6 +8,7 @@ import { ApiError, patch } from '../../lib/api';
 import { dateTime } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
 import { t } from '../../lib/i18n';
+import { MicCheck } from '../../games/shared/MicCheck';
 
 export default function ProfilePage() {
   useDocumentTitle(t("Profile"));
@@ -62,6 +63,12 @@ export default function ProfilePage() {
               ]}
             />
             <p className="mt-5 text-xs text-ink-500 dark:text-ink-400">{t("Email, password and verification are managed by your main account.")}</p>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader title={t('Voice chat microphone')} subtitle={t('Check that your browser lets pmtarcade.com use the microphone, for talking in private rooms.')} />
+          <CardBody>
+            <MicCheck />
           </CardBody>
         </Card>
         <Card>

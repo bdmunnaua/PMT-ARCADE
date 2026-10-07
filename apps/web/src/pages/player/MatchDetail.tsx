@@ -10,6 +10,7 @@ import { useGameRoom } from '../../games/useGameRoom';
 import { SoundToggle } from '../../games/shared/GameUi';
 import { useSoundOnChange } from '../../games/shared/sound';
 import { VoiceChat } from '../../games/shared/VoiceChat';
+import { MicCheck } from '../../games/shared/MicCheck';
 import { ApiError, post } from '../../lib/api';
 import { dateTime, percentFromBps, tokens } from '../../lib/format';
 import { useApi, useDocumentTitle } from '../../lib/hooks';
@@ -65,6 +66,14 @@ export default function MatchDetailPage() {
         <Card>
           <CardBody>
             <InviteShare code={m.joinCode} host={m.players.find((p) => p.isYou)?.displayName ?? 'A friend'} gameName={m.gameName} stakeUnits={m.stakeUnits} />
+          </CardBody>
+        </Card>
+      )}
+      {m.status === 'WAITING_FOR_OPPONENT' && m.visibility === 'PRIVATE' && m.isParticipant && (
+        <Card>
+          <CardHeader title={t('Voice chat: check your microphone')} subtitle={t('You can talk with your friends during the game. Check now while you wait.')} />
+          <CardBody>
+            <MicCheck />
           </CardBody>
         </Card>
       )}
