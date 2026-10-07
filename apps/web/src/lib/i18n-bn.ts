@@ -778,6 +778,8 @@ export const BN: Record<string, string> = {
   'not in voice': 'ভয়েসে নেই',
   '{names} is in voice — tap here to talk': '{names} ভয়েসে আছে — কথা বলতে এখানে চাপুন',
   'connecting…': 'সংযোগ হচ্ছে…',
+  'Voice connection': 'ভয়েস সংযোগ',
+  'Voice chat starts when a friend joins this room — you can talk before, during and after the game.': 'বন্ধু এই রুমে যোগ দিলেই ভয়েস চ্যাট শুরু হবে — খেলার আগে, খেলার সময় আর পরে কথা বলতে পারবেন।',
   'Tap the icon here, next to pmtarcade.com': 'এখানে, pmtarcade.com-এর পাশের আইকনে চাপুন',
   'Tap "aA" here, next to the address': 'এখানে, অ্যাড্রেসের পাশে "aA"-তে চাপুন',
   'Allow the microphone for pmtarcade.com': 'pmtarcade.com-এর জন্য মাইক্রোফোন চালু করুন',

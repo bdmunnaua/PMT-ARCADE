@@ -36,12 +36,14 @@
     "bindings": [
       { "name": "REALTIME", "class_name": "RealtimeHub" },
       { "name": "GAME_ROOMS", "class_name": "GameRoom" },
-      { "name": "CRASH_GAMES", "class_name": "CrashGame" }
+      { "name": "CRASH_GAMES", "class_name": "CrashGame" },
+      { "name": "VOICE_ROOMS", "class_name": "VoiceRoom" }
     ]
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["RealtimeHub", "GameRoom"] },
-    { "tag": "v2", "new_sqlite_classes": ["CrashGame"] }
+    { "tag": "v2", "new_sqlite_classes": ["CrashGame"] },
+    { "tag": "v3", "new_sqlite_classes": ["VoiceRoom"] }
   ],
 
   "triggers": { "crons": ["*/10 * * * *"] },
@@ -81,7 +83,8 @@
         "bindings": [
           { "name": "REALTIME", "class_name": "RealtimeHub" },
           { "name": "GAME_ROOMS", "class_name": "GameRoom" },
-          { "name": "CRASH_GAMES", "class_name": "CrashGame" }
+          { "name": "CRASH_GAMES", "class_name": "CrashGame" },
+      { "name": "VOICE_ROOMS", "class_name": "VoiceRoom" }
         ]
       },
       "triggers": { "crons": ["*/10 * * * *"] },

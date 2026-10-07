@@ -1,6 +1,7 @@
 /**
  * Voice chat for the players at one private table (up to 4): direct browser-to-browser audio
- * (WebRTC). The game room only passes the connection set-up messages between the players.
+ * (WebRTC). The room's voice connection only passes the connection set-up messages between the players.
+ * Works from the moment the players are in the private room: in the lobby, during and after the game.
  *   - "Join voice" asks for the microphone; without it you can still listen.
  *   - 🎤 mutes / unmutes yourself; 🔇 next to a player mutes them for you only.
  *   - Bots never take part.
@@ -15,7 +16,7 @@ import { Button, Card, CardBody, CardHeader } from '../../components/ui';
 import { get, post } from '../../lib/api';
 import { inAppBrowser, openInChromeHref } from '../../lib/invite';
 import { t } from '../../lib/i18n';
-import type { GameRoomConnection } from '../useGameRoom';
+import type { VoiceLink } from '../useVoiceRoom';
 import { MicCheck } from './MicCheck';
 
 /** `sid` identifies one "Join voice" on one device; a new sid means the player's old link is dead */
@@ -120,7 +121,7 @@ const wantsAuto = () => {
   }
 };
 
-export function VoiceChat({ room, players }: { room: GameRoomConnection; players: MatchPlayerDto[] }) {
+export function VoiceChat({ room, players }: { room: VoiceLink; players: MatchPlayerDto[] }) {
   const me = players.find((p) => p.isYou);
   const myNumber = me?.playerNumber;
   const others = players.filter((p) => !p.isYou && !isBot(p));
@@ -621,10 +622,16 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
   if (!me) return null;
   if (others.length === 0)
     return (
-      <p className="flex items-center gap-2 text-xs text-ink-500">
-        <Headphones className="size-4 shrink-0" />
-        {t('Voice chat works with real players only — bots cannot talk. Share the room code with a friend to talk while you play.')}
-      </p>
+      <Card>
+        <CardBody>
+          <p className="flex items-center gap-2 text-xs text-ink-500">
+            <Headphones className="size-4 shrink-0" />
+            {players.some(isBot)
+              ? t('Voice chat works with real players only — bots cannot talk. Share the room code with a friend to talk while you play.')
+              : t('Voice chat starts when a friend joins this room — you can talk before, during and after the game.')}
+          </p>
+        </CardBody>
+      </Card>
     );
   return (
     <Card>
@@ -757,7 +764,7 @@ export function VoiceChat({ room, players }: { room: GameRoomConnection; players
         {joined && showCheck && (
           <div className="space-y-1 rounded-xl bg-ink-100 p-3 font-mono text-[11px] leading-relaxed dark:bg-ink-800">
             <p>
-              {t('Microphone')}: {micError ? `✗ ${micError}` : micOn ? '✓' : t('muted')} · {t('Relay')}: {relay ? '✓' : '✗'} · {t('Game connection')}: {room.status}
+              {t('Microphone')}: {micError ? `✗ ${micError}` : micOn ? '✓' : t('muted')} · {t('Relay')}: {relay ? '✓' : '✗'} · {t('Voice connection')}: {room.status}
             </p>
             {others.filter((p) => inVoice[p.playerNumber]).map((p) => {
               const c = checks[p.playerNumber];

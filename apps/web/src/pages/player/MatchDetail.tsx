@@ -7,10 +7,10 @@ import { InviteShare } from '../../components/InviteShare';
 import { Badge, Button, Card, CardBody, CardHeader, ConfirmDialog, ErrorState, KeyValue, Modal, Notice, PageHeader, PageLoader, Select, StatusBadge, Textarea, useToast } from '../../components/ui';
 import { GAME_CLIENTS } from '../../games/registry';
 import { useGameRoom } from '../../games/useGameRoom';
+import { useVoiceRoom } from '../../games/useVoiceRoom';
 import { SoundToggle } from '../../games/shared/GameUi';
 import { useSoundOnChange } from '../../games/shared/sound';
 import { VoiceChat } from '../../games/shared/VoiceChat';
-import { MicCheck } from '../../games/shared/MicCheck';
 import { ApiError, post } from '../../lib/api';
 import { dateTime, percentFromBps, tokens } from '../../lib/format';
 import { useApi, useDocumentTitle } from '../../lib/hooks';
@@ -30,6 +30,11 @@ export default function MatchDetailPage() {
   if (match.loading && !match.data) return <PageLoader />;
   if (match.error || !match.data) return <ErrorState error={match.error} onRetry={match.reload} />;
   const m = match.data;
+  const voiceOpen =
+    m.visibility === 'PRIVATE' &&
+    m.isParticipant &&
+    !['CANCELLED', 'REFUNDED', 'VOID'].includes(m.status) &&
+    (!m.endedAt || Date.now() - m.endedAt < 30 * 60_000);
   const canLeave = m.isParticipant && (m.status === 'WAITING_FOR_OPPONENT' || (m.status === 'READY' && m.isCreator));
   const canDispute = m.isParticipant && !['CREATED', 'WAITING_FOR_OPPONENT', 'STAKE_LOCKING'].includes(m.status);
   const live = ['READY', 'PLAYING', 'RESULT_PENDING'].includes(m.status) && m.isParticipant;
@@ -69,14 +74,8 @@ export default function MatchDetailPage() {
           </CardBody>
         </Card>
       )}
-      {m.status === 'WAITING_FOR_OPPONENT' && m.visibility === 'PRIVATE' && m.isParticipant && (
-        <Card>
-          <CardHeader title={t('Voice chat: check your microphone')} subtitle={t('You can talk with your friends during the game. Check now while you wait.')} />
-          <CardBody>
-            <MicCheck />
-          </CardBody>
-        </Card>
-      )}
+      {/* private-room voice: one call from the lobby, through the game, until after it — its own connection */}
+      {voiceOpen && <RoomVoice key={`voice-${m.id}`} match={m} />}
       {m.status === 'DISPUTED' && <Notice tone="warning" title={t("Under review")}>{t("This match is frozen while an administrator reviews a dispute. Stakes stay in escrow until it is resolved.")}</Notice>}
 
       {/* the table comes first so players never scroll past the details to play */}
@@ -149,6 +148,12 @@ export default function MatchDetailPage() {
   );
 }
 
+/** the room's voice chat on its own connection (not the game's), so it works before and after the game too */
+function RoomVoice({ match }: { match: MatchDto }) {
+  const link = useVoiceRoom(match.id, true);
+  return <VoiceChat room={link} players={match.players} />;
+}
+
 function GameRoomPanel({ match, game }: { match: MatchDto; game: GameDto }) {
   const Client = game.moduleKey ? GAME_CLIENTS[game.moduleKey] : undefined;
   const room = useGameRoom(match.id, !!Client && game.moduleInstalled);
@@ -185,12 +190,6 @@ function GameRoomPanel({ match, game }: { match: MatchDto; game: GameDto }) {
           </span>
         }
       />
-      {/* stays mounted while the game connection reconnects, so a short drop does not end the call */}
-      {match.visibility === 'PRIVATE' && (
-        <div className="border-b border-ink-100 p-3 dark:border-ink-800">
-          <VoiceChat room={room} players={match.players} />
-        </div>
-      )}
       <CardBody>
         {room.error && <Notice tone="danger">{room.error}</Notice>}
         <Client match={match} room={room} />

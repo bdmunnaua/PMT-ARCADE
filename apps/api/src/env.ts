@@ -9,6 +9,7 @@ export interface Env {
   REALTIME?: DurableObjectNamespace;
   GAME_ROOMS?: DurableObjectNamespace;
   CRASH_GAMES?: DurableObjectNamespace;
+  VOICE_ROOMS?: DurableObjectNamespace;
   ASSETS?: Fetcher;
 
   ENVIRONMENT: string;

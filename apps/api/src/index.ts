@@ -12,6 +12,7 @@ import { createServices } from './services/container';
 export { RealtimeHub } from './durable/realtime-hub';
 export { GameRoom } from './durable/game-room';
 export { CrashGame } from './durable/crash-game';
+export { VoiceRoom } from './durable/voice-room';
 
 const app = createApp();
 

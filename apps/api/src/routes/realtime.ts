@@ -7,6 +7,9 @@ import { rateLimit, requireUser } from '../middleware';
 import { issueTicket, readTicket, ticketSecret } from '../realtime/tickets';
 
 const LIVE_ROOM_STATUSES = ['READY', 'PLAYING', 'RESULT_PENDING'];
+/** private-room voice: open from the lobby until a while after the game (time to talk and rematch) */
+const VOICE_CLOSED_STATUSES = ['CANCELLED', 'REFUNDED', 'VOID'];
+const VOICE_AFTER_GAME_MS = 30 * 60_000;
 
 export function realtimeRoutes(auth: MiddlewareHandler<AppEnv>) {
   const r = new Hono<AppEnv>();
@@ -24,6 +27,15 @@ export function realtimeRoutes(auth: MiddlewareHandler<AppEnv>) {
     else if (kind === 'finance' && (a === 'BUY' || a === 'SELL') && b) {
       const row = a === 'BUY' ? await services.finance.findBuy(b) : await services.finance.findSell(b);
       allowed = !!row && (row.user_id === user.id || (!!admin && (hasPermission(admin.permissions, 'finance.chat') || hasPermission(admin.permissions, 'finance.view'))));
+    } else if (kind === 'voice' && a) {
+      const match = await services.matchesRepo.find(a);
+      const players = match ? await services.matchesRepo.players(a) : [];
+      allowed =
+        !!match &&
+        match.visibility === 'PRIVATE' &&
+        players.some((p) => p.user_id === user.id) &&
+        !VOICE_CLOSED_STATUSES.includes(match.status) &&
+        (!match.ended_at || Date.now() - match.ended_at < VOICE_AFTER_GAME_MS);
     } else if ((kind === 'match' || kind === 'room') && a) {
       const match = await services.matchesRepo.find(a);
       const players = match ? await services.matchesRepo.players(a, kind === 'match') : [];
@@ -46,7 +58,8 @@ export function realtimeRoutes(auth: MiddlewareHandler<AppEnv>) {
     if (!payload) throw new AppError('UNAUTHENTICATED', 'Invalid or expired realtime ticket.');
     const isRoom = payload.c.startsWith('room:');
     const isCrash = payload.c.startsWith('crash:');
-    const ns = isRoom ? c.env.GAME_ROOMS : isCrash ? c.env.CRASH_GAMES : c.env.REALTIME;
+    const isVoice = payload.c.startsWith('voice:');
+    const ns = isRoom ? c.env.GAME_ROOMS : isCrash ? c.env.CRASH_GAMES : isVoice ? c.env.VOICE_ROOMS : c.env.REALTIME;
     if (!ns) throw new AppError('FEATURE_DISABLED', 'Realtime is not available.');
     const target = isRoom ? payload.c.slice('room:'.length) : payload.c;
     const headers = new Headers(c.req.raw.headers);
