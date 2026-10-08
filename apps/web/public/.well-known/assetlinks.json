@@ -1,27 +1,18 @@
 [
   {
-    "relation": [
-      "delegate_permission/common.handle_all_urls"
-    ],
+    "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
       "package_name": "com.pmtarcade.app",
-      "sha256_cert_fingerprints": [
-        "A8:2F:B8:62:1C:1B:22:35:B0:9E:DD:41:61:84:AB:98:04:5B:D5:7D:63:D0:41:0A:C5:2D:E3:75:C8:1C:E2:07",
-        "96:EE:4E:7C:69:FF:DE:03:58:9A:14:E9:C6:69:38:21:B1:94:69:81:CB:87:53:C8:1F:41:DD:E5:73:DA:BC:AF"
-      ]
+      "sha256_cert_fingerprints": ["96:EE:4E:7C:69:FF:DE:03:58:9A:14:E9:C6:69:38:21:B1:94:69:81:CB:87:53:C8:1F:41:DD:E5:73:DA:BC:AF"]
     }
   },
   {
-    "relation": [
-      "delegate_permission/common.handle_all_urls"
-    ],
+    "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
       "package_name": "com.pmtarcade.full",
-      "sha256_cert_fingerprints": [
-        "96:EE:4E:7C:69:FF:DE:03:58:9A:14:E9:C6:69:38:21:B1:94:69:81:CB:87:53:C8:1F:41:DD:E5:73:DA:BC:AF"
-      ]
+      "sha256_cert_fingerprints": ["96:EE:4E:7C:69:FF:DE:03:58:9A:14:E9:C6:69:38:21:B1:94:69:81:CB:87:53:C8:1F:41:DD:E5:73:DA:BC:AF"]
     }
   }
 ]
