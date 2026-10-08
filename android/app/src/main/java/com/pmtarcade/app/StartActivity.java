@@ -50,7 +50,9 @@ public class StartActivity extends Activity {
     }
 
     private void openGame() {
-        Intent open = new Intent(this, LauncherActivity.class);
+        // NEW_TASK: otherwise LauncherActivity restarts itself in a new task, and that second copy
+        // sees the first one still alive and closes at once (the app then shows nothing)
+        Intent open = new Intent(this, LauncherActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(open);
         finish();
         overridePendingTransition(0, 0);
