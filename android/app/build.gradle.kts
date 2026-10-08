@@ -18,8 +18,28 @@ android {
         applicationId = "com.pmtarcade.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
+    }
+
+    // two editions from one project:
+    //  play — Google Play (com.pmtarcade.app): opens the site's Play edition (free arcade games only)
+    //  full — the APK shared from pmtarcade.com (com.pmtarcade.full): the complete site
+    flavorDimensions += "store"
+    productFlavors {
+        create("play") {
+            dimension = "store"
+            resValue("string", "launch_url", "https://pmtarcade.com/?edition=play")
+        }
+        create("full") {
+            dimension = "store"
+            applicationId = "com.pmtarcade.full"
+            resValue("string", "launch_url", "https://pmtarcade.com/?source=android-app")
+        }
+    }
+
+    buildFeatures {
+        resValues = true
     }
 
     signingConfigs {

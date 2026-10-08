@@ -17,6 +17,7 @@ import { ApiError, post } from '../../lib/api';
 import { tokens } from '../../lib/format';
 import { useApi, useDocumentTitle } from '../../lib/hooks';
 import { timeLeft, useTournament } from '../../components/Tournament';
+import { isPlayEdition } from '../../lib/edition';
 import { t } from '../../lib/i18n';
 
 interface GameMessage {
@@ -90,12 +91,12 @@ export default function FreeGamePage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <BackLink to="/play">{t("All games")}</BackLink>
-        <span className="text-sm text-ink-500">
+        {!isPlayEdition && <span className="text-sm text-ink-500">
           {t('Earn up to {a} PMT per game · {b} PMT per day', { a: game.maxPerRunTokens, b: config.data?.dailyCapTokens ?? 0 })}
-        </span>
+        </span>}
       </div>
-      {config.data && !config.data.enabled && <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">{t("Free-game rewards are switched off right now — you can still play.")}</p>}
-      {featured && (
+      {!isPlayEdition && config.data && !config.data.enabled && <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">{t("Free-game rewards are switched off right now — you can still play.")}</p>}
+      {featured && !isPlayEdition && (
         <Link to="/tournament" className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-200">
           <Medal className="size-4" /> {t('This week’s tournament game! Your best score counts · {left}', { left: timeLeft(featured.endsAt) })}
           {featured.you && <span className="ml-auto">{t('You are #{rank}', { rank: featured.you.rank })}</span>}

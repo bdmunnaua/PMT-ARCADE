@@ -1,4 +1,5 @@
 import { lazy, type ReactNode } from 'react';
+import { isPlayEdition } from './lib/edition';
 import { createBrowserRouter, RouterProvider, useRouteError } from 'react-router';
 import type { Permission } from '@arena/shared';
 import { useAuth } from './auth/AuthProvider';
@@ -125,7 +126,7 @@ const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <DashboardPage /> },
+      { index: true, element: isPlayEdition ? <PlayPage /> : <DashboardPage /> },
       { path: 'play', element: <PlayPage /> },
       { path: 'arcade/:id', element: <FreeGamePage /> },
       { path: 'play/:slug', element: <GameDetailPage /> },

@@ -7,6 +7,7 @@ import { Coins, Gamepad2, Megaphone, ShieldBan, Trophy, UserRound, Wrench } from
 import { useAuth } from '../../auth/AuthProvider';
 import { devAuthEnabled, devSignIn } from '../../auth/identity';
 import { SignInCard } from '../../auth/SignInCard';
+import { isPlayEdition } from '../../lib/edition';
 import { FreeGamesGrid, useArcadeConfig } from '../../components/Arcade';
 import { ThemeToggle } from '../../components/Common';
 import { Button, ErrorState, Input, Notice } from '../../components/ui';
@@ -44,7 +45,7 @@ function StateIcon({ children, tone }: { children: ReactNode; tone: 'brand' | 'r
 
 /** The public landing page: sign in, or play the free games for fun right away. */
 export function SignedOutPage() {
-  useDocumentTitle(t("Play free games, earn PMT"));
+  useDocumentTitle(isPlayEdition ? t('Free arcade games') : t("Play free games, earn PMT"));
   const { config } = useAuth();
   const arcade = useArcadeConfig();
   const popular = useApi<{ plays: Record<string, number> }>('/api/arcade/popular');
@@ -59,9 +60,9 @@ export function SignedOutPage() {
       </header>
       <section className="hero-gradient mx-4 grid gap-8 overflow-hidden rounded-3xl p-6 text-white sm:mx-8 sm:p-10 lg:grid-cols-[1fr_380px] lg:items-center">
         <div>
-          <h1 className="text-3xl leading-tight font-black sm:text-5xl">{t("Play free games. Earn PMT.")}</h1>
-          <p className="mt-4 max-w-xl text-white/75">{t("16 free browser games — no download, no purchase needed. Climb the leaderboards, collect daily rewards and earn PMT for your scores.")}</p>
-          <ul className="mt-6 grid gap-3 text-sm text-white/85 sm:grid-cols-3">
+          <h1 className="text-3xl leading-tight font-black sm:text-5xl">{isPlayEdition ? t('16 free arcade games.') : t("Play free games. Earn PMT.")}</h1>
+          <p className="mt-4 max-w-xl text-white/75">{isPlayEdition ? t('Quick, fun games — no download, no purchase. Sign in to keep your best scores and climb the weekly leaderboards.') : t("16 free browser games — no download, no purchase needed. Climb the leaderboards, collect daily rewards and earn PMT for your scores.")}</p>
+          {!isPlayEdition && <ul className="mt-6 grid gap-3 text-sm text-white/85 sm:grid-cols-3">
             <li className="flex items-center gap-2">
               <Gamepad2 className="size-5 text-amber-300" /> {t("Free games, daily check-in")}
             </li>
@@ -71,14 +72,14 @@ export function SignedOutPage() {
             <li className="flex items-center gap-2">
               <Megaphone className="size-5 text-amber-300" /> {t("Creator rewards")}
             </li>
-          </ul>
+          </ul>}
         </div>
         <div className="text-ink-900 dark:text-ink-100">
           {firebaseConfigured && <SignInCard />}
           {devAuthEnabled && <DevIdentityPanel />}
         </div>
       </section>
-      <section className="px-4 pt-6 sm:px-8">
+      {!isPlayEdition && <section className="px-4 pt-6 sm:px-8">
         <a href="/creator-rewards" className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-amber-300/60 bg-amber-50 p-5 text-amber-950 transition hover:shadow-md dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
           <span>
             <span className="block text-lg font-black">{t("🎁 Creator reward: 100,000 PMT")}</span>
@@ -86,25 +87,27 @@ export function SignedOutPage() {
           </span>
           <span className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white">{t("How it works")}</span>
         </a>
-      </section>
+      </section>}
       <section className="px-4 py-8 sm:px-8">
         <h2 className="mb-1 flex items-center gap-2 text-xl font-bold">
           <Coins className="size-5 text-amber-500" /> {t("Free games")}
         </h2>
-        <p className="mb-4 text-sm text-ink-500">{t("Play right now for fun — sign in to earn PMT for your scores.")}</p>
+        <p className="mb-4 text-sm text-ink-500">{isPlayEdition ? t('Play right now — no sign-in needed.') : t("Play right now for fun — sign in to earn PMT for your scores.")}</p>
         {arcade.data && <FreeGamesGrid games={arcade.data.games} plays={popular.data?.plays} linkFor={(g) => ({ href: `/games/${g.id}/index.html` })} />}
       </section>
       <footer className="px-4 pb-8 text-center text-xs text-ink-400 sm:px-8">
         <nav className="mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm">
+          {!isPlayEdition && <>
           <a href="/token/" className="hover:text-brand-600">{t("PMT token")}</a>
           <a href="/transparency/" className="hover:text-brand-600">{t("Transparency")}</a>
           <a href="/whitepaper/" className="hover:text-brand-600">{t("Whitepaper")}</a>
+          </>}
           <a href="https://www.facebook.com/groups/pmtarcade" target="_blank" rel="noreferrer" className="hover:text-brand-600">Facebook</a>
           <a href="/terms/" className="hover:text-brand-600">{t("Terms")}</a>
           <a href="/privacy/" className="hover:text-brand-600">{t("Privacy")}</a>
           <a href="mailto:team@pmtarcade.com" className="hover:text-brand-600">team@pmtarcade.com</a>
         </nav>
-        {t("Free to play. No purchase required. PMT does not have an established DEX market price yet.")}
+        {isPlayEdition ? t('Free to play. No purchase required.') : t("Free to play. No purchase required. PMT does not have an established DEX market price yet.")}
       </footer>
     </div>
   );

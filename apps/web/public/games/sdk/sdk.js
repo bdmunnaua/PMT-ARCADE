@@ -177,6 +177,8 @@
   let score = 0, best = 0;
   let muted = store.get('arcade.muted', false);
   let hub = { signedIn: false, name: null };
+  // Google Play edition of the app: games are just for fun there — no PMT rewards and no ads
+  const PLAY_EDITION = (() => { try { return sessionStorage.getItem('arena.edition') === 'play'; } catch (e) { return false; } })();
   let runPromise = null;
   let lastBump = 0;
   let ui = {};
@@ -254,7 +256,7 @@
   let adsReady = false, adPlaying = false;
   function loadAds() {
     const a = CFG.adsense;
-    if (!a || !a.enabled || !a.client) return;
+    if (!a || !a.enabled || !a.client || PLAY_EDITION) return;
     const s = document.createElement('script');
     s.async = true; s.crossOrigin = 'anonymous';
     s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(a.client);
@@ -345,6 +347,7 @@
   function closeOverlay() { if (ui.overlay) { ui.overlay.remove(); ui.overlay = null; } }
 
   function startNote() {
+    if (PLAY_EDITION) return '';
     if (!inHub) return `<div class="ag-reward dim"><span>${L('Playing for fun.')} <a href="/arcade/${esc(opts.id)}" target="_top">${L('Open it on PMT Arcade')}</a> ${L('and sign in to earn PMT.')}</span></div>`;
     if (!hub.signedIn) return `<div class="ag-reward dim"><span>${L('Sign in on PMT Arcade to earn PMT for your scores.')}</span></div>`;
     return '';
@@ -373,7 +376,7 @@
     closeOverlay();
     score = 0; setScore(0);
     state = 'playing';
-    runPromise = inHub && hub.signedIn ? ask('start', {}) : null;
+    runPromise = inHub && hub.signedIn && !PLAY_EDITION ? ask('start', {}) : null;
     audio();
     opts.onStart && opts.onStart();
   }
@@ -425,7 +428,7 @@
       <div class="ag-score" data-sc>0</div>
       ${isBest ? `<div class="ag-newbest">★ ${L('NEW BEST')}</div>` : `<div class="ag-sub">${L('Best')} ${fmt(best)}</div>`}
       ${stats ? `<div class="ag-stats">${stats}</div>` : ''}
-      <div class="ag-reward dim" data-reward>${inHub && hub.signedIn ? `<div class="spinner"></div> ${L('Saving your score…')}` : startNote().replace(/^<div class="ag-reward dim">|<\/div>$/g, '')}</div>
+      <div class="ag-reward dim" data-reward>${PLAY_EDITION ? '' : inHub && hub.signedIn ? `<div class="spinner"></div> ${L('Saving your score…')}` : startNote().replace(/^<div class="ag-reward dim">|<\/div>$/g, '')}</div>
       <div class="ag-actions-row"><button class="btn btn-primary" data-again>↻ ${L('Play again')}</button><button class="btn" data-exit>⌂ ${L('Menu')}</button></div>`);
     countUp($('[data-sc]', o), score);
     $('[data-exit]', o).onclick = () => { SFX.click(); exit(); };
