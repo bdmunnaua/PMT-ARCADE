@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { BadgeCheck, LogOut, MailWarning } from 'lucide-react';
+import { BadgeCheck, LogOut, MailWarning, Trash2 } from 'lucide-react';
 import type { MeDto } from '@arena/shared';
 import { useAuth, useMe } from '../../auth/AuthProvider';
 import { CopyText, ThemeToggle } from '../../components/Common';
-import { Badge, Button, Card, CardBody, CardHeader, Input, KeyValue, PageHeader, StatusBadge, useToast } from '../../components/ui';
-import { ApiError, patch } from '../../lib/api';
+import { Badge, Button, Card, CardBody, CardHeader, ConfirmDialog, Input, KeyValue, PageHeader, StatusBadge, useToast } from '../../components/ui';
+import { ApiError, patch, post } from '../../lib/api';
 import { dateTime } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
 import { t } from '../../lib/i18n';
@@ -18,6 +18,8 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState(me.displayName);
   const [avatarUrl, setAvatarUrl] = useState(me.avatarUrl ?? '');
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteSent, setDeleteSent] = useState(false);
   const save = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -89,6 +91,35 @@ export default function ProfilePage() {
           </CardBody>
         </Card>
       </div>
+
+      {/* required by Google Play for apps with accounts; the request reaches the admin inbox */}
+      <Card>
+        <CardHeader title={t('Delete my account')} subtitle={t('Your account and personal data are deleted within 30 days. Use or withdraw your PMT first — any balance left ends with the account.')} />
+        <CardBody className="flex flex-wrap items-center justify-between gap-3">
+          <a href="/delete-account/" className="text-sm text-brand-600 underline">
+            {t('What is deleted and what is kept')}
+          </a>
+          <Button variant="danger" icon={<Trash2 className="size-4" />} onClick={() => setDeleting(true)} disabled={deleteSent}>
+            {deleteSent ? t('Deletion requested') : t('Delete my account')}
+          </Button>
+        </CardBody>
+      </Card>
+      <ConfirmDialog
+        open={deleting}
+        onClose={() => setDeleting(false)}
+        title={t('Delete your account?')}
+        confirmLabel={t('Yes, delete my account')}
+        tone="danger"
+        message={t('We will delete your account #{n} and your personal data within 30 days and confirm by email. This cannot be undone.', { n: String(me.playerNumber) })}
+        onConfirm={async () => {
+          await post('/api/me/messages', {
+            category: 'REQUEST',
+            body: `ACCOUNT DELETION REQUEST — please delete account #${me.playerNumber} (@${me.username}) and its personal data, as described on pmtarcade.com/delete-account/.`,
+          });
+          setDeleteSent(true);
+          toast.success(t('Deletion requested. We will confirm by email.'));
+        }}
+      />
     </div>
   );
 }
