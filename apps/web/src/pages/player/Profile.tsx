@@ -9,7 +9,6 @@ import { dateTime } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
 import { t } from '../../lib/i18n';
 import { MicCheck } from '../../games/shared/MicCheck';
-import { isPlayEdition } from '../../lib/edition';
 
 export default function ProfilePage() {
   useDocumentTitle(t("Profile"));
@@ -68,14 +67,12 @@ export default function ProfilePage() {
             <p className="mt-5 text-xs text-ink-500 dark:text-ink-400">{t("Email, password and verification are managed by your main account.")}</p>
           </CardBody>
         </Card>
-        {!isPlayEdition && (
-          <Card>
-            <CardHeader title={t('Voice chat microphone')} subtitle={t('Check that your browser lets pmtarcade.com use the microphone, for talking in private rooms.')} />
-            <CardBody>
-              <MicCheck />
-            </CardBody>
-          </Card>
-        )}
+        <Card>
+          <CardHeader title={t('Voice chat microphone')} subtitle={t('Check that your browser lets pmtarcade.com use the microphone, for talking in private rooms.')} />
+          <CardBody>
+            <MicCheck />
+          </CardBody>
+        </Card>
         <Card>
           <CardHeader title={t("Public profile")} subtitle={t("Your player number and username are permanent.")} />
           <CardBody>
@@ -97,7 +94,7 @@ export default function ProfilePage() {
 
       {/* required by Google Play for apps with accounts; the request reaches the admin inbox */}
       <Card>
-        <CardHeader title={t('Delete my account')} subtitle={isPlayEdition ? t('Your account and personal data are deleted within 30 days.') : t('Your account and personal data are deleted within 30 days. Use or withdraw your PMT first — any balance left ends with the account.')} />
+        <CardHeader title={t('Delete my account')} subtitle={t('Your account and personal data are deleted within 30 days. Use or withdraw your PMT first — any balance left ends with the account.')} />
         <CardBody className="flex flex-wrap items-center justify-between gap-3">
           <a href="/delete-account/" className="text-sm text-brand-600 underline">
             {t('What is deleted and what is kept')}

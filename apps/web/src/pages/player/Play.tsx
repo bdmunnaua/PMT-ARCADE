@@ -7,7 +7,6 @@ import { ErrorState, Notice, PageHeader, Skeleton } from '../../components/ui';
 import { percentFromBps } from '../../lib/format';
 import { useApi, useDocumentTitle } from '../../lib/hooks';
 import { TournamentBanner } from '../../components/Tournament';
-import { isPlayEdition } from '../../lib/edition';
 import { t } from '../../lib/i18n';
 
 /** The lobby: free games that earn PMT, and games played against other players for stakes. */
@@ -19,7 +18,7 @@ export default function PlayPage() {
   const popular = useApi<{ plays: Record<string, number> }>('/api/arcade/popular');
   return (
     <div className="space-y-10">
-      {!isPlayEdition && <TournamentBanner />}
+      <TournamentBanner />
       <section>
         <PageHeader
           title={
@@ -27,7 +26,7 @@ export default function PlayPage() {
               <Gamepad2 className="size-6 text-brand-500" /> {t("Free games")}
             </span>
           }
-          subtitle={isPlayEdition ? t('Play right away — no download, no purchase.') : arcade.data ? t('Play for free and earn bonus PMT for your scores — up to {n} PMT a day.', { n: arcade.data.dailyCapTokens }) : t("Play for free and earn bonus PMT for your scores.")}
+          subtitle={arcade.data ? t('Play for free and earn bonus PMT for your scores — up to {n} PMT a day.', { n: arcade.data.dailyCapTokens }) : t("Play for free and earn bonus PMT for your scores.")}
         />
         {arcade.error ? (
           <ErrorState error={arcade.error} onRetry={arcade.reload} />
@@ -42,7 +41,6 @@ export default function PlayPage() {
         )}
       </section>
 
-      {!isPlayEdition && (
       <section>
         <PageHeader
           title={
@@ -65,7 +63,6 @@ export default function PlayPage() {
           </div>
         )}
       </section>
-      )}
     </div>
   );
 }

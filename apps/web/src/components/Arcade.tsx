@@ -9,7 +9,6 @@ import { tokens } from '../lib/format';
 import { useApi } from '../lib/hooks';
 import { useWallet } from './Wallet';
 import { Badge, Button, Card, CardBody, CardHeader, Input, useToast } from './ui';
-import { isPlayEdition } from '../lib/edition';
 import { t, tn } from '../lib/i18n';
 
 export const useArcadeConfig = () => useApi<ArcadeConfigDto>('/api/arcade/config');
@@ -27,7 +26,7 @@ export function FreeGameCard({ game, to, href, plays }: { game: ArcadeGameDto; t
       <div className="px-1 pt-2">
         <p className="truncate text-sm font-bold">{game.name}</p>
         <p className="truncate text-xs text-ink-500">
-          {isPlayEdition ? t(game.tag) : <>{t(game.tag)} · {t("up to {n} PMT", { n: game.maxPerRunTokens })}</>}
+          {t(game.tag)} · {t("up to {n} PMT", { n: game.maxPerRunTokens })}
         </p>
       </div>
     </>
